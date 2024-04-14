@@ -67,8 +67,8 @@ from "resource" "azurerm_cognitive_account" "cognitive_account" {
 }
 
 transform "new_block" "private_endpoints_variable" {
-  block_type = "azurerm_private_endpoint"
-  block_labels = ["this"]
+  block_type = "resource"
+  block_labels = ["azurerm_private_endpoint", "this"]
   for_each = var.private_endpoints
 
   location            = "${from.resource.azurerm_cognitive_account.cognitive_account.ref}.location"
