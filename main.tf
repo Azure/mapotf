@@ -1,20 +1,20 @@
-from "resource" "azurerm_kubernetes_cluster" "aks" {
+data "resource" "azurerm_kubernetes_cluster" "aks" {
   
 }
 
 transform "update_in_place" "azurerm_kubernetes_cluster_ignore_changes" {
-  from = from.resource.azurerm_kubernetes_cluster.aks
+  from = data.resource.azurerm_kubernetes_cluster.aks
   lifecycle {
     ignore_changes = "[microsoft_defender[0].log_analytics_workspace_id, ${trimprefix(try(from.lifecycle[0].ignore_changes, "[]"), "[")}"
   }
 }
 
-from "resource" "azurerm_kubernetes_cluster_node_pool" aks_node_pool {
+data "resource" "azurerm_kubernetes_cluster_node_pool" aks_node_pool {
   use_for_each = true
 }
 
 transform "update_in_place" azurerm_kubernetes_cluster_node_pool_tags {
-  from = from.resource.azurerm_kubernetes_cluster_node_pool.aks_node_pool
+  from = data.resource.azurerm_kubernetes_cluster_node_pool.aks_node_pool
   tags = "merge(${try(from.tags, "{}")}, { key = each.key })"
 }
 
@@ -62,7 +62,7 @@ transform "new_block" "private_endpoints_variable" {
   nullable    = false
 }
 
-from "resource" "azurerm_cognitive_account" "cognitive_account" {
+data "resource" "azurerm_cognitive_account" "cognitive_account" {
   use_for_each = false
 }
 
@@ -71,7 +71,7 @@ transform "new_block" "private_endpoints_variable" {
   block_labels = ["azurerm_private_endpoint", "this"]
   for_each = var.private_endpoints
 
-  location            = "${from.resource.azurerm_cognitive_account.cognitive_account.ref}.location"
+  location            = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.location"
   name                = coalesce(each.value.name, "pep-${var.name}")
   resource_group_name = coalesce(each.value.resource_group_name, azurerm_cognitive_account.this.resource_group_name)
   subnet_id           = each.value.subnet_resource_id
@@ -80,7 +80,7 @@ transform "new_block" "private_endpoints_variable" {
   private_service_connection {
     is_manual_connection           = false
     name                           = coalesce(each.value.private_service_connection_name, "pse-${var.name}")
-    private_connection_resource_id = "${from.resource.azurerm_cognitive_account.cognitive_account.ref}.id"
+    private_connection_resource_id = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.id"
     subresource_names              = ["account"]
   }
   dynamic "ip_configuration" {
