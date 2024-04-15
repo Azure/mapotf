@@ -6,4 +6,5 @@ var _ golden.Config = &MetaProgrammingTFConfig{}
 
 type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
+	TerraformBlocks []*golden.HclBlock
 }

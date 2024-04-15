@@ -1,5 +1,4 @@
 data "resource" "azurerm_kubernetes_cluster" "aks" {
-  
 }
 
 transform "update_in_place" "azurerm_kubernetes_cluster_ignore_changes" {
@@ -21,6 +20,7 @@ transform "update_in_place" azurerm_kubernetes_cluster_node_pool_tags {
 transform "new_block" "private_endpoints_variable" {
   block_type = "variable"
   block_labels = ["private_endpoints"]
+#asraw
   type = map(object({
     name                                    = optional(string, null)
     role_assignments                        = optional(map(object({})), {})
@@ -60,6 +60,7 @@ transform "new_block" "private_endpoints_variable" {
     - `private_ip_address` - The private IP address of the IP configuration.
   DESCRIPTION
   nullable    = false
+#endasraw
 }
 
 data "resource" "azurerm_cognitive_account" "cognitive_account" {

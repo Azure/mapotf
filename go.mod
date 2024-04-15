@@ -3,7 +3,7 @@ module github.com/lonegunmanb/mptf
 go 1.22.1
 
 require (
-	github.com/Azure/golden v0.0.0-20240409043530-d340c7c4bff0
+	github.com/Azure/golden v0.0.0-20240415083843-cde9047a9701
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/stretchr/testify v1.9.0
 	github.com/zclconf/go-cty v1.14.4
