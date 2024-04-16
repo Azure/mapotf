@@ -2,7 +2,7 @@ data "resource" "azurerm_kubernetes_cluster" "aks" {
 }
 
 transform "update_in_place" "azurerm_kubernetes_cluster_ignore_changes" {
-  from = data.resource.azurerm_kubernetes_cluster.aks
+  from = data.resource.azurerm_kubernetes_cluster.aks.result
   lifecycle {
     ignore_changes = "[microsoft_defender[0].log_analytics_workspace_id, ${trimprefix(try(from.lifecycle[0].ignore_changes, "[]"), "[")}"
   }
@@ -13,7 +13,7 @@ data "resource" "azurerm_kubernetes_cluster_node_pool" aks_node_pool {
 }
 
 transform "update_in_place" azurerm_kubernetes_cluster_node_pool_tags {
-  from = data.resource.azurerm_kubernetes_cluster_node_pool.aks_node_pool
+  from = data.resource.azurerm_kubernetes_cluster_node_pool.aks_node_pool.result
   tags = "merge(${try(from.tags, "{}")}, { key = each.key })"
 }
 
@@ -105,5 +105,8 @@ transform "new_block" "private_endpoints_variable" {
         private_dns_zone_ids = each.value.private_dns_zone_resource_ids
       }
     }
+  }
+  private_service_connection {
+    private_connection_resource_id = "${data.resource.azurerm_cognitive_account.cognitive_account.address}.id"
   }
 }

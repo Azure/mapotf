@@ -40,19 +40,19 @@ func TestNewNestedBlock(t *testing.T) {
 	`)
 
 	assert.Len(t, sut.NestedBlocks, 3)
-	defaultNodePoolBlock := sut.NestedBlocks[0]
+	defaultNodePoolBlock := sut.NestedBlocks["default_node_pool"][0]
 	assert.Equal(t, "default_node_pool", defaultNodePoolBlock.Type)
 	assert.Len(t, defaultNodePoolBlock.Attributes, 3)
 	assert.Empty(t, defaultNodePoolBlock.NestedBlocks)
 	assert.Contains(t, defaultNodePoolBlock.Attributes, "name")
 	assert.Contains(t, defaultNodePoolBlock.Attributes, "node_count")
 	assert.Contains(t, defaultNodePoolBlock.Attributes, "vm_size")
-	identityBlock := sut.NestedBlocks[1]
+	identityBlock := sut.NestedBlocks["identity"][0]
 	assert.Equal(t, "identity", identityBlock.Type)
 	assert.Empty(t, identityBlock.NestedBlocks)
 	assert.Len(t, identityBlock.Attributes, 1)
 	assert.Equal(t, `"SystemAssigned"`, identityBlock.Attributes["type"].String())
-	mdBlock := sut.NestedBlocks[2]
+	mdBlock := sut.NestedBlocks["microsoft_defender"][0]
 	assert.Equal(t, "microsoft_defender", mdBlock.Type)
 	require.NotNil(t, mdBlock.ForEach)
 	assert.Equal(t, `var.msdefender_log_analytics_workspace == null ? ["microsoft_defender"] : []`, mdBlock.ForEach.String())
@@ -140,11 +140,11 @@ func TestNewNestedInNestedBlock(t *testing.T) {
 		t.Run(cc.desc, func(t *testing.T) {
 			// Define some Terraform code with a nested block
 			sut := newBlock(t, cc.code)
-			webAppRoutingBlock := sut.NestedBlocks[0]
+			webAppRoutingBlock := sut.NestedBlocks["web_app_routing"][0]
 			assert.Equal(t, "web_app_routing", webAppRoutingBlock.Type)
 			assert.Contains(t, webAppRoutingBlock.Attributes, "dns_zone_id")
-			assert.Len(t, webAppRoutingBlock.NestedBlocks, 1)
-			identityBlock := webAppRoutingBlock.NestedBlocks[0]
+			assert.Len(t, webAppRoutingBlock.NestedBlocks["web_app_routing_identity"], 1)
+			identityBlock := webAppRoutingBlock.NestedBlocks["web_app_routing_identity"][0]
 			assert.NotNil(t, identityBlock.Attributes, "client_id")
 		})
 	}

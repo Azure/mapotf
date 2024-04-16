@@ -3,6 +3,8 @@ package terraform
 import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+	"sort"
 	"strings"
 )
 
@@ -12,7 +14,7 @@ type Block struct {
 	Count        *Attribute
 	ForEach      *Attribute
 	Attributes   map[string]*Attribute
-	NestedBlocks []*NestedBlock
+	NestedBlocks NestedBlocks
 	Type         string
 	Labels       []string
 	Address      string
@@ -37,6 +39,23 @@ func NewBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *Block {
 	return b
 }
 
+func (b *Block) EvalContext() cty.Value {
+	v := map[string]cty.Value{}
+	for n, a := range b.Attributes {
+		v[n] = cty.StringVal(a.String())
+	}
+	if b.Count != nil {
+		v["count"] = cty.StringVal(b.Count.String())
+	}
+	if b.ForEach != nil {
+		v["for_each"] = cty.StringVal(b.ForEach.String())
+	}
+	for k, values := range b.NestedBlocks.Values() {
+		v[k] = values
+	}
+	return cty.ObjectVal(v)
+}
+
 func attributes(rb *hclsyntax.Body, wb *hclwrite.Body) map[string]*Attribute {
 	attributes := rb.Attributes
 	r := make(map[string]*Attribute, len(attributes))
@@ -46,11 +65,17 @@ func attributes(rb *hclsyntax.Body, wb *hclwrite.Body) map[string]*Attribute {
 	return r
 }
 
-func nestedBlocks(rb *hclsyntax.Body, wb *hclwrite.Body) []*NestedBlock {
+func nestedBlocks(rb *hclsyntax.Body, wb *hclwrite.Body) NestedBlocks {
 	blocks := rb.Blocks
-	r := make([]*NestedBlock, len(blocks))
+	r := make(map[string][]*NestedBlock)
 	for i, block := range blocks {
-		r[i] = NewNestedBlock(block, wb.Blocks()[i])
+		nb := NewNestedBlock(block, wb.Blocks()[i])
+		r[nb.Type] = append(r[nb.Type], nb)
+	}
+	for _, v := range r {
+		sort.Slice(v, func(i, j int) bool {
+			return v[i].Block.Range().Start.Line < v[j].Block.Range().Start.Line
+		})
 	}
 	return r
 }

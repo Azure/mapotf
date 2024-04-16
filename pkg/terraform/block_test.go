@@ -1,6 +1,9 @@
 package terraform_test
 
 import (
+	"fmt"
+	"github.com/lonegunmanb/hclfuncs"
+	"github.com/zclconf/go-cty/cty"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -55,6 +58,129 @@ func TestNewTerraformBlock_ForEach(t *testing.T) {
 	assert.Nil(t, sut.Count)
 	assert.NotNil(t, sut.ForEach)
 	assert.Equal(t, `var.create_rg ? toset(["rg"]) : []`, sut.ForEach.String())
+}
+
+func TestBlockAddressGetValue(t *testing.T) {
+	code := `resource "azurerm_kubernetes_cluster" "example" {
+  name                = "example-aks1"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  dns_prefix          = "exampleaks1"
+
+  dynamic "web_app_routing" {
+	for_each = var.web_app_routing
+	content {
+      dns_zone_id = web_app_routing.value.dns_zone_id
+      dynamic "web_app_routing_identity" {
+		for_each = web_app_routing.value.web_app_routing_identity == null ? [] : [web_app_routing.value.web_app_routing_identity]
+		content {
+	    	client_id = web_app_routing_identity.value.client_id
+		}
+	  }
+	  web_app_routing_identity {
+	    user_assigned_identity_id = var.user_assigned_identity_id
+	  }
+	}
+  }
+
+  default_node_pool {
+    name       = "default"
+    node_count = 1
+    vm_size    = "Standard_D2_v2"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = {
+    Environment = "Production"
+  }
+}`
+	sut := newBlock(t, code)
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"result": sut.EvalContext(),
+		},
+	}
+	cases := []struct {
+		desc     string
+		path     string
+		expected string
+	}{
+		{
+			desc:     "root attribute",
+			path:     "name",
+			expected: `"example-aks1"`,
+		},
+		{
+			desc:     "nested block's attribute",
+			path:     "default_node_pool.0.name",
+			expected: `"default"`,
+		},
+		{
+			desc:     "nested block's attribute, bracket syntax",
+			path:     "default_node_pool[0].name",
+			expected: `"default"`,
+		},
+		{
+			desc:     "dynamic block's for_each",
+			path:     "web_app_routing.0.for_each",
+			expected: `var.web_app_routing`,
+		},
+		{
+			desc:     "dynamic block's attribute",
+			path:     "web_app_routing.0.dns_zone_id",
+			expected: "web_app_routing.value.dns_zone_id",
+		},
+		{
+			desc:     "first nested block instance",
+			path:     "web_app_routing.0.web_app_routing_identity.0.client_id",
+			expected: "web_app_routing_identity.value.client_id",
+		},
+		{
+			desc:     "second nested block instance",
+			path:     "web_app_routing.0.web_app_routing_identity.1.user_assigned_identity_id",
+			expected: "var.user_assigned_identity_id",
+		},
+		{
+			desc: "tags",
+			path: "tags",
+			expected: `{
+    Environment = "Production"
+  }`,
+		},
+	}
+	for _, cc := range cases {
+		t.Run(cc.desc, func(t *testing.T) {
+			exp := fmt.Sprintf(`result.%s`, cc.path)
+			expression, diag := hclsyntax.ParseExpression([]byte(exp), "main.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			value, diag := expression.Value(ctx)
+			require.False(t, diag.HasErrors())
+			assert.Equal(t, cc.expected, value.AsString())
+		})
+	}
+}
+
+func TestBlockAddress_GetNonExistAttributeShouldUseTryFunction(t *testing.T) {
+	sut := newBlock(t, `
+	resource "azurerm_resource_group" "example" {
+		name           = "test"
+		location 	   = "eastus"
+	}
+	`)
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"result": sut.EvalContext(),
+		},
+		Functions: hclfuncs.Functions("."),
+	}
+	expression, diag := hclsyntax.ParseExpression([]byte("try(result.for_each, null)"), "main.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	value, diag := expression.Value(ctx)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	assert.True(t, value.IsNull())
 }
 
 func newBlock(t *testing.T, code string) *terraform.Block {
