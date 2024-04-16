@@ -1,11 +1,9 @@
 package terraform
 
 import (
-	"github.com/ahmetb/go-linq/v3"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 type NestedBlocks map[string][]*NestedBlock
@@ -50,30 +48,7 @@ func (nb *NestedBlock) EvalContext() cty.Value {
 func (nbs NestedBlocks) Values() map[string]cty.Value {
 	v := map[string]cty.Value{}
 	for k, blocks := range nbs {
-		var values []cty.Value
-		allTypes := make(map[string]cty.Type)
-		for _, b := range blocks {
-			value := b.EvalContext()
-			values = append(values, value)
-			attributeTypes := value.Type().AttributeTypes()
-			for n, t := range attributeTypes {
-				allTypes[n] = t
-			}
-		}
-		var allFields []string
-		linq.From(allTypes).Select(func(i interface{}) interface{} {
-			return i.(linq.KeyValue).Key
-		}).ToSlice(&allFields)
-		finalType := cty.ObjectWithOptionalAttrs(allTypes, allFields)
-		var convertedValues []cty.Value
-		for _, v := range values {
-			cv, err := convert.Convert(v, finalType)
-			if err != nil {
-				panic(err)
-			}
-			convertedValues = append(convertedValues, cv)
-		}
-		v[k] = cty.ListVal(convertedValues)
+		v[k] = listOfObject(blocks)
 	}
 	return v
 }

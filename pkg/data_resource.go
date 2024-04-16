@@ -9,7 +9,6 @@ type ResourceData struct {
 	*golden.BaseBlock
 
 	ResourceType string
-	Name         string
 
 	Content map[string]any
 }
@@ -23,6 +22,7 @@ func (rd *ResourceData) AddressLength() int { return 4 }
 func (rd *ResourceData) ExecuteDuringPlan() error {
 	labels := rd.BaseBlock.HclBlock().Labels
 	rd.ResourceType = labels[0]
-	rd.Name = labels[1]
+	//rd.Name = labels[1]
 	rd.EvalContext()
+	panic("implement me")
 }
