@@ -18,29 +18,30 @@ transform "update_in_place" azurerm_kubernetes_cluster_node_pool_tags {
 }
 
 transform "new_block" "private_endpoints_variable" {
-  block_type = "variable"
+  file         = "variables.tf"
+  block_type   = "variable"
   block_labels = ["private_endpoints"]
-#asraw
-  type = map(object({
-    name                                    = optional(string, null)
-    role_assignments                        = optional(map(object({})), {})
-    lock                                    = optional(object({}), {})
-    tags                                    = optional(map(any), null)
-    subnet_resource_id                      = string
-    private_dns_zone_group_name             = optional(string, "default")
-    private_dns_zone_resource_ids           = optional(set(string), [])
-    application_security_group_associations = optional(map(string), {})
-    private_service_connection_name         = optional(string, null)
-    network_interface_name                  = optional(string, null)
-    location                                = optional(string, null)
-    resource_group_name                     = optional(string, null)
-    ip_configurations = optional(map(object({
-      name               = string
-      private_ip_address = string
-    })), {})
-  }))
-  default     = {}
-  description = <<-DESCRIPTION
+  asraw {
+    type = map(object({
+      name                                    = optional(string, null)
+      role_assignments                        = optional(map(object({})), {})
+      lock                                    = optional(object({}), {})
+      tags                                    = optional(map(any), null)
+      subnet_resource_id                      = string
+      private_dns_zone_group_name             = optional(string, "default")
+      private_dns_zone_resource_ids           = optional(set(string), [])
+      application_security_group_associations = optional(map(string), {})
+      private_service_connection_name         = optional(string, null)
+      network_interface_name                  = optional(string, null)
+      location                                = optional(string, null)
+      resource_group_name                     = optional(string, null)
+      ip_configurations                       = optional(map(object({
+        name               = string
+        private_ip_address = string
+      })), {})
+    }))
+    default = {}
+    description = <<-DESCRIPTION
   A map of private endpoints to create on the Key Vault. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
 
   - `name` - (Optional) The name of the private endpoint. One will be generated if not set.
@@ -59,8 +60,8 @@ transform "new_block" "private_endpoints_variable" {
     - `name` - The name of the IP configuration.
     - `private_ip_address` - The private IP address of the IP configuration.
   DESCRIPTION
-  nullable    = false
-#endasraw
+    nullable    = false
+  }
 }
 
 data "resource" "azurerm_cognitive_account" "cognitive_account" {
@@ -68,38 +69,41 @@ data "resource" "azurerm_cognitive_account" "cognitive_account" {
 }
 
 transform "new_block" "private_endpoints_variable" {
-  block_type = "resource"
+  file         = "private_endpoints.tf"
+  block_type   = "resource"
   block_labels = ["azurerm_private_endpoint", "this"]
-  for_each = var.private_endpoints
+  asraw {
+    for_each = var.private_endpoints
 
-  location            = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.location"
-  name                = coalesce(each.value.name, "pep-${var.name}")
-  resource_group_name = coalesce(each.value.resource_group_name, azurerm_cognitive_account.this.resource_group_name)
-  subnet_id           = each.value.subnet_resource_id
-  tags                = each.value.tags
+    location            = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.location"
+    name                = coalesce(each.value.name, "pep-${var.name}")
+    resource_group_name = coalesce(each.value.resource_group_name, azurerm_cognitive_account.this.resource_group_name)
+    subnet_id           = each.value.subnet_resource_id
+    tags                = each.value.tags
 
-  private_service_connection {
-    is_manual_connection           = false
-    name                           = coalesce(each.value.private_service_connection_name, "pse-${var.name}")
-    private_connection_resource_id = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.id"
-    subresource_names              = ["account"]
-  }
-  dynamic "ip_configuration" {
-    for_each = each.value.ip_configurations
-
-    content {
-      name               = ip_configuration.value.name
-      private_ip_address = ip_configuration.value.private_ip_address
-      member_name        = "account"
-      subresource_name   = "account"
+    private_service_connection {
+      is_manual_connection           = false
+      name                           = coalesce(each.value.private_service_connection_name, "pse-${var.name}")
+      private_connection_resource_id = "${data.resource.azurerm_cognitive_account.cognitive_account.ref}.id"
+      subresource_names              = ["account"]
     }
-  }
-  dynamic "private_dns_zone_group" {
-    for_each = length(each.value.private_dns_zone_resource_ids) > 0 ? ["this"] : []
+    dynamic "ip_configuration" {
+      for_each = each.value.ip_configurations
 
-    content {
-      name                 = each.value.private_dns_zone_group_name
-      private_dns_zone_ids = each.value.private_dns_zone_resource_ids
+      content {
+        name               = ip_configuration.value.name
+        private_ip_address = ip_configuration.value.private_ip_address
+        member_name        = "account"
+        subresource_name   = "account"
+      }
+    }
+    dynamic "private_dns_zone_group" {
+      for_each = length(each.value.private_dns_zone_resource_ids) > 0 ? ["this"] : []
+
+      content {
+        name                 = each.value.private_dns_zone_group_name
+        private_dns_zone_ids = each.value.private_dns_zone_resource_ids
+      }
     }
   }
 }

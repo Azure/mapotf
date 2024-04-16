@@ -1,7 +1,6 @@
 package terraform
 
 import (
-	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -12,8 +11,8 @@ import (
 var Fs = afero.NewOsFs()
 
 type Module struct {
-	ResourceBlocks []*golden.HclBlock
-	DataBlocks     []*golden.HclBlock
+	ResourceBlocks []*Block
+	DataBlocks     []*Block
 }
 
 func (m *Module) LoadConfig(cfg, filename string) error {
@@ -31,7 +30,7 @@ func (m *Module) LoadConfig(cfg, filename string) error {
 		if rb.Type != "resource" && rb.Type != "data" {
 			continue
 		}
-		hclBlock := golden.NewHclBlock(rb, writeBlocks[i], nil)
+		hclBlock := NewBlock(rb, writeBlocks[i])
 		if rb.Type == "resource" {
 			m.ResourceBlocks = append(m.ResourceBlocks, hclBlock)
 		} else if rb.Type == "data" {
