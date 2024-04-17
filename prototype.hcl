@@ -1,4 +1,5 @@
-data "resource" "azurerm_kubernetes_cluster" "aks" {
+data "resource" "aks" {
+  resource_type = "azurerm_kubernetes_cluster"
 }
 
 transform "update_in_place" "azurerm_kubernetes_cluster_ignore_changes" {
@@ -8,8 +9,9 @@ transform "update_in_place" "azurerm_kubernetes_cluster_ignore_changes" {
   }
 }
 
-data "resource" "azurerm_kubernetes_cluster_node_pool" aks_node_pool {
-  use_for_each = true
+data "resource" aks_node_pool {
+  resource_type = "azurerm_kubernetes_cluster_node_pool"
+#   use_for_each = true
 }
 
 transform "update_in_place" azurerm_kubernetes_cluster_node_pool_tags {

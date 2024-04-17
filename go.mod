@@ -3,7 +3,7 @@ module github.com/lonegunmanb/mptf
 go 1.22.1
 
 require (
-	github.com/Azure/golden v0.0.0-20240415083843-cde9047a9701
+	github.com/Azure/golden v0.0.0-20240417084111-ee359dc76a50
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/lonegunmanb/hclfuncs v0.6.0
