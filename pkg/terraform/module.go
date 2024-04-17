@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/spf13/afero"
+	"path/filepath"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ type Module struct {
 	DataBlocks     []*Block
 }
 
-func (m *Module) LoadConfig(cfg, filename string) error {
+func (m *Module) loadConfig(cfg, filename string) error {
 	writeFile, diag := hclwrite.ParseConfig([]byte(cfg), filename, hcl.InitialPos)
 	if diag.HasErrors() {
 		return diag
@@ -40,24 +41,28 @@ func (m *Module) LoadConfig(cfg, filename string) error {
 	return nil
 }
 
-func (m *Module) LoadModule(dir string) error {
+func LoadModule(dir string) (*Module, error) {
 	files, err := afero.ReadDir(Fs, dir)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	m := new(Module)
 	for _, f := range files {
 		if f.IsDir() {
 			continue
 		}
-		if strings.HasSuffix(f.Name(), ".tf") {
-			content, err := afero.ReadFile(Fs, f.Name())
-			if err != nil {
-				return err
-			}
-			if err = m.LoadConfig(string(content), f.Name()); err != nil {
-				return err
-			}
+		if !strings.HasSuffix(f.Name(), ".tf") {
+			continue
+		}
+		n := filepath.Join(dir, f.Name())
+		content, err := afero.ReadFile(Fs, n)
+		if err != nil {
+			return nil, err
+		}
+		if err = m.loadConfig(string(content), f.Name()); err != nil {
+			return nil, err
 		}
 	}
-	return nil
+
+	return m, err
 }
