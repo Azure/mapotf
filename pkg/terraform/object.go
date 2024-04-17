@@ -13,7 +13,7 @@ type Object interface {
 	EvalContext() cty.Value
 }
 
-func listOfObject[T Object](objs []T) cty.Value {
+func ListOfObject[T Object](objs []T) cty.Value {
 	var values []cty.Value
 	allTypes := make(map[string]cty.Type)
 	for _, b := range objs {
@@ -21,7 +21,17 @@ func listOfObject[T Object](objs []T) cty.Value {
 		values = append(values, value)
 		attributeTypes := value.Type().AttributeTypes()
 		for n, t := range attributeTypes {
-			allTypes[n] = t
+			if _, ok := allTypes[n]; !ok {
+				allTypes[n] = t
+				continue
+			}
+			if !allTypes[n].Equals(t) {
+				if allTypes[n].IsListType() && t.IsListType() {
+					allTypes[n] = cty.List(mergeObjectType(allTypes[n].ElementType(), t.ElementType()))
+					continue
+				}
+				allTypes[n] = mergeObjectType(allTypes[n], t)
+			}
 		}
 	}
 	var allFields []string
@@ -38,4 +48,23 @@ func listOfObject[T Object](objs []T) cty.Value {
 		convertedValues = append(convertedValues, cv)
 	}
 	return cty.ListVal(convertedValues)
+}
+
+func mergeObjectType(t1, t2 cty.Type) cty.Type {
+	newAttriubtes := make(map[string]cty.Type)
+	for n, t := range t1.AttributeTypes() {
+		newAttriubtes[n] = t
+	}
+	for n, t := range t2.AttributeTypes() {
+		if _, ok := newAttriubtes[n]; !ok {
+			newAttriubtes[n] = t
+			continue
+		}
+		newAttriubtes[n] = mergeObjectType(newAttriubtes[n], t)
+	}
+	var allFields []string
+	for n, _ := range newAttriubtes {
+		allFields = append(allFields, n)
+	}
+	return cty.ObjectWithOptionalAttrs(newAttriubtes, allFields)
 }

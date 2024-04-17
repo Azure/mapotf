@@ -48,7 +48,7 @@ func (nb *NestedBlock) EvalContext() cty.Value {
 func (nbs NestedBlocks) Values() map[string]cty.Value {
 	v := map[string]cty.Value{}
 	for k, blocks := range nbs {
-		v[k] = listOfObject(blocks)
+		v[k] = ListOfObject(blocks)
 	}
 	return v
 }

@@ -1,7 +1,10 @@
 package terraform_test
 
 import (
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/stretchr/testify/require"
+	"github.com/zclconf/go-cty/cty"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -148,4 +151,40 @@ func TestNewNestedInNestedBlock(t *testing.T) {
 			assert.NotNil(t, identityBlock.Attributes, "client_id")
 		})
 	}
+}
+
+func TestNestedBlock_NestInNestedBlockHasDifferentSchema(t *testing.T) {
+	code := `
+resource "fake_resource" this {
+  top_block {
+	second_block {
+	  id = 123
+	}
+  }
+  top_block {
+	second_block {
+      name = "John"
+	}
+  }
+  top_block {
+	second_block{
+	  third_block{
+		enabled = true
+      }
+	}
+  }
+}
+`
+	sut := newBlock(t, code)
+	assert.Len(t, sut.NestedBlocks["top_block"], 3)
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"result": sut.EvalContext(),
+		},
+	}
+	exp, diag := hclsyntax.ParseExpression([]byte("result.top_block.1.second_block.0.name"), "main.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	value, diag := exp.Value(ctx)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	assert.Equal(t, `"John"`, value.AsString())
 }

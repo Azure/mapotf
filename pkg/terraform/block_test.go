@@ -183,6 +183,37 @@ func TestBlockAddress_GetNonExistAttributeShouldUseTryFunction(t *testing.T) {
 	assert.True(t, value.IsNull())
 }
 
+func TestNestedBlock_SameResourceBlockContainsSameNestedBlocksWithDifferentSchema(t *testing.T) {
+	code := `
+resource "fake_resource" this {
+  top_block {
+	second_block {
+	  id = 123
+	}
+  }
+}
+
+resource "fake_resource" that {
+  top_block {
+	third_block {
+	  name = "John"
+	}
+  }
+}
+`
+	sut := newBlocks(t, code)
+	assert.Len(t, sut, 2)
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"result": terraform.ListOfObject(sut),
+		},
+	}
+	v := expressionValue(t, "result.0.top_block.0.second_block.0.id", ctx)
+	assert.Equal(t, "123", v.AsString())
+	v = expressionValue(t, "result.1.top_block.0.third_block.0.name", ctx)
+	assert.Equal(t, `"John"`, v.AsString())
+}
+
 func newBlock(t *testing.T, code string) *terraform.Block {
 
 	// Parse the Terraform code
@@ -198,4 +229,28 @@ func newBlock(t *testing.T, code string) *terraform.Block {
 	// Call the function under test
 	block := terraform.NewBlock(rb, wb)
 	return block
+}
+
+func newBlocks(t *testing.T, code string) []*terraform.Block {
+	// Parse the Terraform code
+	readFile, diags := hclsyntax.ParseConfig([]byte(code), "test", hcl.InitialPos)
+	require.False(t, diags.HasErrors())
+	writeFile, diags := hclwrite.ParseConfig([]byte(code), "test", hcl.InitialPos)
+	require.False(t, diags.HasErrors())
+
+	var blocks []*terraform.Block
+
+	for i, rb := range readFile.Body.(*hclsyntax.Body).Blocks {
+		wb := writeFile.Body().Blocks()[i]
+		blocks = append(blocks, terraform.NewBlock(rb, wb))
+	}
+	return blocks
+}
+
+func expressionValue(t *testing.T, expression string, ctx *hcl.EvalContext) cty.Value {
+	exp, diag := hclsyntax.ParseExpression([]byte(expression), "main.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	value, diag := exp.Value(ctx)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	return value
 }
