@@ -59,8 +59,15 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 	return u.decodeAsStringBlock(u.updateBlock, block, 0, context)
 }
 
+func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
+	return u.updateBlock
+}
+
 func (u *UpdateInPlaceTransform) decodeAsStringBlock(dest *hclwrite.Block, src *golden.HclBlock, depth int, context *hcl.EvalContext) error {
 	for n, attribute := range src.Attributes() {
+		if n == "target_block_address" && depth == 0 {
+			continue
+		}
 		value, err := attribute.Value(context)
 		if err != nil {
 			return err
@@ -90,7 +97,7 @@ func (u *UpdateInPlaceTransform) decodeAsStringBlock(dest *hclwrite.Block, src *
 	return nil
 }
 
-func (u UpdateInPlaceTransform) decodeAsRawBlock(dest *hclwrite.Block, src *golden.HclBlock) error {
+func (u *UpdateInPlaceTransform) decodeAsRawBlock(dest *hclwrite.Block, src *golden.HclBlock) error {
 	for n, attribute := range src.Attributes() {
 		dest.Body().SetAttributeRaw(n, attribute.ExprTokens())
 	}
