@@ -4,6 +4,12 @@ codeberg.org/6543/go-yaml2json v1.0.0 h1:heGqo9VEi7gY2yNqjj7X4ADs5nzlFIbGsJtgYDL
 codeberg.org/6543/go-yaml2json v1.0.0/go.mod h1:mz61q14LWF4ZABrgMEDMmk3t9dPi6zgR1uBh2VKV2RQ=
 github.com/Azure/golden v0.0.0-20240417084111-ee359dc76a50 h1:1cJ1JcpzjOCCn7sG9deb4yLk/NQcTLpzM3OUexvE030=
 github.com/Azure/golden v0.0.0-20240417084111-ee359dc76a50/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
+github.com/Azure/golden v0.0.0-20240418024455-5b073fcf67e3 h1:UL3I29E/YdB+AyF7+aG0KCQLp+SBmzxy0ecdLjDaGN8=
+github.com/Azure/golden v0.0.0-20240418024455-5b073fcf67e3/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
+github.com/Azure/golden v0.0.0-20240418025208-89bbac6b228c h1:2lzpYEaMmy9O6WE/PGZX1wbrQZ+qwRB0SLTRi66Eq/0=
+github.com/Azure/golden v0.0.0-20240418025208-89bbac6b228c/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
+github.com/Azure/golden v0.0.0-20240418030102-bab019154dd9 h1:iK6VxaglT10ew869qGso2O7Z8qR0GBvyYnWHu/ICsOA=
+github.com/Azure/golden v0.0.0-20240418030102-bab019154dd9/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=

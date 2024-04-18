@@ -7,15 +7,15 @@ type Data interface {
 	Data()
 }
 
-type BaseData struct {
-	*MetaProgrammingTFConfig
-}
+type BaseData struct{}
 
 func (bd *BaseData) BlockType() string {
 	return "data"
 }
 
 func (bd *BaseData) Data() {}
+
+func (rd *BaseData) AddressLength() int { return 3 }
 
 func (bd *BaseData) CanExecutePrePlan() bool {
 	return false
