@@ -15,8 +15,8 @@ type ResourceData struct {
 	*golden.BaseBlock
 
 	ResourceType string    `hcl:"resource_type" json:"resource_type"`
-	UseCount     bool      `hcl:"use_count" json:"use_count"`
-	UseForEach   bool      `hcl:"use_for_each" json:"use_for_each"`
+	UseCount     bool      `hcl:"use_count,optional" json:"use_count" default:"false"`
+	UseForEach   bool      `hcl:"use_for_each,optional" json:"use_for_each" default:"false"`
 	Result       cty.Value `attribute:"result"`
 }
 
@@ -25,7 +25,7 @@ func (rd *ResourceData) Type() string {
 }
 
 func (rd *ResourceData) ExecuteDuringPlan() error {
-	src := rd.BaseBlock.Config().(*MetaProgrammingTFConfig).ResourceBlocks
+	src := rd.BaseBlock.Config().(*MetaProgrammingTFConfig).ResourceBlocks()
 	res := linq.From(src)
 	if rd.ResourceType != "" {
 		res = res.Where(func(i interface{}) bool {
