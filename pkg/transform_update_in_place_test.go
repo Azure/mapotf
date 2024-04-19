@@ -48,6 +48,105 @@ transform "update_in_place" this {
 	tags = "foo-bar-baz"
 }`,
 		},
+		{
+			desc: "string inside nested block",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	top_block {
+		id = "123"
+	}
+}
+`,
+			expectedPatchBlock: `patch {
+	top_block {
+		id = 123
+	}
+}`,
+		},
+		{
+			desc: "nested block in nested block",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	top_block {
+		second_block {
+			id = "123"
+		}
+	}
+}
+`,
+			expectedPatchBlock: `patch {
+	top_block {
+		second_block {
+			id = 123
+		}
+	}
+}`,
+		},
+		{
+			desc: "raw token",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	asraw{
+	  tags = { hello = "world" }
+	}
+}
+`,
+			expectedPatchBlock: `patch {
+	tags = { hello = "world" }
+}`,
+		},
+		{
+			desc: "raw token with function call",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	asraw{
+	  tags = merge({}, { hello = "world" })
+	}
+}
+`,
+			expectedPatchBlock: `patch {
+	tags = merge({}, { hello = "world" })
+}`,
+		},
+		{
+			desc: "reserved keywords inside raw block",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	asraw{
+	  target_block_address = uuid()
+      asraw {
+	    id = timestamp()
+      }
+	}
+}
+`,
+			expectedPatchBlock: `patch {
+	target_block_address = uuid()
+    asraw {
+	  id = timestamp()
+    }
+}`,
+		},
+		{
+			desc: "both string and raw updates, string should take precedence",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	asraw{
+	  id = 123
+	}
+	id = "456"
+}
+`,
+			expectedPatchBlock: `patch {
+	id = 456
+}`,
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
@@ -79,6 +178,49 @@ resource "fake_resource" this {
 			assert.Equal(t, formatHcl(c.expectedPatchBlock), formatHcl(actual))
 		})
 	}
+}
+
+func TestUpdateInPlaceTransform_UseForEachInDecode(t *testing.T) {
+	stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+		"/main.tf": `
+resource "fake_resource" this {
+  tags = {}
+}`,
+	}))
+	defer stub.Reset()
+	hclBlocks := newHclBlocks(t, `
+data resource "fake_resource" {
+  resource_type = "fake_resource"
+}
+
+transform update_in_place "fake_resource" {
+	for_each = data.resource.fake_resource.result.fake_resource
+	target_block_address = each.value.mptf.block_address
+	tags = "merge(${each.value.tags}, { block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"  }"
+}
+`)
+	cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
+	require.NoError(t, err)
+	err = cfg.Init(hclBlocks)
+	require.NoError(t, err)
+	err = cfg.RunPrePlan()
+	require.NoError(t, err)
+	err = cfg.RunPlan()
+	require.NoError(t, err)
+	vertices := cfg.BaseConfig.GetVertices()
+	require.NotNil(t, vertices)
+}
+
+func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
+	readFile, diag := hclsyntax.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	var r []*golden.HclBlock
+	for i, rb := range readFile.Body.(*hclsyntax.Body).Blocks {
+		r = append(r, golden.NewHclBlock(rb, writeFile.Body().Blocks()[i], nil))
+	}
+	return r
 }
 
 func formatHcl(inputHcl string) string {

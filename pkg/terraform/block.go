@@ -41,6 +41,16 @@ func NewBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *Block {
 
 func (b *Block) EvalContext() cty.Value {
 	v := map[string]cty.Value{}
+	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
+		"block_address": cty.StringVal(b.Address),
+		"range": cty.ObjectVal(map[string]cty.Value{
+			"file_name":    cty.StringVal(b.Range().Filename),
+			"start_line":   cty.NumberIntVal(int64(b.Range().Start.Line)),
+			"start_column": cty.NumberIntVal(int64(b.Range().Start.Column)),
+			"end_line":     cty.NumberIntVal(int64(b.Range().End.Line)),
+			"end_column":   cty.NumberIntVal(int64(b.Range().End.Column)),
+		}),
+	})
 	for n, a := range b.Attributes {
 		v[n] = cty.StringVal(a.String())
 	}

@@ -20,7 +20,7 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 
 	sut, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
 	require.NoError(t, err)
-	assert.NotEmpty(t, sut.(*pkg.MetaProgrammingTFConfig).ResourceBlocks)
+	assert.NotEmpty(t, sut.ResourceBlocks)
 }
 
 func fakeFs(files map[string]string) afero.Fs {

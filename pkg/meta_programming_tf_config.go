@@ -16,7 +16,7 @@ type MetaProgrammingTFConfig struct {
 	dataBlocks     map[string]*terraform.Block
 }
 
-func NewMetaProgrammingTFConfig(tfDir, cfgDir string, ctx context.Context) (golden.Config, error) {
+func NewMetaProgrammingTFConfig(tfDir, cfgDir string, ctx context.Context) (*MetaProgrammingTFConfig, error) {
 	module, err := terraform.LoadModule(tfDir)
 	if err != nil {
 		return nil, err
@@ -28,6 +28,10 @@ func NewMetaProgrammingTFConfig(tfDir, cfgDir string, ctx context.Context) (gold
 		dataBlocks:     groupByType(module.DataBlocks),
 	}
 	return cfg, nil
+}
+
+func (c *MetaProgrammingTFConfig) Init(hclBlocks []*golden.HclBlock) error {
+	return golden.InitConfig(c, hclBlocks)
 }
 
 func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.Block {

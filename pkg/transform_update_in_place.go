@@ -63,9 +63,19 @@ func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
 	return u.updateBlock
 }
 
+func (u *UpdateInPlaceTransform) isReservedField(name string) bool {
+	reserved := map[string]struct{}{
+		"target_block_address": {},
+		"for_each":             {},
+		"asraw":                {},
+	}
+	_, ok := reserved[name]
+	return ok
+}
+
 func (u *UpdateInPlaceTransform) decodeAsStringBlock(dest *hclwrite.Block, src *golden.HclBlock, depth int, context *hcl.EvalContext) error {
 	for n, attribute := range src.Attributes() {
-		if n == "target_block_address" && depth == 0 {
+		if u.isReservedField(n) && depth == 0 {
 			continue
 		}
 		value, err := attribute.Value(context)
@@ -86,7 +96,7 @@ func (u *UpdateInPlaceTransform) decodeAsStringBlock(dest *hclwrite.Block, src *
 	}
 	for _, b := range src.NestedBlocks() {
 		blockType := b.Type
-		if depth == 0 && blockType == "asraw" {
+		if u.isReservedField(blockType) && depth == 0 {
 			continue
 		}
 		newNestedBlock := dest.Body().AppendNewBlock(blockType, b.Labels)

@@ -10,6 +10,10 @@ github.com/Azure/golden v0.0.0-20240418025208-89bbac6b228c h1:2lzpYEaMmy9O6WE/PG
 github.com/Azure/golden v0.0.0-20240418025208-89bbac6b228c/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
 github.com/Azure/golden v0.0.0-20240418030102-bab019154dd9 h1:iK6VxaglT10ew869qGso2O7Z8qR0GBvyYnWHu/ICsOA=
 github.com/Azure/golden v0.0.0-20240418030102-bab019154dd9/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
+github.com/Azure/golden v0.0.0-20240419030219-f1eb0622c410 h1:xxP9bk9xSCrGDGlKC86EzkqFQQG0JohOtX67zT6/vFw=
+github.com/Azure/golden v0.0.0-20240419030219-f1eb0622c410/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
+github.com/Azure/golden v0.0.0-20240419032742-55d8a9968cce h1:InWWPT0KrfCEshhtsv28BFJEm0rqGkLLw3PCKh+pKeU=
+github.com/Azure/golden v0.0.0-20240419032742-55d8a9968cce/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
