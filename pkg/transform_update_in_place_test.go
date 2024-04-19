@@ -196,7 +196,7 @@ data resource "fake_resource" {
 transform update_in_place "fake_resource" {
 	for_each = data.resource.fake_resource.result.fake_resource
 	target_block_address = each.value.mptf.block_address
-	tags = "merge(${each.value.tags}, { block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"  }"
+	tags = "merge(${try(each.value.tags, "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
 }
 `)
 	cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
@@ -208,7 +208,19 @@ transform update_in_place "fake_resource" {
 	err = cfg.RunPlan()
 	require.NoError(t, err)
 	vertices := cfg.BaseConfig.GetVertices()
-	require.NotNil(t, vertices)
+	b, ok := vertices["transform.update_in_place.fake_resource[resource.fake_resource.this]"]
+	require.True(t, ok)
+	updateTransformBlock, ok := b.(*pkg.UpdateInPlaceTransform)
+	require.True(t, ok)
+	ub := updateTransformBlock.UpdateBlock()
+	actual := string(ub.BuildTokens(hclwrite.Tokens{}).Bytes())
+	expected := `patch {
+	tags = merge({}, { 
+  block_address = "resource.fake_resource.this"
+  file_name = "main.tf"
+})
+}`
+	assert.Equal(t, formatHcl(expected), formatHcl(actual))
 }
 
 func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
