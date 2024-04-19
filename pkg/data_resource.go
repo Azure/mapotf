@@ -26,6 +26,7 @@ func (rd *ResourceData) Type() string {
 
 func (rd *ResourceData) ExecuteDuringPlan() error {
 	src := rd.BaseBlock.Config().(*MetaProgrammingTFConfig).ResourceBlocks()
+	var matched []*terraform.Block
 	res := linq.From(src)
 	if rd.ResourceType != "" {
 		res = res.Where(func(i interface{}) bool {
@@ -42,9 +43,11 @@ func (rd *ResourceData) ExecuteDuringPlan() error {
 			return i.(*terraform.Block).Count != nil
 		})
 	}
+	res.ToSlice(&matched)
+	matchedBlocks := terraform.ListOfObject(matched)
 	resourceBlocks := make(map[string]map[string]cty.Value)
-	res.ForEach(func(i interface{}) {
-		b := i.(*terraform.Block)
+	for i := 0; i < matchedBlocks.LengthInt(); i++ {
+		b := matched[i]
 		t := b.Labels[0]
 		address := b.Address
 		sm, ok := resourceBlocks[t]
@@ -52,8 +55,8 @@ func (rd *ResourceData) ExecuteDuringPlan() error {
 			sm = make(map[string]cty.Value)
 			resourceBlocks[t] = sm
 		}
-		sm[address] = b.EvalContext()
-	})
+		sm[address] = matchedBlocks.Index(cty.NumberIntVal(int64(i)))
+	}
 	rd.Result = golden.ToCtyValue(resourceBlocks)
 	return nil
 }

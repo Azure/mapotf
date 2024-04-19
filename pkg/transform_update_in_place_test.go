@@ -185,7 +185,11 @@ func TestUpdateInPlaceTransform_UseForEachInDecode(t *testing.T) {
 		"/main.tf": `
 resource "fake_resource" this {
   tags = {}
-}`,
+}
+
+resource "fake_resource" that {
+}
+`,
 	}))
 	defer stub.Reset()
 	hclBlocks := newHclBlocks(t, `
@@ -196,7 +200,7 @@ data resource "fake_resource" {
 transform update_in_place "fake_resource" {
 	for_each = data.resource.fake_resource.result.fake_resource
 	target_block_address = each.value.mptf.block_address
-	tags = "merge(${try(each.value.tags, "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
+	tags = "merge(${try(coalesce(each.value.tags, "{}"), "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
 }
 `)
 	cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
@@ -217,6 +221,19 @@ transform update_in_place "fake_resource" {
 	expected := `patch {
 	tags = merge({}, { 
   block_address = "resource.fake_resource.this"
+  file_name = "main.tf"
+})
+}`
+	assert.Equal(t, formatHcl(expected), formatHcl(actual))
+	b, ok = vertices["transform.update_in_place.fake_resource[resource.fake_resource.that]"]
+	require.True(t, ok)
+	updateTransformBlock, ok = b.(*pkg.UpdateInPlaceTransform)
+	require.True(t, ok)
+	ub = updateTransformBlock.UpdateBlock()
+	actual = string(ub.BuildTokens(hclwrite.Tokens{}).Bytes())
+	expected = `patch {
+	tags = merge({}, { 
+  block_address = "resource.fake_resource.that"
   file_name = "main.tf"
 })
 }`
