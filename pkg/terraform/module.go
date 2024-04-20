@@ -7,11 +7,15 @@ import (
 	"github.com/spf13/afero"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 var Fs = afero.NewOsFs()
 
 type Module struct {
+	dir            string
+	writeFiles     map[string]*hclwrite.File
+	lock           *sync.Mutex
 	ResourceBlocks []*RootBlock
 	DataBlocks     []*RootBlock
 }
@@ -25,6 +29,7 @@ func (m *Module) loadConfig(cfg, filename string) error {
 	if diag.HasErrors() {
 		return diag
 	}
+	m.writeFiles[filename] = writeFile
 	readBlocks := readFile.Body.(*hclsyntax.Body).Blocks
 	writeBlocks := writeFile.Body().Blocks()
 	for i, rb := range readBlocks {
@@ -46,7 +51,11 @@ func LoadModule(dir string) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
-	m := new(Module)
+	m := &Module{
+		dir:        dir,
+		writeFiles: make(map[string]*hclwrite.File),
+		lock:       &sync.Mutex{},
+	}
 	for _, f := range files {
 		if f.IsDir() {
 			continue
@@ -65,4 +74,17 @@ func LoadModule(dir string) (*Module, error) {
 	}
 
 	return m, err
+}
+
+func (m *Module) SaveToDisk() error {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	for fn, wf := range m.writeFiles {
+		content := wf.Bytes()
+		err := afero.WriteFile(Fs, filepath.Join(m.dir, fn), content, 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

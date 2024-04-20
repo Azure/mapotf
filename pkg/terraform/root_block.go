@@ -9,6 +9,7 @@ import (
 )
 
 var _ Block = new(RootBlock)
+
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
 		"block_address": cty.StringVal(b.Address),
