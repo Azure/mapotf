@@ -6,9 +6,11 @@ import (
 	"github.com/zclconf/go-cty/cty"
 	"sort"
 	"strings"
+	"sync"
 )
 
 var _ Block = new(RootBlock)
+var _ Locakable = new(RootBlock)
 
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
@@ -24,6 +26,7 @@ var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) 
 }
 
 type RootBlock struct {
+	lock *sync.Mutex
 	*hclsyntax.Block
 	WriteBlock   *hclwrite.Block
 	Count        *Attribute
@@ -33,6 +36,14 @@ type RootBlock struct {
 	Type         string
 	Labels       []string
 	Address      string
+}
+
+func (b *RootBlock) Lock() {
+	b.lock.Lock()
+}
+
+func (b *RootBlock) Unlock() {
+	b.lock.Unlock()
 }
 
 func (b *RootBlock) WriteBody() *hclwrite.Body {
@@ -49,6 +60,7 @@ func (b *RootBlock) GetNestedBlocks() NestedBlocks {
 
 func NewBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *RootBlock {
 	b := &RootBlock{
+		lock:       &sync.Mutex{},
 		Type:       rb.Type,
 		Labels:     rb.Labels,
 		Address:    strings.Join(append([]string{rb.Type}, rb.Labels...), "."),

@@ -66,6 +66,10 @@ func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
 }
 
 func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hclwrite.Block) {
+	if l, lockable := dest.(terraform.Locakable); lockable {
+		l.Lock()
+		defer l.Unlock()
+	}
 	for name, attr := range patch.Body().Attributes() {
 		dest.WriteBody().SetAttributeRaw(name, attr.Expr().BuildTokens(nil))
 	}
