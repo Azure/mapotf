@@ -12,8 +12,8 @@ import (
 var Fs = afero.NewOsFs()
 
 type Module struct {
-	ResourceBlocks []*Block
-	DataBlocks     []*Block
+	ResourceBlocks []*RootBlock
+	DataBlocks     []*RootBlock
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {

@@ -73,7 +73,7 @@ resource "fake_resource" that {
 		t.Run(c.desc, func(t *testing.T) {
 			stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
 				"/main.tf": c.tfCode,
-			}))
+			})).Stub(&terraform.RootBlockReflectionInformation, func(map[string]cty.Value, *terraform.RootBlock) {})
 			defer stub.Reset()
 			cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
 			require.NoError(t, err)

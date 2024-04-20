@@ -6,6 +6,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+var _ Block = new(NestedBlock)
+
 type NestedBlocks map[string][]*NestedBlock
 
 type NestedBlock struct {
@@ -15,6 +17,18 @@ type NestedBlock struct {
 	ForEach      *Attribute
 	Attributes   map[string]*Attribute
 	NestedBlocks NestedBlocks
+}
+
+func (nb *NestedBlock) WriteBody() *hclwrite.Body {
+	return nb.WriteBlock.Body()
+}
+
+func (nb *NestedBlock) GetAttributes() map[string]*Attribute {
+	return nb.Attributes
+}
+
+func (nb *NestedBlock) GetNestedBlocks() NestedBlocks {
+	return nb.NestedBlocks
 }
 
 func NewNestedBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *NestedBlock {

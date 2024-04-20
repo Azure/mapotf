@@ -214,7 +214,7 @@ resource "fake_resource" that {
 	assert.Equal(t, `"John"`, v.AsString())
 }
 
-func newBlock(t *testing.T, code string) *terraform.Block {
+func newBlock(t *testing.T, code string) *terraform.RootBlock {
 
 	// Parse the Terraform code
 	readFile, diags := hclsyntax.ParseConfig([]byte(code), "test", hcl.InitialPos)
@@ -231,14 +231,14 @@ func newBlock(t *testing.T, code string) *terraform.Block {
 	return block
 }
 
-func newBlocks(t *testing.T, code string) []*terraform.Block {
+func newBlocks(t *testing.T, code string) []*terraform.RootBlock {
 	// Parse the Terraform code
 	readFile, diags := hclsyntax.ParseConfig([]byte(code), "test", hcl.InitialPos)
 	require.False(t, diags.HasErrors())
 	writeFile, diags := hclwrite.ParseConfig([]byte(code), "test", hcl.InitialPos)
 	require.False(t, diags.HasErrors())
 
-	var blocks []*terraform.Block
+	var blocks []*terraform.RootBlock
 
 	for i, rb := range readFile.Body.(*hclsyntax.Body).Blocks {
 		wb := writeFile.Body().Blocks()[i]

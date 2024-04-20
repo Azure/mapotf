@@ -6,7 +6,7 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-var _ Object = &Block{}
+var _ Object = &RootBlock{}
 var _ Object = &NestedBlock{}
 
 type Object interface {

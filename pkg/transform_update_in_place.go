@@ -2,10 +2,12 @@ package pkg
 
 import (
 	"fmt"
+
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/lonegunmanb/mptf/pkg/terraform"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 )
@@ -17,7 +19,7 @@ type UpdateInPlaceTransform struct {
 	*BaseTransform
 	TargetBlockAddress string `hcl:"target_block_address"`
 	updateBlock        *hclwrite.Block
-	targetBlock        *hclwrite.Block
+	targetBlock        *terraform.RootBlock
 }
 
 func (u *UpdateInPlaceTransform) Type() string {
@@ -47,7 +49,7 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", address)
 	}
-	u.targetBlock = b.WriteBlock
+	u.targetBlock = b
 	u.updateBlock = hclwrite.NewBlock("patch", []string{})
 	for _, b := range block.NestedBlocks() {
 		if b.Type == "asraw" {
@@ -61,6 +63,24 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 
 func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
 	return u.updateBlock
+}
+
+func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hclwrite.Block) {
+	for name, attr := range patch.Body().Attributes() {
+		dest.WriteBody().SetAttributeRaw(name, attr.Expr().BuildTokens(nil))
+	}
+	// Handle nested blocks
+	for _, patchNestedBlock := range patch.Body().Blocks() {
+		destNestedBlocks := dest.GetNestedBlocks()[patchNestedBlock.Type()]
+		if len(destNestedBlocks) == 0 {
+			// If the nested block does not exist in dest, add it
+			dest.WriteBody().AppendBlock(patchNestedBlock)
+		} else {
+			for _, nb := range destNestedBlocks {
+				u.PatchWriteBlock(nb, patchNestedBlock)
+			}
+		}
+	}
 }
 
 func (u *UpdateInPlaceTransform) isReservedField(name string) bool {

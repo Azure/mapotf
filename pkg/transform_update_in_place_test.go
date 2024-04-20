@@ -240,6 +240,159 @@ transform update_in_place "fake_resource" {
 	assert.Equal(t, formatHcl(expected), formatHcl(actual))
 }
 
+func TestPatchWriteBlock(t *testing.T) {
+	cases := []struct {
+		desc         string
+		dest         string
+		patch        string
+		expectedDest string
+	}{
+		{
+			desc: "Same attribute in dest and patch",
+			dest: `
+block "example" {
+	id = "untouched"
+    attr = "old"
+}`,
+			patch: `
+block "example" {
+    attr = "new"
+}`,
+			expectedDest: `
+block "example" {
+	id = "untouched"
+    attr = "new"
+}`,
+		},
+		{
+			desc: "Attribute in patch not in dest",
+			dest: `
+block "example" {
+}`,
+			patch: `
+block "example" {
+    attr = "new"
+}`,
+			expectedDest: `
+block "example" {
+    attr = "new"
+}`,
+		},
+		{
+			desc: "Same nested block in dest and patch",
+			dest: `
+block "example" {
+    nested_block "nested" {
+        attr = "old"
+    }
+}`,
+			patch: `
+block "example" {
+    nested_block "nested" {
+        attr = "new"
+    }
+}`,
+			expectedDest: `
+block "example" {
+    nested_block "nested" {
+        attr = "new"
+    }
+}`,
+		},
+		{
+			desc: "Nested block in patch not in dest",
+			dest: `
+block "example" {
+}`,
+			patch: `
+block "example" {
+    nested_block "nested" {
+        attr = "new"
+    }
+}`,
+			expectedDest: `
+block "example" {
+    nested_block "nested" {
+        attr = "new"
+    }
+}`,
+		},
+		{
+			desc: "Nested block, multiple instances",
+			dest: `
+block "example" {
+    nested_block {
+        attr = "old"
+    }
+    nested_block {
+		id = 123
+        attr = "old"
+    }
+}`,
+			patch: `
+block "example" {
+    nested_block {
+        attr = "new"
+    }
+}`,
+			expectedDest: `
+block "example" {
+    nested_block {
+        attr = "new"
+    }
+    nested_block {
+		id = 123
+        attr = "new"
+    }
+}`,
+		},
+		{
+			desc: "Nested block, multiple instances 2",
+			dest: `
+block "example" {
+    nested_block {
+        attr = "old"
+    }
+    nested_block {
+		id = 123
+    }
+}`,
+			patch: `
+block "example" {
+    nested_block {
+        attr = "new"
+    }
+}`,
+			expectedDest: `
+block "example" {
+    nested_block {
+        attr = "new"
+    }
+    nested_block {
+		id = 123
+        attr = "new"
+    }
+}`,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			readDst, diag := hclsyntax.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			writeDst, diag := hclwrite.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
+
+			dstBlock := terraform.NewBlock(readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
+			patchFile, diag := hclwrite.ParseConfig([]byte(c.patch), "patch.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			sut := new(pkg.UpdateInPlaceTransform)
+			sut.PatchWriteBlock(dstBlock, patchFile.Body().Blocks()[0])
+			patched := string(dstBlock.WriteBlock.BuildTokens(hclwrite.Tokens{}).Bytes())
+			assert.Equal(t, formatHcl(c.expectedDest), formatHcl(patched))
+		})
+	}
+}
+
 func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
 	readFile, diag := hclsyntax.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
 	require.Falsef(t, diag.HasErrors(), diag.Error())
@@ -253,5 +406,5 @@ func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
 }
 
 func formatHcl(inputHcl string) string {
-	return strings.TrimSuffix(string(hclwrite.Format([]byte(inputHcl))), "\n")
+	return strings.Trim(string(hclwrite.Format([]byte(inputHcl))), "\n")
 }

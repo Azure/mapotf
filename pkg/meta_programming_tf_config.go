@@ -12,8 +12,8 @@ var _ golden.Config = &MetaProgrammingTFConfig{}
 type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
 	tfDir          string
-	resourceBlocks map[string]*terraform.Block
-	dataBlocks     map[string]*terraform.Block
+	resourceBlocks map[string]*terraform.RootBlock
+	dataBlocks     map[string]*terraform.RootBlock
 }
 
 func NewMetaProgrammingTFConfig(tfDir, cfgDir string, ctx context.Context) (*MetaProgrammingTFConfig, error) {
@@ -34,15 +34,15 @@ func (c *MetaProgrammingTFConfig) Init(hclBlocks []*golden.HclBlock) error {
 	return golden.InitConfig(c, hclBlocks)
 }
 
-func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.Block {
+func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.RootBlock {
 	return c.slice(c.resourceBlocks)
 }
 
-func (c *MetaProgrammingTFConfig) DataBlocks() []*terraform.Block {
+func (c *MetaProgrammingTFConfig) DataBlocks() []*terraform.RootBlock {
 	return c.slice(c.dataBlocks)
 }
 
-func (c *MetaProgrammingTFConfig) TerraformBlock(address string) *terraform.Block {
+func (c *MetaProgrammingTFConfig) TerraformBlock(address string) *terraform.RootBlock {
 	if strings.HasPrefix(address, "resource.") {
 		return c.resourceBlocks[address]
 	}
@@ -52,16 +52,16 @@ func (c *MetaProgrammingTFConfig) TerraformBlock(address string) *terraform.Bloc
 	return nil
 }
 
-func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.Block) []*terraform.Block {
-	var r []*terraform.Block
+func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) []*terraform.RootBlock {
+	var r []*terraform.RootBlock
 	for _, b := range blocks {
 		r = append(r, b)
 	}
 	return r
 }
 
-func groupByType(blocks []*terraform.Block) map[string]*terraform.Block {
-	r := make(map[string]*terraform.Block)
+func groupByType(blocks []*terraform.RootBlock) map[string]*terraform.RootBlock {
+	r := make(map[string]*terraform.RootBlock)
 	for _, b := range blocks {
 		r[b.Address] = b
 	}
