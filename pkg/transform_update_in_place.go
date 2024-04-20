@@ -1,8 +1,8 @@
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -85,6 +85,18 @@ func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hc
 			}
 		}
 	}
+}
+
+func (u *UpdateInPlaceTransform) String() string {
+	content := make(map[string]any)
+	content["id"] = u.Id()
+	content["target_block_address"] = u.TargetBlockAddress
+	content["patch"] = string(u.updateBlock.BuildTokens(nil).Bytes())
+	str, err := json.Marshal(content)
+	if err != nil {
+		panic(err.Error())
+	}
+	return string(str)
 }
 
 func (u *UpdateInPlaceTransform) isReservedField(name string) bool {
