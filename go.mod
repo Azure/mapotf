@@ -5,10 +5,12 @@ go 1.22.1
 require (
 	github.com/Azure/golden v0.0.0-20240419032742-55d8a9968cce
 	github.com/ahmetb/go-linq/v3 v3.2.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/lonegunmanb/hclfuncs v0.6.0
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.11.0
+	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zclconf/go-cty v1.14.4
 )
@@ -38,7 +40,6 @@ require (
 	github.com/hashicorp/go-cty-funcs v0.0.0-20230405223818-a090f58aa992 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.6 // indirect
@@ -62,7 +63,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/timandy/routine v1.1.3 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.3 // indirect
