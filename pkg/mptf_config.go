@@ -22,6 +22,7 @@ type MetaProgrammingTFConfig struct {
 	tfDir          string
 	resourceBlocks map[string]*terraform.RootBlock
 	dataBlocks     map[string]*terraform.RootBlock
+	module         *terraform.Module
 }
 
 func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, ctx context.Context) (*MetaProgrammingTFConfig, error) {
@@ -34,6 +35,7 @@ func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, ctx 
 		tfDir:          tfDir,
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),
+		module:         module,
 	}
 	return cfg, golden.InitConfig(cfg, hclBlocks)
 }
@@ -105,6 +107,10 @@ func LoadMPTFHclBlocks(ignoreUnsupportedBlock bool, dir string) ([]*golden.HclBl
 		}
 	}
 	return r, err
+}
+
+func (c *MetaProgrammingTFConfig) SaveToDisk() error {
+	return c.module.SaveToDisk()
 }
 
 func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) []*terraform.RootBlock {

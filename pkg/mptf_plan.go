@@ -9,11 +9,13 @@ import (
 
 var _ golden.Plan = &MetaProgrammingTFPlan{}
 
-func RunMetaProgrammingTFPlan(c golden.Config) (*MetaProgrammingTFPlan, error) {
+func RunMetaProgrammingTFPlan(c *MetaProgrammingTFConfig) (*MetaProgrammingTFPlan, error) {
 	if err := c.RunPlan(); err != nil {
 		return nil, err
 	}
-	plan := new(MetaProgrammingTFPlan)
+	plan := &MetaProgrammingTFPlan{
+		c: c,
+	}
 	for _, t := range golden.Blocks[Transform](c) {
 		plan.Transforms = append(plan.Transforms, t)
 	}
@@ -21,6 +23,7 @@ func RunMetaProgrammingTFPlan(c golden.Config) (*MetaProgrammingTFPlan, error) {
 }
 
 type MetaProgrammingTFPlan struct {
+	c          *MetaProgrammingTFConfig
 	Transforms []Transform
 }
 
@@ -52,5 +55,9 @@ func (m *MetaProgrammingTFPlan) Apply() error {
 	if err != nil {
 		return fmt.Errorf("errors applying transforms: %+v", err)
 	}
+	if err = m.c.SaveToDisk(); err != nil {
+		return fmt.Errorf("errors saving changes: %+v", err)
+	}
+
 	return nil
 }
