@@ -162,7 +162,7 @@ resource "fake_resource" this {
 			writeFile, diag := hclwrite.ParseConfig([]byte(c.cfg), "test.hcl", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
-			cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
+			cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, context.TODO())
 			require.NoError(t, err)
 			sut := &pkg.UpdateInPlaceTransform{
 				BaseBlock: golden.NewBaseBlock(cfg, hclBlock),
@@ -172,6 +172,7 @@ resource "fake_resource" this {
 				Functions: hclfuncs.Functions("."),
 			})
 			require.NoError(t, err)
+			assert.Equal(t, "resource.fake_resource.this", sut.TargetBlockAddress)
 			updateBlock := sut.UpdateBlock()
 
 			actual := string(updateBlock.BuildTokens(hclwrite.Tokens{}).Bytes())
@@ -203,7 +204,7 @@ transform update_in_place "fake_resource" {
 	tags = "merge(${try(coalesce(each.value.tags, "{}"), "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
 }
 `)
-	cfg, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, context.TODO())
 	require.NoError(t, err)
 	err = cfg.Init(hclBlocks)
 	require.NoError(t, err)

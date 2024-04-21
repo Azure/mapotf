@@ -27,8 +27,8 @@ func (u *UpdateInPlaceTransform) Type() string {
 }
 
 func (u *UpdateInPlaceTransform) Apply() error {
-	//TODO implement me
-	panic("implement me")
+	u.PatchWriteBlock(u.targetBlock, u.updateBlock)
+	return nil
 }
 
 func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.EvalContext) error {
@@ -43,11 +43,11 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 	if v.Type() != cty.String {
 		return fmt.Errorf("`target_block_address` must be a string, like `resource.azurerm_resource_group.this`")
 	}
-	address := v.AsString()
+	u.TargetBlockAddress = v.AsString()
 	cfg := u.BaseBlock.Config().(*MetaProgrammingTFConfig)
-	b := cfg.TerraformBlock(address)
+	b := cfg.TerraformBlock(u.TargetBlockAddress)
 	if b == nil {
-		return fmt.Errorf("cannot find block: %s", address)
+		return fmt.Errorf("cannot find block: %s", u.TargetBlockAddress)
 	}
 	u.targetBlock = b
 	u.updateBlock = hclwrite.NewBlock("patch", []string{})

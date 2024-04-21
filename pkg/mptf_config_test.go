@@ -18,7 +18,7 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig("/", "", context.TODO())
+	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, context.TODO())
 	require.NoError(t, err)
 	assert.NotEmpty(t, sut.ResourceBlocks)
 }

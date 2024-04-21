@@ -47,6 +47,9 @@ func ListOfObject[T Object](objs []T) cty.Value {
 		}
 		convertedValues = append(convertedValues, cv)
 	}
+	if len(convertedValues) == 0 {
+		return cty.ListValEmpty(finalType)
+	}
 	return cty.ListVal(convertedValues)
 }
 
