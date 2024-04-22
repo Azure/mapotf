@@ -11,7 +11,7 @@ Another scenario is, there are some common design patterns, such as creating pri
 ## An example
 
 1. Clone [terraform-azurerm-aks](https://github.com/Azure/terraform-azurerm-aks.git)
-2. Run `mptf apply --mptf-dir example --tf-dir <AKS_MODULE_PATH>`
+2. Run `mptf apply --mptf-dir example/customize_aks_ignore_changes --tf-dir <AKS_MODULE_PATH>`
 
 You'll be asked for permission to carry the plan, input `yes` to continue:
 

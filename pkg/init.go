@@ -15,6 +15,7 @@ func init() {
 
 func registerTransform() {
 	golden.RegisterBlock(new(UpdateInPlaceTransform))
+	golden.RegisterBlock(new(NewBlockTransform))
 }
 
 func registerData() {

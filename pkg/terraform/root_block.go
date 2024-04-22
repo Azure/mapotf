@@ -1,20 +1,20 @@
 package terraform
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
-	"sort"
-	"strings"
-	"sync"
 )
 
 var _ Block = new(RootBlock)
-var _ Locakable = new(RootBlock)
 
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
 		"block_address": cty.StringVal(b.Address),
+		"ref":           cty.StringVal(blockAddressToRef(b.Address)),
 		"range": cty.ObjectVal(map[string]cty.Value{
 			"file_name":    cty.StringVal(b.Range().Filename),
 			"start_line":   cty.NumberIntVal(int64(b.Range().Start.Line)),
@@ -25,8 +25,14 @@ var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) 
 	})
 }
 
+func blockAddressToRef(address string) string {
+	if strings.HasPrefix(address, "resource.") {
+		return strings.TrimPrefix(address, "resource.")
+	}
+	return address
+}
+
 type RootBlock struct {
-	lock *sync.Mutex
 	*hclsyntax.Block
 	WriteBlock   *hclwrite.Block
 	Count        *Attribute
@@ -38,12 +44,16 @@ type RootBlock struct {
 	Address      string
 }
 
-func (b *RootBlock) Lock() {
-	b.lock.Lock()
+func (b *RootBlock) SetAttributeRaw(name string, tokens hclwrite.Tokens) {
+	unlock := lockBlockFile(b)
+	defer unlock()
+	b.WriteBody().SetAttributeRaw(name, tokens)
 }
 
-func (b *RootBlock) Unlock() {
-	b.lock.Unlock()
+func (b *RootBlock) AppendBlock(block *hclwrite.Block) {
+	unlock := lockBlockFile(b)
+	defer unlock()
+	b.WriteBody().AppendBlock(block)
 }
 
 func (b *RootBlock) WriteBody() *hclwrite.Body {
@@ -60,7 +70,6 @@ func (b *RootBlock) GetNestedBlocks() NestedBlocks {
 
 func NewBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *RootBlock {
 	b := &RootBlock{
-		lock:       &sync.Mutex{},
 		Type:       rb.Type,
 		Labels:     rb.Labels,
 		Address:    strings.Join(append([]string{rb.Type}, rb.Labels...), "."),

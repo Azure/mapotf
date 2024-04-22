@@ -19,6 +19,18 @@ type NestedBlock struct {
 	NestedBlocks NestedBlocks
 }
 
+func (nb *NestedBlock) SetAttributeRaw(name string, tokens hclwrite.Tokens) {
+	unlock := lockBlockFile(nb)
+	defer unlock()
+	nb.WriteBody().SetAttributeRaw(name, tokens)
+}
+
+func (nb *NestedBlock) AppendBlock(block *hclwrite.Block) {
+	unlock := lockBlockFile(nb)
+	defer unlock()
+	nb.WriteBody().AppendBlock(block)
+}
+
 func (nb *NestedBlock) WriteBody() *hclwrite.Body {
 	return nb.WriteBlock.Body()
 }

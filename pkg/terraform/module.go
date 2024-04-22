@@ -88,3 +88,22 @@ func (m *Module) SaveToDisk() error {
 	}
 	return nil
 }
+
+func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
+	func() {
+		m.lock.Lock()
+		defer m.lock.Unlock()
+		if _, ok := m.writeFiles[fileName]; !ok {
+			m.writeFiles[fileName] = hclwrite.NewFile()
+		}
+	}()
+	writeFile := m.writeFiles[fileName]
+	lock.Lock(fileName)
+	defer lock.Unlock(fileName)
+	tokens := writeFile.Body().BuildTokens(nil)
+	if tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
+		writeFile.Body().AppendNewline()
+	}
+	writeFile.Body().AppendBlock(block)
+	writeFile.Body().AppendNewline()
+}

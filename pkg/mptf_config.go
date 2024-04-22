@@ -95,8 +95,6 @@ func LoadMPTFHclBlocks(ignoreUnsupportedBlock bool, dir string) ([]*golden.HclBl
 	}
 
 	var r []*golden.HclBlock
-
-	// First loop: parse all rule blocks
 	for _, b := range blocks {
 		if golden.IsBlockTypeWanted(b.Type) {
 			r = append(r, b)
@@ -119,6 +117,10 @@ func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) 
 		r = append(r, b)
 	}
 	return r
+}
+
+func (c *MetaProgrammingTFConfig) AddBlock(filename string, block *hclwrite.Block) {
+	c.module.AddBlock(filename, block)
 }
 
 func groupByType(blocks []*terraform.RootBlock) map[string]*terraform.RootBlock {
