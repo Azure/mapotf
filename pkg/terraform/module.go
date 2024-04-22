@@ -81,7 +81,7 @@ func (m *Module) SaveToDisk() error {
 	defer m.lock.Unlock()
 	for fn, wf := range m.writeFiles {
 		content := wf.Bytes()
-		err := afero.WriteFile(Fs, filepath.Join(m.dir, fn), content, 0644)
+		err := afero.WriteFile(Fs, filepath.Join(m.dir, fn), hclwrite.Format(content), 0644)
 		if err != nil {
 			return err
 		}
