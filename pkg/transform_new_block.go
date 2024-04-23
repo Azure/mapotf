@@ -9,7 +9,7 @@ import (
 )
 
 var _ golden.ApplyBlock = &NewBlockTransform{}
-var _ golden.CustomDecodeBase = &NewBlockTransform{}
+var _ golden.CustomDecode = &NewBlockTransform{}
 var _ mptfBlock = &NewBlockTransform{}
 
 type NewBlockTransform struct {
@@ -43,7 +43,7 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 	if err != nil {
 		return err
 	}
-	n.Labels = nil
+	var labels []string
 	labelsAttr, ok := block.Attributes()["labels"]
 	if ok {
 		labelsValue, err := labelsAttr.Value(context)
@@ -51,9 +51,10 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 			return fmt.Errorf("error while evaluating labels: %+v", err)
 		}
 		for i := 0; i < labelsValue.LengthInt(); i++ {
-			n.Labels = append(n.Labels, labelsValue.Index(cty.NumberIntVal(int64(i))).AsString())
+			labels = append(labels, labelsValue.Index(cty.NumberIntVal(int64(i))).AsString())
 		}
 	}
+	n.Labels = labels
 	n.newWriteBlock = hclwrite.NewBlock(n.NewBlockType, n.Labels)
 	for _, b := range block.NestedBlocks() {
 		if b.Type == "asraw" {

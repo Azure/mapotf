@@ -11,7 +11,7 @@ import (
 )
 
 var _ Transform = &UpdateInPlaceTransform{}
-var _ golden.CustomDecodeBase = &UpdateInPlaceTransform{}
+var _ golden.CustomDecode = &UpdateInPlaceTransform{}
 var _ mptfBlock = &UpdateInPlaceTransform{}
 
 type UpdateInPlaceTransform struct {
