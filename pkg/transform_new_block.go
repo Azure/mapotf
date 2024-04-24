@@ -26,6 +26,7 @@ func (n *NewBlockTransform) isReservedField(name string) bool {
 		"new_block_type": {},
 		"for_each":       {},
 		"asraw":          {},
+		"asstring":       {},
 		"labels":         {},
 		"filename":       {},
 	}
@@ -63,8 +64,13 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 			}
 			continue
 		}
+		if b.Type == "asstring" {
+			if err := decodeAsStringBlock(n, n.newWriteBlock, b, 0, context); err != nil {
+				return err
+			}
+			continue
+		}
 	}
-	_ = decodeAsStringBlock(n, n.newWriteBlock, block, 0, context)
 	return nil
 }
 

@@ -13,8 +13,8 @@ var _ Block = new(RootBlock)
 
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
-		"block_address":      cty.StringVal(b.Address),
-		"terraform_addresss": cty.StringVal(blockAddressToRef(b.Address)),
+		"block_address":     cty.StringVal(b.Address),
+		"terraform_address": cty.StringVal(blockAddressToRef(b.Address)),
 		"range": cty.ObjectVal(map[string]cty.Value{
 			"file_name":    cty.StringVal(b.Range().Filename),
 			"start_line":   cty.NumberIntVal(int64(b.Range().Start.Line)),

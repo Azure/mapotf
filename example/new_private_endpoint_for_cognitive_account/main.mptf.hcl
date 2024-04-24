@@ -55,14 +55,16 @@ transform "new_block" "private_endpoints_resource" {
   filename            = "main.tf"
   new_block_type      = "resource"
   labels              = ["azurerm_private_endpoint", "this"]
-  location            = "${each.value.mptf.terraform_address}.location"
-  resource_group_name = "coalesce(each.value.resource_group_name, ${each.value.mptf.terraform_address}.resource_group_name)"
-  name                = "coalesce(each.value.name, ${each.value.mptf.terraform_address}.name)"
-  private_service_connection {
-    private_connection_resource_id = "${each.value.mptf.terraform_address}.id"
-    name                           = "coalesce(each.value.private_service_connection_name, ${each.value.mptf.terraform_address}.name)"
-    is_manual_connection = "false"
-    subresource_names    = "[\"account\"]"
+  asstring {
+    location            = "${each.value.mptf.terraform_address}.location"
+    resource_group_name = "coalesce(each.value.resource_group_name, ${each.value.mptf.terraform_address}.resource_group_name)"
+    name                = "coalesce(each.value.name, ${each.value.mptf.terraform_address}.name)"
+    private_service_connection {
+      private_connection_resource_id = "${each.value.mptf.terraform_address}.id"
+      name                           = "coalesce(each.value.private_service_connection_name, ${each.value.mptf.terraform_address}.name)"
+      is_manual_connection           = "false"
+      subresource_names              = "[\"account\"]"
+    }
   }
   asraw {
     for_each = var.private_endpoints

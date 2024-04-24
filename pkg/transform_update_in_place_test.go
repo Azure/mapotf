@@ -29,7 +29,9 @@ func TestUpdateInPlaceTransform_Decode(t *testing.T) {
 			cfg: `
 transform "update_in_place" this {
 	target_block_address = "resource.fake_resource.this"
-	tags = "{ hello = world }"
+	asstring{
+	  tags = "{ hello = world }"
+	}
 }
 `,
 			expectedPatchBlock: `patch {
@@ -41,7 +43,9 @@ transform "update_in_place" this {
 			cfg: `
 transform "update_in_place" this {
 	target_block_address = "resource.fake_resource.this"
-	tags = "\"${join("-", ["foo", "bar", "baz"])}\""
+	asstring{
+	  tags = "\"${join("-", ["foo", "bar", "baz"])}\""
+	}
 }
 `,
 			expectedPatchBlock: `patch {
@@ -53,8 +57,10 @@ transform "update_in_place" this {
 			cfg: `
 transform "update_in_place" this {
 	target_block_address = "resource.fake_resource.this"
-	top_block {
-		id = "123"
+	asstring{
+	  top_block {
+	    id = "123"
+	  }
 	}
 }
 `,
@@ -69,10 +75,12 @@ transform "update_in_place" this {
 			cfg: `
 transform "update_in_place" this {
 	target_block_address = "resource.fake_resource.this"
-	top_block {
+	asstring{
+	  top_block {
 		second_block {
 			id = "123"
 		}
+	  }
 	}
 }
 `,
@@ -140,7 +148,9 @@ transform "update_in_place" this {
 	asraw{
 	  id = 123
 	}
-	id = "456"
+	asstring{
+	  id = "456"
+	}
 }
 `,
 			expectedPatchBlock: `patch {
@@ -201,7 +211,9 @@ data resource "fake_resource" {
 transform update_in_place "fake_resource" {
 	for_each = data.resource.fake_resource.result.fake_resource
 	target_block_address = each.value.mptf.block_address
-	tags = "merge(${try(coalesce(each.value.tags, "{}"), "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
+	asstring{
+	  tags = "merge(${try(coalesce(each.value.tags, "{}"), "{}")}, { \n block_address = \"${each.value.mptf.block_address}\" \n file_name = \"${each.value.mptf.range.file_name}\"\n  })"
+	}
 }
 `)
 	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, context.TODO())

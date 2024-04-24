@@ -5,7 +5,9 @@ data "resource" aks {
 transform "update_in_place" aks_ignore_changes {
   for_each = try(data.resource.aks.result.azurerm_kubernetes_cluster, {})
   target_block_address = each.value.mptf.block_address
-  lifecycle {
-    ignore_changes = "[\n/*<mptf>*/microsoft_defender[0].log_analytics_workspace_id,/*</mptf>*/ ${trimprefix(try(each.value.lifecycle.0.ignore_changes, "[]"), "[")}"
+  asstring {
+    lifecycle {
+      ignore_changes = "[\n/*<mptf>*/microsoft_defender[0].log_analytics_workspace_id,/*</mptf>*/ ${trimprefix(try(each.value.lifecycle.0.ignore_changes, "[]"), "[")}"
+    }
   }
 }

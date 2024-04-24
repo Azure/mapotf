@@ -51,8 +51,14 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 			}
 			continue
 		}
+		if b.Type == "asstring" {
+			if err := decodeAsStringBlock(u, u.updateBlock, b, 0, context); err != nil {
+				return err
+			}
+			continue
+		}
 	}
-	return decodeAsStringBlock(u, u.updateBlock, block, 0, context)
+	return nil
 }
 
 func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
@@ -94,6 +100,7 @@ func (u *UpdateInPlaceTransform) isReservedField(name string) bool {
 		"target_block_address": {},
 		"for_each":             {},
 		"asraw":                {},
+		"asstring":             {},
 	}
 	_, ok := reserved[name]
 	return ok
