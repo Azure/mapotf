@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	avmfix "github.com/lonegunmanb/avmfix/pkg"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -71,7 +73,8 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 			continue
 		}
 	}
-	return nil
+	n.newWriteBlock, err = n.Format(n.newWriteBlock)
+	return err
 }
 
 func (n *NewBlockTransform) Type() string {
@@ -85,6 +88,30 @@ func (n *NewBlockTransform) Apply() error {
 
 func (n *NewBlockTransform) NewWriteBlock() *hclwrite.Block {
 	return n.newWriteBlock
+}
+
+func (n *NewBlockTransform) Format(block *hclwrite.Block) (*hclwrite.Block, error) {
+	if block.Type() != "resource" && block.Type() != "data" && block.Type() != "variable" {
+		return block, nil
+	}
+	bytes := block.BuildTokens(nil).Bytes()
+	syntaxFile, diag := hclsyntax.ParseConfig(bytes, "dummy.hcl", hcl.InitialPos)
+	if diag.HasErrors() {
+		return nil, diag
+	}
+	syntaxBlock := syntaxFile.Body.(*hclsyntax.Body).Blocks[0]
+	avmBlock := avmfix.NewHclBlock(syntaxBlock, block)
+	if block.Type() == "resource" || block.Type() == "data" {
+		resourceBlock := avmfix.BuildResourceBlock(avmBlock, &hcl.File{})
+		resourceBlock.AutoFix()
+		return resourceBlock.HclBlock.WriteBlock, nil
+	}
+	if block.Type() == "variable" {
+		variableBlock := avmfix.BuildVariableBlock(&hcl.File{}, avmBlock)
+		variableBlock.AutoFix()
+		return variableBlock.Block.WriteBlock, nil
+	}
+	return nil, nil
 }
 
 func getRequiredStringAttribute(name string, block *golden.HclBlock, context *hcl.EvalContext) (string, error) {

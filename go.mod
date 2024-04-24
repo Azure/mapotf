@@ -7,6 +7,7 @@ require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
+	github.com/lonegunmanb/avmfix v0.0.0-20240417142601-696c8957e81f
 	github.com/lonegunmanb/hclfuncs v0.6.0
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.11.0
@@ -45,10 +46,12 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.6 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-sdk v0.5.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
+	github.com/hashicorp/terraform-json v0.21.0 // indirect
 	github.com/hashicorp/vault/api v1.10.0 // indirect
 	github.com/heimdalr/dag v1.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -56,6 +59,23 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
+	github.com/lonegunmanb/terraform-alicloud-schema v1.220.1 // indirect
+	github.com/lonegunmanb/terraform-aws-schema/v5 v5.45.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v0.73.0 // indirect
+	github.com/lonegunmanb/terraform-azapi-schema v1.12.1 // indirect
+	github.com/lonegunmanb/terraform-azuread-schema/v2 v2.48.0 // indirect
+	github.com/lonegunmanb/terraform-azurerm-schema/v3 v3.99.0 // indirect
+	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
+	github.com/lonegunmanb/terraform-google-schema/v4 v4.84.0 // indirect
+	github.com/lonegunmanb/terraform-helm-schema/v2 v2.13.0 // indirect
+	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.27.0 // indirect
+	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.1 // indirect
+	github.com/lonegunmanb/terraform-modtm-schema v0.2.0 // indirect
+	github.com/lonegunmanb/terraform-null-schema/v3 v3.2.2 // indirect
+	github.com/lonegunmanb/terraform-random-schema/v3 v3.6.0 // indirect
+	github.com/lonegunmanb/terraform-template-schema/v2 v2.2.0 // indirect
+	github.com/lonegunmanb/terraform-time-schema v0.11.1 // indirect
+	github.com/lonegunmanb/terraform-tls-schema/v4 v4.0.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -68,8 +88,8 @@ require (
 	github.com/zclconf/go-cty-yaml v1.0.3 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
-	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
