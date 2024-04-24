@@ -7,7 +7,7 @@ require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
-	github.com/lonegunmanb/avmfix v0.0.0-20240417142601-696c8957e81f
+	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
 	github.com/lonegunmanb/hclfuncs v0.6.0
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.11.0
@@ -59,20 +59,21 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
-	github.com/lonegunmanb/terraform-alicloud-schema v1.220.1 // indirect
-	github.com/lonegunmanb/terraform-aws-schema/v5 v5.45.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v0.73.0 // indirect
+	github.com/lonegunmanb/terraform-alicloud-schema v1.222.0 // indirect
+	github.com/lonegunmanb/terraform-aws-schema/v5 v5.46.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v0.74.0 // indirect
 	github.com/lonegunmanb/terraform-azapi-schema v1.12.1 // indirect
 	github.com/lonegunmanb/terraform-azuread-schema/v2 v2.48.0 // indirect
 	github.com/lonegunmanb/terraform-azurerm-schema/v3 v3.99.0 // indirect
 	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
 	github.com/lonegunmanb/terraform-google-schema/v4 v4.84.0 // indirect
-	github.com/lonegunmanb/terraform-helm-schema/v2 v2.13.0 // indirect
+	github.com/lonegunmanb/terraform-google-schema/v5 v5.26.0 // indirect
+	github.com/lonegunmanb/terraform-helm-schema/v2 v2.13.1 // indirect
 	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.27.0 // indirect
 	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.1 // indirect
 	github.com/lonegunmanb/terraform-modtm-schema v0.2.0 // indirect
 	github.com/lonegunmanb/terraform-null-schema/v3 v3.2.2 // indirect
-	github.com/lonegunmanb/terraform-random-schema/v3 v3.6.0 // indirect
+	github.com/lonegunmanb/terraform-random-schema/v3 v3.6.1 // indirect
 	github.com/lonegunmanb/terraform-template-schema/v2 v2.2.0 // indirect
 	github.com/lonegunmanb/terraform-time-schema v0.11.1 // indirect
 	github.com/lonegunmanb/terraform-tls-schema/v4 v4.0.5 // indirect
