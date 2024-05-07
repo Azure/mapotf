@@ -7,7 +7,7 @@ transform "update_in_place" aks_ignore_changes {
   target_block_address = each.value.mptf.block_address
   asstring {
     lifecycle {
-      ignore_changes = "[\n/*<mptf>*/microsoft_defender[0].log_analytics_workspace_id,/*</mptf>*/ ${trimprefix(try(each.value.lifecycle.0.ignore_changes, "[]"), "[")}"
+      ignore_changes = "[\n/*<mptf>*/microsoft_defender[0].log_analytics_workspace_id,/*</mptf>*/ ${trimprefix(try(each.value.lifecycle.0.ignore_changes, "[\n]"), "[")}"
     }
   }
 }

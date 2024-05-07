@@ -11,9 +11,9 @@ transform "update_in_place" set_prevent_destroy {
   for_each = try(local.addresses, [])
   target_block_address = each.value
 
-  asraw {
+  asstring {
     lifecycle {
-      prevent_destroy = false
+      prevent_destroy = env("PREVENT_DESTROY")
     }
   }
 }
