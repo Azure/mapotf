@@ -41,9 +41,9 @@ func main() {
 	case "apply":
 		cobraCmd := cmd.NewApplyCmd()
 		err = cobraCmd.ExecuteContext(ctx)
-	//case "console":
-	//	cobraCmd := cmd.NewConsoleCmd()
-	//	err = cobraCmd.ExecuteContext(ctx)
+	case "console":
+		cobraCmd := cmd.NewConsoleCmd()
+		err = cobraCmd.ExecuteContext(ctx)
 	default:
 		usage()
 	}

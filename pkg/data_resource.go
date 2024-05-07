@@ -14,9 +14,9 @@ type ResourceData struct {
 	*BaseData
 	*golden.BaseBlock
 
-	ResourceType string    `hcl:"resource_type" json:"resource_type"`
-	UseCount     bool      `hcl:"use_count,optional" json:"use_count" default:"false"`
-	UseForEach   bool      `hcl:"use_for_each,optional" json:"use_for_each" default:"false"`
+	ResourceType string    `hcl:"resource_type,optional"`
+	UseCount     bool      `hcl:"use_count,optional" default:"false"`
+	UseForEach   bool      `hcl:"use_for_each,optional" default:"false"`
 	Result       cty.Value `attribute:"result"`
 }
 

@@ -54,6 +54,12 @@ func ListOfObject[T Object](objs []T) cty.Value {
 }
 
 func mergeObjectType(t1, t2 cty.Type) cty.Type {
+	if t1.IsPrimitiveType() && t2.IsPrimitiveType() {
+		return t1
+	}
+	if t1.IsCollectionType() && t2.IsCollectionType() {
+		return mergeObjectTypeInCollection(t1, t2)
+	}
 	newAttriubtes := make(map[string]cty.Type)
 	for n, t := range t1.AttributeTypes() {
 		newAttriubtes[n] = t
@@ -70,4 +76,20 @@ func mergeObjectType(t1, t2 cty.Type) cty.Type {
 		allFields = append(allFields, n)
 	}
 	return cty.ObjectWithOptionalAttrs(newAttriubtes, allFields)
+}
+
+func mergeObjectTypeInCollection(t1, t2 cty.Type) cty.Type {
+	if t1.ElementType().IsObjectType() && t2.ElementType().IsObjectType() {
+		mergedElementType := mergeObjectType(t1.ElementType(), t2.ElementType())
+		if t1.IsListType() {
+			return cty.List(mergedElementType)
+		}
+		if t1.IsMapType() {
+			return cty.Map(mergedElementType)
+		}
+		if t1.IsSetType() {
+			return cty.Set(mergedElementType)
+		}
+	}
+	return t1
 }
