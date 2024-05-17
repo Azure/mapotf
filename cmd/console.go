@@ -27,11 +27,15 @@ func NewConsoleCmd() *cobra.Command {
 
 func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 	return func(c *cobra.Command, args []string) error {
+		varFlags, err := varFlags(c, args)
+		if err != nil {
+			return err
+		}
 		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, *mptfDir)
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, nil, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}

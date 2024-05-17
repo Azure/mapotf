@@ -3,7 +3,7 @@ module github.com/lonegunmanb/mptf
 go 1.22.1
 
 require (
-	github.com/Azure/golden v0.0.0-20240517064015-182f2971c507
+	github.com/Azure/golden v0.0.0-20240517085154-5f53887d70d5
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
@@ -91,11 +91,11 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/timandy/routine v1.1.3 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.3 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
