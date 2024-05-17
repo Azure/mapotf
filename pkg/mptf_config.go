@@ -25,13 +25,13 @@ type MetaProgrammingTFConfig struct {
 	module         *terraform.Module
 }
 
-func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, ctx context.Context) (*MetaProgrammingTFConfig, error) {
+func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
 	module, err := terraform.LoadModule(tfDir)
 	if err != nil {
 		return nil, err
 	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig:     golden.NewBasicConfig(tfDir, ctx),
+		BaseConfig:     golden.NewBasicConfig(tfDir, "mptf", "mf", cliFlagAssignedVars, ctx),
 		tfDir:          tfDir,
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),
