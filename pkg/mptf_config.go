@@ -31,7 +31,7 @@ func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, cliF
 		return nil, err
 	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig:     golden.NewBasicConfig(tfDir, "mptf", "mf", cliFlagAssignedVars, ctx),
+		BaseConfig:     golden.NewBasicConfig(tfDir, "mptf", "mptf", cliFlagAssignedVars, ctx),
 		tfDir:          tfDir,
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),

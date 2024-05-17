@@ -8,6 +8,8 @@ github.com/Azure/golden v0.0.0-20240507053842-7b27f0d6cabd h1:2xn6Q90lBTh/IY39Nm
 github.com/Azure/golden v0.0.0-20240507053842-7b27f0d6cabd/go.mod h1:PdTWXww7P6cU85wKYR9GLJwtlyyxTp8bK7eRdxLCNd4=
 github.com/Azure/golden v0.0.0-20240517061709-d9afff3053ba h1:ScYSXvEz8ioP0a3lW/sI/75lSbb6AmiUbymKj7QXNck=
 github.com/Azure/golden v0.0.0-20240517061709-d9afff3053ba/go.mod h1:XaSNlqTvkbJHsRAADflDwUGWo+tJkjC12jhEUXb/hqo=
+github.com/Azure/golden v0.0.0-20240517064015-182f2971c507 h1:c1V7bZDReHpOwUJbpkQqSH9VcXlHY2E1Wb+ah10UZP8=
+github.com/Azure/golden v0.0.0-20240517064015-182f2971c507/go.mod h1:XaSNlqTvkbJHsRAADflDwUGWo+tJkjC12jhEUXb/hqo=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
