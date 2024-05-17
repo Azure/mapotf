@@ -21,7 +21,7 @@ func NewApplyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, hclBlocks, cmd.Context())
+			cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, hclBlocks, nil, cmd.Context())
 			if err != nil {
 				return err
 			}

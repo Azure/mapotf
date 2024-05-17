@@ -31,7 +31,7 @@ func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, nil, c.Context())
 		if err != nil {
 			return err
 		}
