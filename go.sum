@@ -6,6 +6,8 @@ github.com/Azure/golden v0.0.0-20240423074409-5877b479266f h1:9qFo1nbVeQmjM53Fl6
 github.com/Azure/golden v0.0.0-20240423074409-5877b479266f/go.mod h1:YgAc9ezUf5or52XkRk8zrHTdKarSDltuux/qkvm200E=
 github.com/Azure/golden v0.0.0-20240507053842-7b27f0d6cabd h1:2xn6Q90lBTh/IY39NmA3AlPZwkIr52BH9Uh/KMkGsEE=
 github.com/Azure/golden v0.0.0-20240507053842-7b27f0d6cabd/go.mod h1:PdTWXww7P6cU85wKYR9GLJwtlyyxTp8bK7eRdxLCNd4=
+github.com/Azure/golden v0.0.0-20240517061709-d9afff3053ba h1:ScYSXvEz8ioP0a3lW/sI/75lSbb6AmiUbymKj7QXNck=
+github.com/Azure/golden v0.0.0-20240517061709-d9afff3053ba/go.mod h1:XaSNlqTvkbJHsRAADflDwUGWo+tJkjC12jhEUXb/hqo=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
@@ -190,6 +192,8 @@ github.com/lonegunmanb/hclfuncs v0.6.0 h1:NN/zLxFoV5msno/2w3tXDt4y9gnnHG3Im18OAd
 github.com/lonegunmanb/hclfuncs v0.6.0/go.mod h1:qMo9iYVpRqCiH3syY8AX9PTcfCbhlNSFQ8wcCIzKrsI=
 github.com/lonegunmanb/hclfuncs v0.7.0 h1:RcXmaMaPjODga3hAiaYwcNv+xM9W9qaNwYUfeO0LxMI=
 github.com/lonegunmanb/hclfuncs v0.7.0/go.mod h1:ZXtl6hOBc7aiovX0BbQpOt9SZpZpumY2xk2TI9Qtbu4=
+github.com/lonegunmanb/hclfuncs v0.8.0 h1:O6sOuIPecwSVhAXrArWGIVmqWH31QJA27obZczaU37Q=
+github.com/lonegunmanb/hclfuncs v0.8.0/go.mod h1:ZXtl6hOBc7aiovX0BbQpOt9SZpZpumY2xk2TI9Qtbu4=
 github.com/lonegunmanb/terraform-alicloud-schema v1.220.1 h1:xLct0DJOv0iR9mwZndub5RpN17ftnmKBl3lopVQna1Y=
 github.com/lonegunmanb/terraform-alicloud-schema v1.220.1/go.mod h1:WiY7BIczp2CYZtbEJ/CEtcJ0JlziUrm1XuIIOvnC9bg=
 github.com/lonegunmanb/terraform-alicloud-schema v1.222.0 h1:X+dfy6vUMkjftc7x1YD8SumjOk3+A/6I+UEheiTpSeY=

@@ -3,12 +3,12 @@ module github.com/lonegunmanb/mptf
 go 1.22.1
 
 require (
-	github.com/Azure/golden v0.0.0-20240507053842-7b27f0d6cabd
+	github.com/Azure/golden v0.0.0-20240517061709-d9afff3053ba
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
-	github.com/lonegunmanb/hclfuncs v0.7.0
+	github.com/lonegunmanb/hclfuncs v0.8.0
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.0
@@ -46,6 +46,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.6 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
+	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -84,6 +85,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/peterh/liner v1.2.2 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
