@@ -17,7 +17,7 @@ func NewPlanCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tfDir := cf.tfDir
-			mptfDir := cf.mptfDir
+			mptfDir := cf.mptfDirs[0]
 			varFlags, err := varFlags(os.Args)
 			if err != nil {
 				return err

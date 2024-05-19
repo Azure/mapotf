@@ -10,7 +10,7 @@ var cf = &commonFlags{}
 
 type commonFlags struct {
 	tfDir        string
-	mptfDir      string
+	mptfDirs     []string
 	mptfVars     []string
 	mptfVarFiles []string
 }
