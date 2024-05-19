@@ -10,18 +10,22 @@ import (
 )
 
 func NewApplyCmd() *cobra.Command {
-	var tfDir, mptfDir string
 	auto := false
 
 	applyCmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Apply the plan, mptf apply [-a] [path to config files]",
+		FParseErrWhitelist: cobra.FParseErrWhitelist{
+			UnknownFlags: true,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			tfDir := cf.tfDir
+			mptfDir := cf.mptfDir
 			hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
 			if err != nil {
 				return err
 			}
-			varFlags, err := varFlags(cmd, args)
+			varFlags, err := varFlags(os.Args)
 			if err != nil {
 				return err
 			}
@@ -54,8 +58,9 @@ func NewApplyCmd() *cobra.Command {
 	}
 
 	applyCmd.Flags().BoolVarP(&auto, "auto", "a", false, "Apply fixes without confirmation")
-	applyCmd.Flags().StringVar(&tfDir, "tf-dir", "", "Terraform directory")
-	applyCmd.Flags().StringVar(&mptfDir, "mptf-dir", "", "MPTF directory")
-
 	return applyCmd
+}
+
+func init() {
+	rootCmd.AddCommand(NewApplyCmd())
 }

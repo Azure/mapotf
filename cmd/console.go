@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
@@ -13,21 +14,20 @@ import (
 )
 
 func NewConsoleCmd() *cobra.Command {
-	var tfDir, mptfDir string
 	replCmd := &cobra.Command{
 		Use:   "console",
 		Short: "Start REPL mode, grept console [path to config files]",
-		RunE:  replFunc(&tfDir, &mptfDir),
+		FParseErrWhitelist: cobra.FParseErrWhitelist{
+			UnknownFlags: true,
+		},
+		RunE: replFunc(&cf.tfDir, &cf.mptfDir),
 	}
-	replCmd.Flags().StringVar(&tfDir, "tf-dir", "", "Terraform directory")
-	replCmd.Flags().StringVar(&mptfDir, "mptf-dir", "", "MPTF directory")
-
 	return replCmd
 }
 
 func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 	return func(c *cobra.Command, args []string) error {
-		varFlags, err := varFlags(c, args)
+		varFlags, err := varFlags(os.Args)
 		if err != nil {
 			return err
 		}
@@ -79,4 +79,8 @@ func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 
 		return nil
 	}
+}
+
+func init() {
+	rootCmd.AddCommand(NewConsoleCmd())
 }

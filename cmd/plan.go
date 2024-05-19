@@ -2,19 +2,23 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/lonegunmanb/mptf/pkg"
 	"github.com/spf13/cobra"
 )
 
 func NewPlanCmd() *cobra.Command {
-	var tfDir, mptfDir string
-
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "Generates a plan based on the specified configuration",
+		FParseErrWhitelist: cobra.FParseErrWhitelist{
+			UnknownFlags: true,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			varFlags, err := varFlags(cmd, args)
+			tfDir := cf.tfDir
+			mptfDir := cf.mptfDir
+			varFlags, err := varFlags(os.Args)
 			if err != nil {
 				return err
 			}
@@ -35,8 +39,9 @@ func NewPlanCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&tfDir, "tf-dir", "", "Terraform directory")
-	cmd.Flags().StringVar(&mptfDir, "mptf-dir", "", "MPTF directory")
-
 	return cmd
+}
+
+func init() {
+	rootCmd.AddCommand(NewPlanCmd())
 }
