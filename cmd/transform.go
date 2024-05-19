@@ -13,14 +13,14 @@ func NewApplyCmd() *cobra.Command {
 	auto := false
 
 	applyCmd := &cobra.Command{
-		Use:   "apply",
-		Short: "Apply the plan, mptf apply [-a] [path to config files]",
+		Use:   "transform",
+		Short: "Apply the transforms, mptf transform [-a] --tf-dir --mptf-dir",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tfDir := cf.tfDir
-			mptfDir := cf.mptfDir
+			mptfDir := cf.mptfDirs[0]
 			hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
 			if err != nil {
 				return err

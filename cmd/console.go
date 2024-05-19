@@ -20,22 +20,24 @@ func NewConsoleCmd() *cobra.Command {
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
-		RunE: replFunc(&cf.tfDir, &cf.mptfDir),
+		RunE: replFunc(),
 	}
 	return replCmd
 }
 
-func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
+func replFunc() func(*cobra.Command, []string) error {
 	return func(c *cobra.Command, args []string) error {
+		tfDir := cf.tfDir
+		mptfDir := cf.mptfDirs[0]
 		varFlags, err := varFlags(os.Args)
 		if err != nil {
 			return err
 		}
-		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, *mptfDir)
+		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, varFlags, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}

@@ -34,7 +34,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cf.tfDir, "tf-dir", "", "Terraform directory")
-	rootCmd.PersistentFlags().StringVar(&cf.mptfDir, "mptf-dir", "", "MPTF directory")
+	rootCmd.PersistentFlags().StringSliceVarP(&cf.mptfDirs, "mptf-dir", "", nil, "MPTF directory")
 
 	rootCmd.PersistentFlags().StringSlice("mptf-var", cf.mptfVars, "Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable.")
 	rootCmd.PersistentFlags().StringSlice("mptf-var-file", cf.mptfVarFiles, "Load variable values from the given file, in addition to the default files mptf.mptfvars and *.auto.mptfvars. Use this option more than once to include more than one variables file.")
