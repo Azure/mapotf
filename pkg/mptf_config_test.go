@@ -2,6 +2,8 @@ package pkg_test
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/lonegunmanb/mptf/pkg"
@@ -21,6 +23,50 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
 	require.NoError(t, err)
 	assert.NotEmpty(t, sut.ResourceBlocks)
+}
+
+func TestModulePathsWhenModulesJsonExists(t *testing.T) {
+	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+		"/.terraform/modules/modules.json": `{
+			"Modules": [
+				{
+					"Key": "",
+					"Source": "",
+					"Dir": "."
+				},
+				{
+					"Key": "that",
+					"Source": "./module",
+					"Dir": "module"
+				}
+			]
+		}`,
+	}))
+	defer stub.Reset()
+
+	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
+	require.NoError(t, err)
+
+	paths, err := sut.ModulePaths()
+	require.NoError(t, err)
+	pwd, err := os.Getwd()
+	require.NoError(t, err)
+	assert.Contains(t, paths, pwd)
+	assert.Contains(t, paths, filepath.Join(pwd, "module"))
+}
+
+func TestModulePathsWhenModulesJsonDoesNotExist(t *testing.T) {
+	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{}))
+	defer stub.Reset()
+
+	sut, err := pkg.NewMetaProgrammingTFConfig(".", nil, nil, context.TODO())
+	require.NoError(t, err)
+
+	paths, err := sut.ModulePaths()
+	require.NoError(t, err)
+	pwd, err := os.Getwd()
+	require.NoError(t, err)
+	assert.Equal(t, []string{pwd}, paths)
 }
 
 func fakeFs(files map[string]string) afero.Fs {

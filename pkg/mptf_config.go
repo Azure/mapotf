@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/Azure/golden"
 	"github.com/hashicorp/go-multierror"
@@ -109,6 +110,45 @@ func LoadMPTFHclBlocks(ignoreUnsupportedBlock bool, dir string) ([]*golden.HclBl
 
 func (c *MetaProgrammingTFConfig) SaveToDisk() error {
 	return c.module.SaveToDisk()
+}
+
+func (c *MetaProgrammingTFConfig) ModulePaths() ([]string, error) {
+	moduleManifest := filepath.Join(c.tfDir, ".terraform", "modules", "modules.json")
+	exist, err := afero.Exists(MPTFFs, moduleManifest)
+	if err != nil {
+		return nil, fmt.Errorf("cannot check `modules.json` at %s: %+v", moduleManifest, err)
+	}
+	if !exist {
+		absDir, err := filepath.Abs(c.tfDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", c.tfDir, err)
+		}
+		return []string{absDir}, nil
+	}
+	var modules = struct {
+		Modules []struct {
+			Key    string `json:"key"`
+			Source string `json:"Source"`
+			Dir    string `json:"Dir"`
+		} `json:"Modules"`
+	}{}
+	manifestJson, err := afero.ReadFile(MPTFFs, moduleManifest)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read `modules.json` at %s: %+v", moduleManifest, err)
+	}
+	if err = json.Unmarshal(manifestJson, &modules); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal `modules.json` at %s: %+v", moduleManifest, err)
+	}
+	var paths []string
+	for _, m := range modules.Modules {
+		dir := m.Dir
+		absDir, err := filepath.Abs(dir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", dir, err)
+		}
+		paths = append(paths, absDir)
+	}
+	return paths, nil
 }
 
 func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) []*terraform.RootBlock {

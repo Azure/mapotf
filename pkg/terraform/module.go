@@ -11,6 +11,17 @@ import (
 )
 
 var Fs = afero.NewOsFs()
+var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
+	"resource": func(m *Module) *[]*RootBlock {
+		return &m.ResourceBlocks
+	},
+	"data": func(m *Module) *[]*RootBlock {
+		return &m.DataBlocks
+	},
+	"module": func(m *Module) *[]*RootBlock {
+		return &m.ModuleBlocks
+	},
+}
 
 type Module struct {
 	dir            string
@@ -18,6 +29,7 @@ type Module struct {
 	lock           *sync.Mutex
 	ResourceBlocks []*RootBlock
 	DataBlocks     []*RootBlock
+	ModuleBlocks   []*RootBlock
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -33,15 +45,13 @@ func (m *Module) loadConfig(cfg, filename string) error {
 	readBlocks := readFile.Body.(*hclsyntax.Body).Blocks
 	writeBlocks := writeFile.Body().Blocks()
 	for i, rb := range readBlocks {
-		if rb.Type != "resource" && rb.Type != "data" {
+		getter, want := wantedTypes[rb.Type]
+		if !want {
 			continue
 		}
 		hclBlock := NewBlock(rb, writeBlocks[i])
-		if rb.Type == "resource" {
-			m.ResourceBlocks = append(m.ResourceBlocks, hclBlock)
-		} else if rb.Type == "data" {
-			m.DataBlocks = append(m.DataBlocks, hclBlock)
-		}
+		blocks := getter(m)
+		*blocks = append(*blocks, hclBlock)
 	}
 	return nil
 }
