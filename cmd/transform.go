@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func NewApplyCmd() *cobra.Command {
+func NewTransformCmd() *cobra.Command {
 	auto := false
 
 	applyCmd := &cobra.Command{
@@ -37,6 +37,10 @@ func NewApplyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if len(plan.Transforms) == 0 {
+				fmt.Println("No transforms to apply.")
+				return nil
+			}
 			fmt.Println(plan.String())
 			if !auto {
 				reader := bufio.NewReader(os.Stdin)
@@ -62,5 +66,5 @@ func NewApplyCmd() *cobra.Command {
 }
 
 func init() {
-	rootCmd.AddCommand(NewApplyCmd())
+	rootCmd.AddCommand(NewTransformCmd())
 }
