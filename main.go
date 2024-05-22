@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
-	os.Args, _ = cmd.FilterArgs(os.Args)
+	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
+	os.Args = mptfArgs
+	cmd.NonMptfArgs = nonMptfArgs
 	cmd.Execute()
 }

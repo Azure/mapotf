@@ -2,6 +2,8 @@ package cmd
 
 import "github.com/spf13/cobra"
 
+var NonMptfArgs []string
+
 func FilterArgs(inputArgs []string) ([]string, []string) {
 	var mptfArgs, nonMptfArgs []string
 	mptfArgs = append(mptfArgs, inputArgs[0])
@@ -11,6 +13,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		NewPlanCmd(),
 		NewConsoleCmd(),
 		NewRestoreCmd(),
+		NewInitCmd(),
 	} {
 		subCommands[cmd.Use] = struct{}{}
 	}
@@ -20,6 +23,9 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		"--mptf-var":      {},
 		"--mptf-var-file": {},
 	}
+	mptfShortHands := map[string]struct{}{
+		"-r": {},
+	}
 	for i := 0; i < len(inputArgs); i++ {
 		arg := inputArgs[i]
 		if _, isSubCommand := subCommands[arg]; isSubCommand {
@@ -28,7 +34,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 			mptfArgs = append(mptfArgs, arg)
 			mptfArgs = append(mptfArgs, inputArgs[i+1])
 			i++
-		} else if arg == "-r" {
+		} else if _, isMptfShorthand := mptfShortHands[arg]; isMptfShorthand {
 			mptfArgs = append(mptfArgs, arg)
 		} else {
 			nonMptfArgs = append(nonMptfArgs, arg)
