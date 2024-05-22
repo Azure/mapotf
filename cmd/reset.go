@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRestoreCmd() *cobra.Command {
+func NewResetCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "restore",
-		Short: "Restore all transformed Terraform files, mptf restore --tf-dir",
+		Use:   "reset",
+		Short: "Reset all transformed Terraform files, mptf reset --tf-dir",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
@@ -35,5 +35,5 @@ func NewRestoreCmd() *cobra.Command {
 }
 
 func init() {
-	rootCmd.AddCommand(NewRestoreCmd())
+	rootCmd.AddCommand(NewResetCmd())
 }

@@ -13,8 +13,9 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		NewTransformCmd(),
 		NewPlanCmd(),
 		NewConsoleCmd(),
-		NewRestoreCmd(),
+		NewResetCmd(),
 		NewInitCmd(),
+		NewApplyCmd(),
 	} {
 		subCommands[cmd.Use] = struct{}{}
 	}

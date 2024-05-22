@@ -1,31 +1,34 @@
 package cmd
 
 import (
-	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
 )
 
-func wrapTerraformCommand(cmd string) func(*cobra.Command, []string) error {
+func wrapTerraformCommandWithEphemeralTransform(tfDir, tfCmd string, recursive *bool) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		restores, err := transform(*recursive, cmd.Context())
+		if err != nil {
+			return err
+		}
+		for _, restore := range restores {
+			r := restore
+			defer r()
+		}
+		return wrapTerraformCommand(tfDir, tfCmd)(nil, nil)
+	}
+}
+
+func wrapTerraformCommand(tfDir, cmd string) func(*cobra.Command, []string) error {
 	return func(*cobra.Command, []string) error {
 		tfArgs := append([]string{cmd}, NonMptfArgs...)
-		for _, arg := range tfArgs {
-			println(arg)
-		}
 		tfCmd := exec.Command("terraform", tfArgs...)
+		tfCmd.Dir = tfDir
 		tfCmd.Stdin = os.Stdin
 		tfCmd.Stdout = os.Stdout
+		tfCmd.Stderr = os.Stderr
 		// Run the command and pass through exit code
-		if err := tfCmd.Run(); err != nil {
-			var pe *exec.ExitError
-			if errors.As(err, &pe) {
-				os.Exit(pe.ExitCode())
-			}
-			os.Stderr.WriteString(fmt.Sprintf("Error executing command but could not get exit code: %s\n", err))
-			os.Exit(1)
-		}
-		return nil
+		return tfCmd.Run()
 	}
 }

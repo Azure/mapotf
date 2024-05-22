@@ -11,7 +11,7 @@ func NewInitCmd() *cobra.Command {
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
-		RunE: wrapTerraformCommand("init"),
+		RunE: wrapTerraformCommand(cf.tfDir, "init"),
 	}
 }
 

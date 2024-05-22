@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -18,9 +21,8 @@ to quickly create a Cobra application.`,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -28,12 +30,20 @@ to quickly create a Cobra application.`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		var pe *exec.ExitError
+		if errors.As(err, &pe) {
+			os.Exit(pe.ExitCode())
+		}
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cf.tfDir, "tf-dir", "", "Terraform directory")
+	pwd, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Sprintf("error on getting working dir:%s", err.Error()))
+	}
+	rootCmd.PersistentFlags().StringVar(&cf.tfDir, "tf-dir", pwd, "Terraform directory")
 	rootCmd.PersistentFlags().StringSliceVar(&cf.mptfDirs, "mptf-dir", nil, "MPTF directory")
 
 	rootCmd.PersistentFlags().StringSlice("mptf-var", cf.mptfVars, "Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable.")
