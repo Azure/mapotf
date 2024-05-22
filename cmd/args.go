@@ -16,6 +16,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		NewResetCmd(),
 		NewInitCmd(),
 		NewApplyCmd(),
+		NewDestroyCmd(),
 	} {
 		subCommands[cmd.Use] = struct{}{}
 	}
