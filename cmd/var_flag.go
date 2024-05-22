@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"github.com/Azure/golden"
 	"strings"
 )
@@ -13,6 +15,32 @@ type commonFlags struct {
 	mptfDirs     []string
 	mptfVars     []string
 	mptfVarFiles []string
+}
+
+type localizedMptfDir struct {
+	path    string
+	dispose func()
+}
+
+func (l localizedMptfDir) Dispose() {
+	if l.dispose != nil {
+		l.dispose()
+	}
+}
+
+func (c *commonFlags) MptfDirs(ctx context.Context) ([]localizedMptfDir, error) {
+	var r []localizedMptfDir
+	for _, originalDir := range c.mptfDirs {
+		localizedPath, disposeFunc, err := localizeConfigFolder(originalDir, ctx)
+		if err != nil {
+			for _, localizedDir := range r {
+				localizedDir.Dispose()
+			}
+			return nil, fmt.Errorf("cannot get config path: %s: %+v", originalDir, err)
+		}
+		r = append(r, localizedMptfDir{path: localizedPath, dispose: disposeFunc})
+	}
+	return r, nil
 }
 
 func varFlags(args []string) ([]golden.CliFlagAssignedVariables, error) {
