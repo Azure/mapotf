@@ -44,10 +44,7 @@ func TestModulePathsWhenModulesJsonExists(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
-	require.NoError(t, err)
-
-	paths, err := sut.ModulePaths()
+	paths, err := pkg.ModulePaths("/")
 	require.NoError(t, err)
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
@@ -59,10 +56,7 @@ func TestModulePathsWhenModulesJsonDoesNotExist(t *testing.T) {
 	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig(".", nil, nil, context.TODO())
-	require.NoError(t, err)
-
-	paths, err := sut.ModulePaths()
+	paths, err := pkg.ModulePaths(".")
 	require.NoError(t, err)
 	pwd, err := os.Getwd()
 	require.NoError(t, err)

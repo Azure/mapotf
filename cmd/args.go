@@ -10,6 +10,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		NewTransformCmd(),
 		NewPlanCmd(),
 		NewConsoleCmd(),
+		NewRestoreCmd(),
 	} {
 		subCommands[cmd.Use] = struct{}{}
 	}
@@ -27,7 +28,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 			mptfArgs = append(mptfArgs, arg)
 			mptfArgs = append(mptfArgs, inputArgs[i+1])
 			i++
-		} else if arg == "-a" {
+		} else if arg == "-r" {
 			mptfArgs = append(mptfArgs, arg)
 		} else {
 			nonMptfArgs = append(nonMptfArgs, arg)

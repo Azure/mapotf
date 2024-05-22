@@ -112,16 +112,16 @@ func (c *MetaProgrammingTFConfig) SaveToDisk() error {
 	return c.module.SaveToDisk()
 }
 
-func (c *MetaProgrammingTFConfig) ModulePaths() ([]string, error) {
-	moduleManifest := filepath.Join(c.tfDir, ".terraform", "modules", "modules.json")
+func ModulePaths(tfDir string) ([]string, error) {
+	moduleManifest := filepath.Join(tfDir, ".terraform", "modules", "modules.json")
 	exist, err := afero.Exists(MPTFFs, moduleManifest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot check `modules.json` at %s: %+v", moduleManifest, err)
 	}
 	if !exist {
-		absDir, err := filepath.Abs(c.tfDir)
+		absDir, err := filepath.Abs(tfDir)
 		if err != nil {
-			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", c.tfDir, err)
+			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", tfDir, err)
 		}
 		return []string{absDir}, nil
 	}

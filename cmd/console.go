@@ -14,7 +14,7 @@ import (
 )
 
 func NewConsoleCmd() *cobra.Command {
-	replCmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "console",
 		Short: "Start REPL mode, grept console [path to config files]",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
@@ -22,7 +22,6 @@ func NewConsoleCmd() *cobra.Command {
 		},
 		RunE: replFunc(),
 	}
-	return replCmd
 }
 
 func replFunc() func(*cobra.Command, []string) error {
