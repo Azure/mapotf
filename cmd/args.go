@@ -7,6 +7,7 @@ var NonMptfArgs []string
 func FilterArgs(inputArgs []string) ([]string, []string) {
 	var mptfArgs, nonMptfArgs []string
 	mptfArgs = append(mptfArgs, inputArgs[0])
+	inputArgs = inputArgs[1:]
 	var subCommands = make(map[string]struct{})
 	for _, cmd := range []*cobra.Command{
 		NewTransformCmd(),
