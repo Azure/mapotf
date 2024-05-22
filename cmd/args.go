@@ -9,16 +9,11 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 	mptfArgs = append(mptfArgs, inputArgs[0])
 	inputArgs = inputArgs[1:]
 	var subCommands = make(map[string]struct{})
-	for _, cmd := range []*cobra.Command{
+	for _, cmd := range append([]*cobra.Command{
 		NewTransformCmd(),
-		NewPlanCmd(),
 		NewDebugCmd(),
 		NewResetCmd(),
-		NewInitCmd(),
-		NewApplyCmd(),
-		NewDestroyCmd(),
-		NewConsoleCmd(),
-	} {
+	}, terraformCommands...) {
 		subCommands[cmd.Use] = struct{}{}
 	}
 	mptfVarFlags := map[string]struct{}{

@@ -29,6 +29,7 @@ func wrapTerraformCommand(tfDir, cmd string) func(*cobra.Command, []string) erro
 		tfCmd.Stdout = os.Stdout
 		tfCmd.Stderr = os.Stderr
 		// Run the command and pass through exit code
-		return tfCmd.Run()
+		err := tfCmd.Run()
+		return err
 	}
 }
