@@ -16,22 +16,26 @@ func NewResetCmd() *cobra.Command {
 			UnknownFlags: true,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			modulePaths, err := pkg.ModulePaths(cf.tfDir)
-			if err != nil {
-				return err
-			}
-			tfDirs := modulePaths
-			for _, tfDir := range tfDirs {
-				d := tfDir
-				err = backup.RestoreBackup(d)
-				if err != nil {
-					return err
-				}
-			}
-			fmt.Println("All transforms have been reverted.")
-			return nil
+			return reset()
 		},
 	}
+}
+
+func reset() error {
+	modulePaths, err := pkg.ModulePaths(cf.tfDir)
+	if err != nil {
+		return err
+	}
+	tfDirs := modulePaths
+	for _, tfDir := range tfDirs {
+		d := tfDir
+		err = backup.RestoreBackup(d)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println("All transforms have been reverted.")
+	return nil
 }
 
 func init() {

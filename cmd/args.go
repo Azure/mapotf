@@ -12,11 +12,12 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 	for _, cmd := range []*cobra.Command{
 		NewTransformCmd(),
 		NewPlanCmd(),
-		NewConsoleCmd(),
+		NewDebugCmd(),
 		NewResetCmd(),
 		NewInitCmd(),
 		NewApplyCmd(),
 		NewDestroyCmd(),
+		NewConsoleCmd(),
 	} {
 		subCommands[cmd.Use] = struct{}{}
 	}
