@@ -14,29 +14,39 @@ import (
 )
 
 func NewDebugCmd() *cobra.Command {
-	return &cobra.Command{
+	var tfDir, mptfDir string
+	debugCmd := &cobra.Command{
 		Use:   "debug",
 		Short: "Start REPL mode, mptf debug [path to config files]",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
-		RunE: replFunc(),
+		RunE: replFunc(&tfDir, &mptfDir),
 	}
+	pwd, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Sprintf("error on getting working dir:%s", err.Error()))
+	}
+	debugCmd.Flags().StringVar(&tfDir, "tf-dir", pwd, "Terraform directory")
+	debugCmd.Flags().StringVar(&mptfDir, "mptf-dir", "", "MPTF directory, you can assign only one mptf-dir for debug command")
+	err = debugCmd.MarkFlagRequired("mptf-dir")
+	if err != nil {
+		panic(err)
+	}
+	return debugCmd
 }
 
-func replFunc() func(*cobra.Command, []string) error {
+func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 	return func(c *cobra.Command, args []string) error {
-		tfDir := cf.tfDir
-		mptfDir := cf.mptfDirs[0]
 		varFlags, err := varFlags(os.Args)
 		if err != nil {
 			return err
 		}
-		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
+		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, *mptfDir)
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, hclBlocks, varFlags, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}
@@ -82,7 +92,6 @@ func replFunc() func(*cobra.Command, []string) error {
 	}
 }
 
-//TODO: I'm not ready for debug yet.
-//func init() {
-//	rootCmd.AddCommand(NewDebugCmd())
-//}
+func init() {
+	rootCmd.AddCommand(NewDebugCmd())
+}
