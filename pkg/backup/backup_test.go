@@ -80,3 +80,20 @@ func fakeFs(files map[string]string) afero.Fs {
 	}
 	return fs
 }
+
+func TestClearBackup(t *testing.T) {
+	dir := "cfg"
+	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+		filepath.Join(dir, "main.tf"):           "terraform content",
+		filepath.Join(dir, "main.tf"+Extension): "backupContent",
+	}))
+	defer stub.Reset()
+	err := ClearBackup(dir)
+	require.NoError(t, err)
+	exists, err := afero.Exists(pkg.MPTFFs, filepath.Join(dir, "main.tf"+Extension))
+	require.NoError(t, err)
+	assert.False(t, exists)
+	exists, err = afero.Exists(pkg.MPTFFs, filepath.Join(dir, "main.tf"))
+	require.NoError(t, err)
+	assert.True(t, exists)
+}

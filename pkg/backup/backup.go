@@ -70,6 +70,20 @@ func RestoreBackup(dir string) error {
 	return nil
 }
 
+func ClearBackup(dir string) error {
+	backupFiles, err := afero.Glob(pkg.MPTFFs, filepath.Join(dir, "*"+Extension))
+	if err != nil {
+		return fmt.Errorf("cannot list backup files in %s:%+v", dir, err)
+	}
+	for _, backupFile := range backupFiles {
+		// delete the backup file
+		if err = pkg.MPTFFs.Remove(backupFile); err != nil {
+			return fmt.Errorf("cannot delete backup file %s:%+v", backupFile, err)
+		}
+	}
+	return nil
+}
+
 func getFilePerm(originalFile string, backupFile string, err error) (os.FileInfo, error) {
 	var info os.FileInfo
 	for _, path := range []string{originalFile, backupFile} {
