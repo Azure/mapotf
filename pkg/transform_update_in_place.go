@@ -66,6 +66,10 @@ func (u *UpdateInPlaceTransform) UpdateBlock() *hclwrite.Block {
 }
 
 func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hclwrite.Block) {
+	// we cannot patch one-line block
+	if dest.Range().Start.Line == dest.Range().End.Line {
+		dest.WriteBody().AppendNewline()
+	}
 	for name, attr := range patch.Body().Attributes() {
 		dest.SetAttributeRaw(name, attr.Expr().BuildTokens(nil))
 	}

@@ -387,6 +387,20 @@ block "example" {
     }
 }`,
 		},
+		{
+			desc: "one-line dest block",
+			dest: `block "example" {}`,
+			patch: `
+block "example" {
+	attr = "new"
+}
+`,
+			expectedDest: `
+block "example" {
+	attr = "new"
+}
+`,
+		},
 	}
 
 	for _, c := range cases {
