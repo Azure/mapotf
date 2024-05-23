@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"strings"
+)
 
 var NonMptfArgs []string
 
@@ -21,9 +24,11 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		"--mptf-dir":      {},
 		"--mptf-var":      {},
 		"--mptf-var-file": {},
+		"--help":          {},
 	}
 	mptfShortHands := map[string]struct{}{
 		"-r": {},
+		"-h": {},
 	}
 	for i := 0; i < len(inputArgs); i++ {
 		arg := inputArgs[i]
@@ -31,8 +36,10 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 			mptfArgs = append(mptfArgs, arg)
 		} else if _, isMptfVarFlag := mptfVarFlags[arg]; isMptfVarFlag {
 			mptfArgs = append(mptfArgs, arg)
-			mptfArgs = append(mptfArgs, inputArgs[i+1])
-			i++
+			if i != len(inputArgs)-1 && !strings.HasPrefix(inputArgs[i+1], "-") {
+				mptfArgs = append(mptfArgs, inputArgs[i+1])
+				i++
+			}
 		} else if _, isMptfShorthand := mptfShortHands[arg]; isMptfShorthand {
 			mptfArgs = append(mptfArgs, arg)
 		} else {
