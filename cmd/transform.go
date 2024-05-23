@@ -15,7 +15,7 @@ func NewTransformCmd() *cobra.Command {
 
 	transformCmd := &cobra.Command{
 		Use:   "transform",
-		Short: "Apply the transforms, mptf transform [-r] --tf-dir --mptf-dir, support mutilple mptf dirs",
+		Short: "Apply the transforms, mptf transform [-r] --tf-dir [] --mptf-dir  [path to config files], support mutilple mptf dirs",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},

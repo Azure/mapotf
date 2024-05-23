@@ -16,6 +16,7 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		NewTransformCmd(),
 		NewDebugCmd(),
 		NewResetCmd(),
+		NewClearBackupCmd(),
 	}, terraformCommands...) {
 		subCommands[cmd.Use] = struct{}{}
 	}

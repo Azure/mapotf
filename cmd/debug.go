@@ -17,7 +17,7 @@ func NewDebugCmd() *cobra.Command {
 	var tfDir, mptfDir string
 	debugCmd := &cobra.Command{
 		Use:   "debug",
-		Short: "Start REPL mode, mptf debug [path to config files]",
+		Short: "Start REPL mode, mptf debug --mptf-dir [path to config files]",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
