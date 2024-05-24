@@ -6,7 +6,7 @@ require (
 	github.com/Azure/golden v0.0.0-20240524032324-2485ff3c3472
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/go-getter/v2 v2.2.1
+	github.com/hashicorp/go-getter/v2 v2.2.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.20.1
 	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
