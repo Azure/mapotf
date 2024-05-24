@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/Azure/golden"
-	"github.com/lonegunmanb/mptf/pkg"
-	"github.com/lonegunmanb/mptf/pkg/terraform"
+	"github.com/Azure/mapotf/pkg"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,7 +76,7 @@ resource "fake_resource" that {
 				"/main.tf": c.tfCode,
 			})).Stub(&terraform.RootBlockReflectionInformation, func(map[string]cty.Value, *terraform.RootBlock) {})
 			defer stub.Reset()
-			cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
+			cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
 			require.NoError(t, err)
 
 			// Use the config to create a ResourceData object
@@ -110,7 +110,7 @@ func TestResourceData_CustomizedToStringShouldContainsAllFields(t *testing.T) {
 }`,
 	}))
 	defer stub.Reset()
-	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
 	require.NoError(t, err)
 
 	data := &pkg.ResourceData{

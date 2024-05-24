@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Azure/mapotf/pkg"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
-	"github.com/lonegunmanb/mptf/pkg"
 	"github.com/spf13/afero"
 )
 

@@ -2,7 +2,7 @@ package backup
 
 import (
 	"fmt"
-	"github.com/lonegunmanb/mptf/pkg"
+	"github.com/Azure/mapotf/pkg"
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"

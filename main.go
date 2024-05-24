@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/lonegunmanb/mptf/cmd"
 	"os"
+
+	"github.com/Azure/mapotf/cmd"
 )
 
 func main() {

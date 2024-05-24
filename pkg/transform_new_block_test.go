@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/Azure/golden"
+	"github.com/Azure/mapotf/pkg"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/lonegunmanb/mptf/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zclconf/go-cty/cty"

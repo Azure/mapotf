@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/Azure/golden"
-	"github.com/lonegunmanb/mptf/pkg"
-	"github.com/lonegunmanb/mptf/pkg/backup"
+	"github.com/Azure/mapotf/pkg"
+	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -15,7 +15,7 @@ func NewTransformCmd() *cobra.Command {
 
 	transformCmd := &cobra.Command{
 		Use:   "transform",
-		Short: "Apply the transforms, mptf transform [-r] --tf-dir [] --mptf-dir  [path to config files], support mutilple mptf dirs",
+		Short: "Apply the transforms, mapotf transform [-r] --tf-dir [] --mptf-dir  [path to config files], support mutilple mptf dirs",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
@@ -67,12 +67,12 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 	for _, mptfDir := range mptfDirs {
 		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
 		if err != nil {
-			return restore, err
+			return nil, err
 		}
 		for _, tfDir := range tfDirs {
 			err = applyTransform(tfDir, hclBlocks, varFlags, ctx)
 			if err != nil {
-				return restore, err
+				return nil, err
 			}
 		}
 	}
@@ -81,7 +81,7 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 }
 
 func applyTransform(tfDir string, hclBlocks []*golden.HclBlock, varFlags []golden.CliFlagAssignedVariables, ctx context.Context) error {
-	cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, hclBlocks, varFlags, ctx)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, &cf.tfDir, hclBlocks, varFlags, ctx)
 	if err != nil {
 		return err
 	}

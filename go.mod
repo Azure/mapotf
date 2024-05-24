@@ -1,9 +1,9 @@
-module github.com/lonegunmanb/mptf
+module github.com/Azure/mapotf
 
 go 1.22.1
 
 require (
-	github.com/Azure/golden v0.0.0-20240517085154-5f53887d70d5
+	github.com/Azure/golden v0.0.0-20240524032324-2485ff3c3472
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-getter/v2 v2.2.1

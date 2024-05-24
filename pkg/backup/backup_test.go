@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lonegunmanb/mptf/pkg"
+	"github.com/Azure/mapotf/pkg"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 )

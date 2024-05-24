@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Azure/golden"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/lonegunmanb/mptf/pkg/terraform"
 	"github.com/spf13/afero"
 	"path/filepath"
 	"strings"
@@ -26,18 +26,19 @@ type MetaProgrammingTFConfig struct {
 	module         *terraform.Module
 }
 
-func NewMetaProgrammingTFConfig(tfDir string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
+func NewMetaProgrammingTFConfig(tfDir string, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
 	module, err := terraform.LoadModule(tfDir)
 	if err != nil {
 		return nil, err
 	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig:     golden.NewBasicConfig(tfDir, "mptf", "mptf", cliFlagAssignedVars, ctx),
+		BaseConfig:     golden.NewBasicConfig(tfDir, "mapotf", "mptf", varConfigDir, cliFlagAssignedVars, ctx),
 		tfDir:          tfDir,
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),
 		module:         module,
 	}
+	//TODO: inject vars here
 	return cfg, golden.InitConfig(cfg, hclBlocks)
 }
 

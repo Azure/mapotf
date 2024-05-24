@@ -2,8 +2,8 @@ package pkg
 
 import (
 	"github.com/Azure/golden"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/ahmetb/go-linq/v3"
-	"github.com/lonegunmanb/mptf/pkg/terraform"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )

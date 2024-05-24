@@ -2,13 +2,13 @@ package pkg_test
 
 import (
 	"context"
-	"github.com/lonegunmanb/mptf/pkg"
+	"github.com/Azure/mapotf/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 
-	"github.com/lonegunmanb/mptf/pkg/terraform"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/prashantv/gostub"
 )
 
@@ -40,7 +40,7 @@ transform "update_in_place" fake_resource2 {
 	}))
 	hclBlocks, err := pkg.LoadMPTFHclBlocks(false, "mptf")
 	require.NoError(t, err)
-	cfg, err := pkg.NewMetaProgrammingTFConfig("terraform", hclBlocks, nil, context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig("terraform", nil, hclBlocks, nil, context.TODO())
 	require.NoError(t, err)
 	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
 	require.NoError(t, err)

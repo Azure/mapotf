@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lonegunmanb/mptf/pkg"
-	"github.com/lonegunmanb/mptf/pkg/terraform"
+	"github.com/Azure/mapotf/pkg"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, context.TODO())
+	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
 	require.NoError(t, err)
 	assert.NotEmpty(t, sut.ResourceBlocks)
 }

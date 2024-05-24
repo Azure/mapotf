@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/Azure/golden"
+	"github.com/Azure/mapotf/pkg"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/lonegunmanb/mptf/pkg"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +17,7 @@ func NewDebugCmd() *cobra.Command {
 	var tfDir, mptfDir string
 	debugCmd := &cobra.Command{
 		Use:   "debug",
-		Short: "Start REPL mode, mptf debug --mptf-dir [path to config files]",
+		Short: "Start REPL mode, mapotf debug --mptf-dir [path to config files]",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
@@ -46,7 +46,7 @@ func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, hclBlocks, varFlags, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, nil, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}

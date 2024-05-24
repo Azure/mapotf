@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/lonegunmanb/mptf/pkg"
-	"github.com/lonegunmanb/mptf/pkg/backup"
+	"github.com/Azure/mapotf/pkg"
+	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/spf13/cobra"
 )
 
 func NewResetCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "reset",
-		Short: "Reset all transformed Terraform files, mptf reset --tf-dir",
+		Short: "Reset all transformed Terraform files, mapotf reset --tf-dir",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},

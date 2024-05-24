@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/lonegunmanb/mptf/pkg"
-	"github.com/lonegunmanb/mptf/pkg/backup"
+
+	"github.com/Azure/mapotf/pkg"
+	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/spf13/cobra"
 )
 
 func NewClearBackupCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "clean-backup",
-		Short: "Reserve all transformed Terraform files, clear backup files, mptf clean-backup --tf-dir  [path to config files]",
+		Short: "Reserve all transformed Terraform files, clear backup files, mapotf clean-backup --tf-dir  [path to config files]",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},

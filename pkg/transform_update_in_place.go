@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Azure/golden"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/lonegunmanb/mptf/pkg/terraform"
 )
 
 var _ Transform = &UpdateInPlaceTransform{}
