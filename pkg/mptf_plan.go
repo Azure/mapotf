@@ -16,9 +16,7 @@ func RunMetaProgrammingTFPlan(c *MetaProgrammingTFConfig) (*MetaProgrammingTFPla
 	plan := &MetaProgrammingTFPlan{
 		c: c,
 	}
-	for _, t := range golden.Blocks[Transform](c) {
-		plan.Transforms = append(plan.Transforms, t)
-	}
+	plan.Transforms = append(plan.Transforms, golden.Blocks[Transform](c)...)
 	return plan, nil
 }
 

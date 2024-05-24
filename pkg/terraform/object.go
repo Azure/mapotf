@@ -72,7 +72,7 @@ func mergeObjectType(t1, t2 cty.Type) cty.Type {
 		newAttriubtes[n] = mergeObjectType(newAttriubtes[n], t)
 	}
 	var allFields []string
-	for n, _ := range newAttriubtes {
+	for n := range newAttriubtes {
 		allFields = append(allFields, n)
 	}
 	return cty.ObjectWithOptionalAttrs(newAttriubtes, allFields)

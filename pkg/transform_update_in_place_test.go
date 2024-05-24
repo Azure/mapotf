@@ -408,7 +408,7 @@ block "example" {
 			readDst, diag := hclsyntax.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			writeDst, diag := hclwrite.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
-
+			require.Falsef(t, diag.HasErrors(), diag.Error())
 			dstBlock := terraform.NewBlock(readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
 			patchFile, diag := hclwrite.ParseConfig([]byte(c.patch), "patch.hcl", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
