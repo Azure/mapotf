@@ -10,6 +10,10 @@ Another scenario is, there are some common design patterns, such as creating pri
 
 `mapotf` tools has two phases, match and transform. You can use `data` block to match the Terraform blocks you're interested in, then you can define `transform` blocks in instruct how to mutate the original Terraform code, you can update the block in place, or insert new blocks, or remove the given parts inside a Terraform block.
 
+## How to install?
+
+`go install github.com/Azure/mapotf`
+
 ## An example
 
 1. Clone [terraform-azurerm-aks](https://github.com/Azure/terraform-azurerm-aks.git)
