@@ -20,20 +20,18 @@ var MPTFFs = afero.NewOsFs()
 
 type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
-	tfDir          string
 	resourceBlocks map[string]*terraform.RootBlock
 	dataBlocks     map[string]*terraform.RootBlock
 	module         *terraform.Module
 }
 
-func NewMetaProgrammingTFConfig(tfDir string, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
-	module, err := terraform.LoadModule(tfDir)
+func NewMetaProgrammingTFConfig(m TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
+	module, err := terraform.LoadModule(m.toTerraformPkgType())
 	if err != nil {
 		return nil, err
 	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig:     golden.NewBasicConfig(tfDir, "mapotf", "mptf", varConfigDir, cliFlagAssignedVars, ctx),
-		tfDir:          tfDir,
+		BaseConfig:     golden.NewBasicConfig(m.AbsDir, "mapotf", "mptf", varConfigDir, cliFlagAssignedVars, ctx),
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),
 		module:         module,
@@ -113,7 +111,7 @@ func (c *MetaProgrammingTFConfig) SaveToDisk() error {
 	return c.module.SaveToDisk()
 }
 
-func ModulePaths(tfDir string) ([]string, error) {
+func ModuleRefs(tfDir string) ([]TerraformModuleRef, error) {
 	moduleManifest := filepath.Join(tfDir, ".terraform", "modules", "modules.json")
 	exist, err := afero.Exists(MPTFFs, moduleManifest)
 	if err != nil {
@@ -124,14 +122,13 @@ func ModulePaths(tfDir string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", tfDir, err)
 		}
-		return []string{absDir}, nil
+		return []TerraformModuleRef{{
+			Dir:    ".",
+			AbsDir: absDir,
+		}}, nil
 	}
 	var modules = struct {
-		Modules []struct {
-			Key    string `json:"key"`
-			Source string `json:"Source"`
-			Dir    string `json:"Dir"`
-		} `json:"Modules"`
+		Modules []TerraformModuleRef `json:"Modules"`
 	}{}
 	manifestJson, err := afero.ReadFile(MPTFFs, moduleManifest)
 	if err != nil {
@@ -140,16 +137,16 @@ func ModulePaths(tfDir string) ([]string, error) {
 	if err = json.Unmarshal(manifestJson, &modules); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal `modules.json` at %s: %+v", moduleManifest, err)
 	}
-	var paths []string
-	for _, m := range modules.Modules {
+	for i, m := range modules.Modules {
 		dir := m.Dir
 		absDir, err := filepath.Abs(dir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", dir, err)
 		}
-		paths = append(paths, absDir)
+		m.AbsDir = absDir
+		modules.Modules[i] = m
 	}
-	return paths, nil
+	return modules.Modules, nil
 }
 
 func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) []*terraform.RootBlock {

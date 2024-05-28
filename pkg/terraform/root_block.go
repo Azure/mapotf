@@ -12,9 +12,26 @@ import (
 var _ Block = new(RootBlock)
 
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
+	var moduleObj = cty.ObjectVal(map[string]cty.Value{
+		"key":     cty.StringVal(""),
+		"version": cty.StringVal(""),
+		"source":  cty.StringVal(""),
+		"dir":     cty.StringVal(""),
+		"abs_dir": cty.StringVal(""),
+	})
+	if b.module != nil {
+		moduleObj = cty.ObjectVal(map[string]cty.Value{
+			"key":     cty.StringVal(b.module.Key),
+			"version": cty.StringVal(b.module.Version),
+			"source":  cty.StringVal(b.module.Source),
+			"dir":     cty.StringVal(b.module.Dir),
+			"abs_dir": cty.StringVal(b.module.AbsDir),
+		})
+	}
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
 		"block_address":     cty.StringVal(b.Address),
 		"terraform_address": cty.StringVal(blockAddressToRef(b.Address)),
+		"module":            moduleObj,
 		"range": cty.ObjectVal(map[string]cty.Value{
 			"file_name":    cty.StringVal(b.Range().Filename),
 			"start_line":   cty.NumberIntVal(int64(b.Range().Start.Line)),
@@ -34,6 +51,7 @@ func blockAddressToRef(address string) string {
 
 type RootBlock struct {
 	*hclsyntax.Block
+	module       *Module
 	WriteBlock   *hclwrite.Block
 	Count        *Attribute
 	ForEach      *Attribute
@@ -68,13 +86,14 @@ func (b *RootBlock) GetNestedBlocks() NestedBlocks {
 	return b.NestedBlocks
 }
 
-func NewBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *RootBlock {
+func NewBlock(m *Module, rb *hclsyntax.Block, wb *hclwrite.Block) *RootBlock {
 	b := &RootBlock{
 		Type:       rb.Type,
 		Labels:     rb.Labels,
 		Address:    strings.Join(append([]string{rb.Type}, rb.Labels...), "."),
 		Block:      rb,
 		WriteBlock: wb,
+		module:     m,
 	}
 	if countAttr, ok := rb.Body.Attributes["count"]; ok {
 		b.Count = NewAttribute("count", countAttr, wb.Body().GetAttribute("count"))

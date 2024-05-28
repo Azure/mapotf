@@ -172,7 +172,10 @@ resource "fake_resource" this {
 			writeFile, diag := hclwrite.ParseConfig([]byte(c.cfg), "test.hcl", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
-			cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
+			cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+				Dir:    ".",
+				AbsDir: "/",
+			}, nil, nil, nil, context.TODO())
 			require.NoError(t, err)
 			sut := &pkg.UpdateInPlaceTransform{
 				BaseBlock: golden.NewBaseBlock(cfg, hclBlock),
@@ -216,7 +219,10 @@ transform update_in_place "fake_resource" {
 	}
 }
 `)
-	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
 	require.NoError(t, err)
 	err = cfg.Init(hclBlocks)
 	require.NoError(t, err)
@@ -409,7 +415,10 @@ block "example" {
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			writeDst, diag := hclwrite.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
-			dstBlock := terraform.NewBlock(readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
+			dstBlock := terraform.NewBlock(&terraform.Module{
+				Dir:    ".",
+				AbsDir: "/",
+			}, readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
 			patchFile, diag := hclwrite.ParseConfig([]byte(c.patch), "patch.hcl", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			sut := new(pkg.UpdateInPlaceTransform)

@@ -24,12 +24,16 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 }
 
 type Module struct {
-	dir            string
+	Dir            string
+	AbsDir         string
 	writeFiles     map[string]*hclwrite.File
 	lock           *sync.Mutex
 	ResourceBlocks []*RootBlock
 	DataBlocks     []*RootBlock
 	ModuleBlocks   []*RootBlock
+	Key            string
+	Source         string
+	Version        string
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -49,22 +53,34 @@ func (m *Module) loadConfig(cfg, filename string) error {
 		if !want {
 			continue
 		}
-		hclBlock := NewBlock(rb, writeBlocks[i])
+		hclBlock := NewBlock(m, rb, writeBlocks[i])
 		blocks := getter(m)
 		*blocks = append(*blocks, hclBlock)
 	}
 	return nil
 }
 
-func LoadModule(dir string) (*Module, error) {
-	files, err := afero.ReadDir(Fs, dir)
+type TerraformModuleRef struct {
+	Key     string `json:"Key"`
+	Source  string `json:"Source"`
+	Dir     string `json:"Dir"`
+	AbsDir  string
+	Version string `json:"Version"`
+}
+
+func LoadModule(mr TerraformModuleRef) (*Module, error) {
+	files, err := afero.ReadDir(Fs, mr.AbsDir)
 	if err != nil {
 		return nil, err
 	}
 	m := &Module{
-		dir:        dir,
+		Dir:        mr.Dir,
+		AbsDir:     mr.AbsDir,
 		writeFiles: make(map[string]*hclwrite.File),
 		lock:       &sync.Mutex{},
+		Key:        mr.Key,
+		Source:     mr.Source,
+		Version:    mr.Version,
 	}
 	for _, f := range files {
 		if f.IsDir() {
@@ -73,7 +89,7 @@ func LoadModule(dir string) (*Module, error) {
 		if !strings.HasSuffix(f.Name(), ".tf") {
 			continue
 		}
-		n := filepath.Join(dir, f.Name())
+		n := filepath.Join(mr.AbsDir, f.Name())
 		content, err := afero.ReadFile(Fs, n)
 		if err != nil {
 			return nil, err
@@ -91,7 +107,7 @@ func (m *Module) SaveToDisk() error {
 	defer m.lock.Unlock()
 	for fn, wf := range m.writeFiles {
 		content := wf.Bytes()
-		err := afero.WriteFile(Fs, filepath.Join(m.dir, fn), hclwrite.Format(content), 0644)
+		err := afero.WriteFile(Fs, filepath.Join(m.Dir, fn), hclwrite.Format(content), 0644)
 		if err != nil {
 			return err
 		}

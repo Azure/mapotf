@@ -3,6 +3,11 @@ variable "prevent_destroy" {
   default = false
 }
 
+variable "root_only" {
+  type    = bool
+  default = false
+}
+
 data "resource" all_resource {
 }
 
@@ -11,7 +16,7 @@ locals {
     for resource_type, resource_blocks in data.resource.all_resource.result :resource_blocks
   ])
   mptfs               = flatten([for _, blocks in local.all_resource_blocks : [for b in blocks : b.mptf]])
-  addresses           = [for mptf in local.mptfs : mptf.block_address]
+  addresses           = var.root_only ? [for mptf in local.mptfs : mptf.block_address if mptf.module.dir == "."] : [for mptf in local.mptfs : mptf.block_address]
 }
 
 transform "update_in_place" set_prevent_destroy {

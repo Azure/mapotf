@@ -22,14 +22,13 @@ func NewResetCmd() *cobra.Command {
 }
 
 func reset() error {
-	modulePaths, err := pkg.ModulePaths(cf.tfDir)
+	moduleRefs, err := pkg.ModuleRefs(cf.tfDir)
 	if err != nil {
 		return err
 	}
-	tfDirs := modulePaths
-	for _, tfDir := range tfDirs {
+	for _, tfDir := range moduleRefs {
 		d := tfDir
-		err = backup.RestoreBackup(d)
+		err = backup.RestoreBackup(d.AbsDir)
 		if err != nil {
 			return err
 		}

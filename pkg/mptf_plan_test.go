@@ -40,7 +40,10 @@ transform "update_in_place" fake_resource2 {
 	}))
 	hclBlocks, err := pkg.LoadMPTFHclBlocks(false, "mptf")
 	require.NoError(t, err)
-	cfg, err := pkg.NewMetaProgrammingTFConfig("terraform", nil, hclBlocks, nil, context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+		Dir:    "terraform",
+		AbsDir: "terraform",
+	}, nil, hclBlocks, nil, context.TODO())
 	require.NoError(t, err)
 	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
 	require.NoError(t, err)

@@ -76,7 +76,10 @@ resource "fake_resource" that {
 				"/main.tf": c.tfCode,
 			})).Stub(&terraform.RootBlockReflectionInformation, func(map[string]cty.Value, *terraform.RootBlock) {})
 			defer stub.Reset()
-			cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
+			cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+				Dir:    ".",
+				AbsDir: "/",
+			}, nil, nil, nil, context.TODO())
 			require.NoError(t, err)
 
 			// Use the config to create a ResourceData object
@@ -110,7 +113,10 @@ func TestResourceData_CustomizedToStringShouldContainsAllFields(t *testing.T) {
 }`,
 	}))
 	defer stub.Reset()
-	cfg, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
+	cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
 	require.NoError(t, err)
 
 	data := &pkg.ResourceData{

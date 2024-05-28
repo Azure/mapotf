@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
 )
 
 func NewTransformCmd() *cobra.Command {
@@ -35,19 +36,28 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	tfDirs := []string{cf.tfDir}
+	absDir, err := filepath.Abs(cf.tfDir)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get abs path for %s: %+v", cf.tfDir, err)
+	}
+	moduleRefs := []pkg.TerraformModuleRef{
+		{
+			Dir:    ".",
+			AbsDir: absDir,
+		},
+	}
 	if recursive {
-		modulePaths, err := pkg.ModulePaths(tfDirs[0])
+		modulePaths, err := pkg.ModuleRefs(cf.tfDir)
 		if err != nil {
 			return nil, err
 		}
-		tfDirs = modulePaths
+		moduleRefs = modulePaths
 	}
-	for _, tfDir := range tfDirs {
-		d := tfDir
-		err = backup.BackupFolder(d)
+	for _, moduleRef := range moduleRefs {
+		d := moduleRef
+		err = backup.BackupFolder(d.AbsDir)
 		restore = append(restore, func() {
-			_ = backup.RestoreBackup(d)
+			_ = backup.RestoreBackup(d.AbsDir)
 		})
 		if err != nil {
 			return restore, err
@@ -69,19 +79,19 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, tfDir := range tfDirs {
+		for _, tfDir := range moduleRefs {
 			err = applyTransform(tfDir, hclBlocks, varFlags, ctx)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
-	fmt.Println("Plan applied successfully.")
+	fmt.Println("Transforms applied successfully.")
 	return restore, nil
 }
 
-func applyTransform(tfDir string, hclBlocks []*golden.HclBlock, varFlags []golden.CliFlagAssignedVariables, ctx context.Context) error {
-	cfg, err := pkg.NewMetaProgrammingTFConfig(tfDir, &cf.tfDir, hclBlocks, varFlags, ctx)
+func applyTransform(m pkg.TerraformModuleRef, hclBlocks []*golden.HclBlock, varFlags []golden.CliFlagAssignedVariables, ctx context.Context) error {
+	cfg, err := pkg.NewMetaProgrammingTFConfig(m, &cf.tfDir, hclBlocks, varFlags, ctx)
 	if err != nil {
 		return err
 	}

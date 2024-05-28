@@ -22,14 +22,13 @@ func NewClearBackupCmd() *cobra.Command {
 }
 
 func cleanBackup() error {
-	modulePaths, err := pkg.ModulePaths(cf.tfDir)
+	moduleRefs, err := pkg.ModuleRefs(cf.tfDir)
 	if err != nil {
 		return err
 	}
-	tfDirs := modulePaths
-	for _, tfDir := range tfDirs {
+	for _, tfDir := range moduleRefs {
 		d := tfDir
-		err = backup.ClearBackup(d)
+		err = backup.ClearBackup(d.AbsDir)
 		if err != nil {
 			return err
 		}

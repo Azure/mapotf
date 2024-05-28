@@ -20,7 +20,10 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig("/", nil, nil, nil, context.TODO())
+	sut, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
 	require.NoError(t, err)
 	assert.NotEmpty(t, sut.ResourceBlocks)
 }
@@ -44,8 +47,12 @@ func TestModulePathsWhenModulesJsonExists(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	paths, err := pkg.ModulePaths("/")
+	refs, err := pkg.ModuleRefs("/")
 	require.NoError(t, err)
+	var paths []string
+	for _, ref := range refs {
+		paths = append(paths, ref.AbsDir)
+	}
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
 	assert.Contains(t, paths, pwd)
@@ -56,8 +63,12 @@ func TestModulePathsWhenModulesJsonDoesNotExist(t *testing.T) {
 	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{}))
 	defer stub.Reset()
 
-	paths, err := pkg.ModulePaths(".")
+	refs, err := pkg.ModuleRefs(".")
 	require.NoError(t, err)
+	var paths []string
+	for _, ref := range refs {
+		paths = append(paths, ref.AbsDir)
+	}
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
 	assert.Equal(t, []string{pwd}, paths)

@@ -20,7 +20,10 @@ data "fake_data" this {}
 	_ = afero.WriteFile(mockFs, "/main2.tf", []byte(`resource "fake_resource" that {}
 data "fake_data" that {}
 `), 0644)
-	sut, err := LoadModule("/")
+	sut, err := LoadModule(TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	})
 	require.NoError(t, err)
 	assert.Len(t, sut.ResourceBlocks, 2)
 	assert.Len(t, sut.DataBlocks, 2)
@@ -39,7 +42,10 @@ func TestModule_SaveToDisk(t *testing.T) {
 	_ = afero.WriteFile(mockFs, filename, []byte(originalContent), 0644)
 
 	// Load the config file into a Module
-	m, err := LoadModule("tmp")
+	m, err := LoadModule(TerraformModuleRef{
+		Dir:    "tmp",
+		AbsDir: "tmp",
+	})
 	require.NoError(t, err)
 
 	// Do some modification on the resource block's hclwrite.Block

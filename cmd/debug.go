@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
@@ -36,17 +37,31 @@ func NewDebugCmd() *cobra.Command {
 	return debugCmd
 }
 
-func replFunc(tfDir, mptfDir *string) func(*cobra.Command, []string) error {
+func replFunc(tfDir, mptfDir *string) func(c *cobra.Command, args []string) error {
 	return func(c *cobra.Command, args []string) error {
 		varFlags, err := varFlags(os.Args)
 		if err != nil {
 			return err
 		}
-		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, *mptfDir)
+		localizedDir, dispose, err := localizeConfigFolder(*mptfDir, c.Context())
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(*tfDir, nil, hclBlocks, varFlags, c.Context())
+		if dispose != nil {
+			defer dispose()
+		}
+		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, localizedDir)
+		if err != nil {
+			return err
+		}
+		abs, err := filepath.Abs(*tfDir)
+		if err != nil {
+			return err
+		}
+		cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+			Dir:    ".",
+			AbsDir: abs,
+		}, nil, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}

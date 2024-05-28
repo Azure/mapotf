@@ -227,7 +227,7 @@ func newBlock(t *testing.T, code string) *terraform.RootBlock {
 	wb := writeFile.Body().Blocks()[0]
 
 	// Call the function under test
-	block := terraform.NewBlock(rb, wb)
+	block := terraform.NewBlock(nil, rb, wb)
 	return block
 }
 
@@ -242,7 +242,7 @@ func newBlocks(t *testing.T, code string) []*terraform.RootBlock {
 
 	for i, rb := range readFile.Body.(*hclsyntax.Body).Blocks {
 		wb := writeFile.Body().Blocks()[i]
-		blocks = append(blocks, terraform.NewBlock(rb, wb))
+		blocks = append(blocks, terraform.NewBlock(nil, rb, wb))
 	}
 	return blocks
 }
