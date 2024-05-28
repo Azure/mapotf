@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 )
 
 func wrapTerraformCommandWithEphemeralTransform(tfDir, tfCmd string, recursive *bool) func(*cobra.Command, []string) error {
@@ -16,14 +19,21 @@ func wrapTerraformCommandWithEphemeralTransform(tfDir, tfCmd string, recursive *
 			r := restore
 			defer r()
 		}
-		return wrapTerraformCommand(tfDir, tfCmd)(nil, nil)
+		return wrapTerraformCommand(tfDir, tfCmd)(cmd, args)
 	}
 }
 
 func wrapTerraformCommand(tfDir, cmd string) func(*cobra.Command, []string) error {
-	return func(*cobra.Command, []string) error {
+	return func(c *cobra.Command, args []string) error {
 		tfArgs := append([]string{cmd}, NonMptfArgs...)
-		tfCmd := exec.Command("terraform", tfArgs...)
+		ctx, cancelFunc := context.WithCancel(c.Context())
+		ch := make(chan os.Signal)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-ch
+			cancelFunc()
+		}()
+		tfCmd := exec.CommandContext(ctx, "terraform", tfArgs...)
 		tfCmd.Dir = tfDir
 		tfCmd.Stdin = os.Stdin
 		tfCmd.Stdout = os.Stdout
