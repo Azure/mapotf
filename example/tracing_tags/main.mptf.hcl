@@ -10,6 +10,7 @@ transform "update_in_place" tracing_tags {
           merge({
                   file = "${each.value.mptf.range.file_name}"
                   block = "${each.value.mptf.terraform_address}"
+                  git_hash = "${each.value.mptf.module.git_hash}"
                   module_source = "${each.value.mptf.module.source}"
                   module_version = "${each.value.mptf.module.version}"
                 }, ${try(each.value.tags, "{}")})

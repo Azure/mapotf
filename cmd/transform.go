@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/spf13/cobra"
 	"os"
-	"path/filepath"
 )
 
 func NewTransformCmd() *cobra.Command {
@@ -36,15 +35,9 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	absDir, err := filepath.Abs(cf.tfDir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get abs path for %s: %+v", cf.tfDir, err)
-	}
-	moduleRefs := []pkg.TerraformModuleRef{
-		{
-			Dir:    ".",
-			AbsDir: absDir,
-		},
+	rootMod, err := pkg.NewTerraformRootModuleRef(".")
+	moduleRefs := []*pkg.TerraformModuleRef{
+		rootMod,
 	}
 	if recursive {
 		modulePaths, err := pkg.ModuleRefs(cf.tfDir)
@@ -90,7 +83,7 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 	return restore, nil
 }
 
-func applyTransform(m pkg.TerraformModuleRef, hclBlocks []*golden.HclBlock, varFlags []golden.CliFlagAssignedVariables, ctx context.Context) error {
+func applyTransform(m *pkg.TerraformModuleRef, hclBlocks []*golden.HclBlock, varFlags []golden.CliFlagAssignedVariables, ctx context.Context) error {
 	cfg, err := pkg.NewMetaProgrammingTFConfig(m, &cf.tfDir, hclBlocks, varFlags, ctx)
 	if err != nil {
 		return err

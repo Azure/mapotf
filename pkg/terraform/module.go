@@ -34,6 +34,7 @@ type Module struct {
 	Key            string
 	Source         string
 	Version        string
+	GitHash        string
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -66,6 +67,7 @@ type TerraformModuleRef struct {
 	Dir     string `json:"Dir"`
 	AbsDir  string
 	Version string `json:"Version"`
+	GitHash string
 }
 
 func LoadModule(mr TerraformModuleRef) (*Module, error) {
@@ -81,6 +83,7 @@ func LoadModule(mr TerraformModuleRef) (*Module, error) {
 		Key:        mr.Key,
 		Source:     mr.Source,
 		Version:    mr.Version,
+		GitHash:    mr.GitHash,
 	}
 	for _, f := range files {
 		if f.IsDir() {

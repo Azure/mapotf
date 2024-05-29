@@ -13,19 +13,21 @@ var _ Block = new(RootBlock)
 
 var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) {
 	var moduleObj = cty.ObjectVal(map[string]cty.Value{
-		"key":     cty.StringVal(""),
-		"version": cty.StringVal(""),
-		"source":  cty.StringVal(""),
-		"dir":     cty.StringVal(""),
-		"abs_dir": cty.StringVal(""),
+		"key":      cty.StringVal(""),
+		"version":  cty.StringVal(""),
+		"source":   cty.StringVal(""),
+		"dir":      cty.StringVal(""),
+		"abs_dir":  cty.StringVal(""),
+		"git_hash": cty.StringVal(""),
 	})
 	if b.module != nil {
 		moduleObj = cty.ObjectVal(map[string]cty.Value{
-			"key":     cty.StringVal(b.module.Key),
-			"version": cty.StringVal(b.module.Version),
-			"source":  cty.StringVal(b.module.Source),
-			"dir":     cty.StringVal(b.module.Dir),
-			"abs_dir": cty.StringVal(b.module.AbsDir),
+			"key":      cty.StringVal(b.module.Key),
+			"version":  cty.StringVal(b.module.Version),
+			"source":   cty.StringVal(b.module.Source),
+			"dir":      cty.StringVal(b.module.Dir),
+			"abs_dir":  cty.StringVal(b.module.AbsDir),
+			"git_hash": cty.StringVal(b.module.GitHash),
 		})
 	}
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{

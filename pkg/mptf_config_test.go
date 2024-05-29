@@ -20,8 +20,8 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	}))
 	defer stub.Reset()
 
-	sut, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
-		Dir:    ".",
+	sut, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
 		AbsDir: "/",
 	}, nil, nil, nil, context.TODO())
 	require.NoError(t, err)

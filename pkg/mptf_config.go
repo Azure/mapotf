@@ -25,7 +25,7 @@ type MetaProgrammingTFConfig struct {
 	module         *terraform.Module
 }
 
-func NewMetaProgrammingTFConfig(m TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
+func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
 	module, err := terraform.LoadModule(m.toTerraformPkgType())
 	if err != nil {
 		return nil, err
@@ -111,24 +111,21 @@ func (c *MetaProgrammingTFConfig) SaveToDisk() error {
 	return c.module.SaveToDisk()
 }
 
-func ModuleRefs(tfDir string) ([]TerraformModuleRef, error) {
+func ModuleRefs(tfDir string) ([]*TerraformModuleRef, error) {
 	moduleManifest := filepath.Join(tfDir, ".terraform", "modules", "modules.json")
 	exist, err := afero.Exists(MPTFFs, moduleManifest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot check `modules.json` at %s: %+v", moduleManifest, err)
 	}
 	if !exist {
-		absDir, err := filepath.Abs(tfDir)
+		mod, err := NewTerraformRootModuleRef(".")
 		if err != nil {
-			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", tfDir, err)
+			return nil, err
 		}
-		return []TerraformModuleRef{{
-			Dir:    ".",
-			AbsDir: absDir,
-		}}, nil
+		return []*TerraformModuleRef{mod}, nil
 	}
 	var modules = struct {
-		Modules []TerraformModuleRef `json:"Modules"`
+		Modules []*TerraformModuleRef `json:"Modules"`
 	}{}
 	manifestJson, err := afero.ReadFile(MPTFFs, moduleManifest)
 	if err != nil {
@@ -138,12 +135,9 @@ func ModuleRefs(tfDir string) ([]TerraformModuleRef, error) {
 		return nil, fmt.Errorf("cannot unmarshal `modules.json` at %s: %+v", moduleManifest, err)
 	}
 	for i, m := range modules.Modules {
-		dir := m.Dir
-		absDir, err := filepath.Abs(dir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot get abs dir for %s: %+v", dir, err)
+		if err := m.Load(); err != nil {
+			return nil, fmt.Errorf("cannot load info for %s: %+v", m.Dir, err)
 		}
-		m.AbsDir = absDir
 		modules.Modules[i] = m
 	}
 	return modules.Modules, nil

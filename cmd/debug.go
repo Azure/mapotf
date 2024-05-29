@@ -3,15 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func NewDebugCmd() *cobra.Command {
@@ -54,14 +52,11 @@ func replFunc(tfDir, mptfDir *string) func(c *cobra.Command, args []string) erro
 		if err != nil {
 			return err
 		}
-		abs, err := filepath.Abs(*tfDir)
+		mod, err := pkg.NewTerraformModuleRef(".", "", "", "")
 		if err != nil {
 			return err
 		}
-		cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
-			Dir:    ".",
-			AbsDir: abs,
-		}, nil, hclBlocks, varFlags, c.Context())
+		cfg, err := pkg.NewMetaProgrammingTFConfig(mod, nil, hclBlocks, varFlags, c.Context())
 		if err != nil {
 			return err
 		}

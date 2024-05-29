@@ -172,7 +172,7 @@ resource "fake_resource" this {
 			writeFile, diag := hclwrite.ParseConfig([]byte(c.cfg), "test.hcl", hcl.InitialPos)
 			require.Falsef(t, diag.HasErrors(), diag.Error())
 			hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
-			cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
 				Dir:    ".",
 				AbsDir: "/",
 			}, nil, nil, nil, context.TODO())
@@ -219,7 +219,7 @@ transform update_in_place "fake_resource" {
 	}
 }
 `)
-	cfg, err := pkg.NewMetaProgrammingTFConfig(pkg.TerraformModuleRef{
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
 		Dir:    ".",
 		AbsDir: "/",
 	}, nil, nil, nil, context.TODO())
