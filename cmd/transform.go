@@ -30,8 +30,8 @@ func NewTransformCmd() *cobra.Command {
 }
 
 func transform(recursive bool, ctx context.Context) ([]func(), error) {
-	varFlags, err := varFlags(os.Args)
 	var restore []func()
+	varFlags, err := varFlags(os.Args)
 	if err != nil {
 		return nil, err
 	}

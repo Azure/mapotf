@@ -13,10 +13,13 @@ import (
 )
 
 func localizeConfigFolder(path string, ctx context.Context) (configPath string, onDefer func(), err error) {
-	fs := pkg.MPTFFs
-	exists, err := afero.Exists(fs, path)
-	if exists && err == nil {
-		return path, nil, nil
+	absPath, err := filepath.Abs(path)
+	if err == nil {
+		fs := pkg.MPTFFs
+		exists, err := afero.Exists(fs, absPath)
+		if exists && err == nil {
+			return path, nil, nil
+		}
 	}
 	tmp := filepath.Join(os.TempDir(), uuid.NewString())
 	cleaner := func() {
