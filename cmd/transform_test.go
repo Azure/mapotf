@@ -2,10 +2,6 @@ package cmd_test
 
 import (
 	"context"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/Azure/mapotf/cmd"
 	"github.com/Azure/mapotf/pkg"
 	filesystem "github.com/Azure/mapotf/pkg/fs"
@@ -13,6 +9,9 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"os"
+	"testing"
+	"time"
 )
 
 func TestSuccessfulTransformation(t *testing.T) {
@@ -54,12 +53,13 @@ resource "fake_resource" that {
 	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
 	os.Args = mptfArgs
 	cmd.NonMptfArgs = nonMptfArgs
-	ctx, _ := context.WithDeadline(context.TODO(), time.Now().Add(500*time.Millisecond))
-	cmd.Execute(ctx)
-	tfFile, err := afero.ReadFile(fs, "/testTerraform/main.tf")
-	require.NoError(t, err)
-	tfFileStr := string(tfFile)
-	expected := `
+
+	runWithTimeout(t, func() {
+		cmd.Execute(context.Background())
+		tfFile, err := afero.ReadFile(fs, "/testTerraform/main.tf")
+		require.NoError(t, err)
+		tfFileStr := string(tfFile)
+		expected := `
 resource "fake_resource" this {
   tags = merge({}, {
     block_address = "resource.fake_resource.this"
@@ -74,12 +74,28 @@ resource "fake_resource" that {
   })
 }
 `
-	assert.Equal(t, expected, tfFileStr)
-	backupTfFilePath := "/testTerraform/main.tf.mptfbackup"
-	exists, err := afero.Exists(fs, backupTfFilePath)
-	require.NoError(t, err)
-	assert.True(t, exists)
-	backupFileContent, err := afero.ReadFile(fs, backupTfFilePath)
-	require.NoError(t, err)
-	assert.Equal(t, terraformCode, string(backupFileContent))
+		assert.Equal(t, expected, tfFileStr)
+		backupTfFilePath := "/testTerraform/main.tf.mptfbackup"
+		exists, err := afero.Exists(fs, backupTfFilePath)
+		require.NoError(t, err)
+		assert.True(t, exists)
+		backupFileContent, err := afero.ReadFile(fs, backupTfFilePath)
+		require.NoError(t, err)
+		assert.Equal(t, terraformCode, string(backupFileContent))
+
+	}, 100*time.Millisecond)
+}
+
+func runWithTimeout(t *testing.T, callback func(), timeout time.Duration) {
+	done := make(chan bool)
+	go func() {
+		callback()
+		done <- true
+	}()
+	select {
+	case <-done:
+		return
+	case <-time.After(timeout):
+		t.Fatal("timeout")
+	}
 }
