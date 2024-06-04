@@ -36,6 +36,9 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 		return nil, err
 	}
 	rootMod, err := pkg.NewTerraformRootModuleRef(".")
+	if err != nil {
+		return nil, err
+	}
 	moduleRefs := []*pkg.TerraformModuleRef{
 		rootMod,
 	}

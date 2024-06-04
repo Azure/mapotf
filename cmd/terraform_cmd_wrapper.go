@@ -27,7 +27,7 @@ func wrapTerraformCommand(tfDir, cmd string) func(*cobra.Command, []string) erro
 	return func(c *cobra.Command, args []string) error {
 		tfArgs := append([]string{cmd}, NonMptfArgs...)
 		ctx, cancelFunc := context.WithCancel(c.Context())
-		ch := make(chan os.Signal)
+		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			<-ch
