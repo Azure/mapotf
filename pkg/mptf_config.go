@@ -119,7 +119,7 @@ func ModuleRefs(tfDir string) ([]*TerraformModuleRef, error) {
 		return nil, fmt.Errorf("cannot check `modules.json` at %s: %+v", moduleManifest, err)
 	}
 	if !exist {
-		mod, err := NewTerraformRootModuleRef(".")
+		mod, err := NewTerraformRootModuleRef(tfDir)
 		if err != nil {
 			return nil, err
 		}
