@@ -4,19 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/Azure/golden"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/spf13/afero"
-	"path/filepath"
-	"strings"
 )
 
 var _ golden.Config = &MetaProgrammingTFConfig{}
-var MPTFFs = afero.NewOsFs()
 
 type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
@@ -63,7 +64,7 @@ func (c *MetaProgrammingTFConfig) TerraformBlock(address string) *terraform.Root
 }
 
 func LoadMPTFHclBlocks(ignoreUnsupportedBlock bool, dir string) ([]*golden.HclBlock, error) {
-	fs := MPTFFs
+	fs := filesystem.Fs
 	matches, err := afero.Glob(fs, filepath.Join(dir, "*.mptf.hcl"))
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (c *MetaProgrammingTFConfig) SaveToDisk() error {
 
 func ModuleRefs(tfDir string) ([]*TerraformModuleRef, error) {
 	moduleManifest := filepath.Join(tfDir, ".terraform", "modules", "modules.json")
-	exist, err := afero.Exists(MPTFFs, moduleManifest)
+	exist, err := afero.Exists(filesystem.Fs, moduleManifest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot check `modules.json` at %s: %+v", moduleManifest, err)
 	}
@@ -127,7 +128,7 @@ func ModuleRefs(tfDir string) ([]*TerraformModuleRef, error) {
 	var modules = struct {
 		Modules []*TerraformModuleRef `json:"Modules"`
 	}{}
-	manifestJson, err := afero.ReadFile(MPTFFs, moduleManifest)
+	manifestJson, err := afero.ReadFile(filesystem.Fs, moduleManifest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read `modules.json` at %s: %+v", moduleManifest, err)
 	}

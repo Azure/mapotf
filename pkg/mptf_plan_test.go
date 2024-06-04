@@ -3,20 +3,19 @@ package pkg_test
 import (
 	"context"
 	"github.com/Azure/mapotf/pkg"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 
-	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/prashantv/gostub"
 )
 
 func TestMetaProgrammingTFPlan_OnlyTransformThatHasTargetShouldBeInThePlan(t *testing.T) {
-	gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+	gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		filepath.Join("terraform", "main.tf"): `resource "fake_resource" this {
 }`,
-	})).Stub(&pkg.MPTFFs, fakeFs(map[string]string{
 		filepath.Join("mptf", "main.mptf.hcl"): `data "resource" fake_resource {
   resource_type = "fake_resource"
 }

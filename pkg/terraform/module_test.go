@@ -1,18 +1,20 @@
 package terraform
 
 import (
+	"path/filepath"
+	"testing"
+
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zclconf/go-cty/cty"
-	"path/filepath"
-	"testing"
 )
 
 func TestLoadModuleShouldLoadAllTerraformFiles(t *testing.T) {
 	mockFs := afero.NewMemMapFs()
-	stub := gostub.Stub(&Fs, mockFs)
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
 	defer stub.Reset()
 	_ = afero.WriteFile(mockFs, "/main.tf", []byte(`resource "fake_resource" this {}
 data "fake_data" this {}
@@ -32,7 +34,7 @@ data "fake_data" that {}
 func TestModule_SaveToDisk(t *testing.T) {
 	// Create a mock file system
 	mockFs := afero.NewMemMapFs()
-	stub := gostub.Stub(&Fs, mockFs)
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
 	defer stub.Reset()
 
 	// Compose a valid Terraform config file

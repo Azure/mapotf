@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -160,7 +161,7 @@ transform "update_in_place" this {
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+			stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 				"/main.tf": `
 resource "fake_resource" this {
   tags = null
@@ -195,7 +196,7 @@ resource "fake_resource" this {
 }
 
 func TestUpdateInPlaceTransform_UseForEachInDecode(t *testing.T) {
-	stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/main.tf": `
 resource "fake_resource" this {
   tags = {}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"os"
 	"path/filepath"
 
@@ -13,10 +14,9 @@ import (
 )
 
 func localizeConfigFolder(path string, ctx context.Context) (configPath string, onDefer func(), err error) {
-	absPath, err := filepath.Abs(path)
+	absPath, err := pkg.AbsDir(path)
 	if err == nil {
-		fs := pkg.MPTFFs
-		exists, err := afero.Exists(fs, absPath)
+		exists, err := afero.Exists(filesystem.Fs, absPath)
 		if exists && err == nil {
 			return path, nil, nil
 		}

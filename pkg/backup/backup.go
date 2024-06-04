@@ -2,22 +2,23 @@ package backup
 
 import (
 	"fmt"
-	"github.com/Azure/mapotf/pkg"
-	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
+
+	filesystem "github.com/Azure/mapotf/pkg/fs"
+	"github.com/spf13/afero"
 )
 
 const Extension = ".mptfbackup"
 
 func BackupFolder(dir string) error {
-	terraformFile, err := afero.Glob(pkg.MPTFFs, filepath.Join(dir, "*.tf"))
+	terraformFile, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*.tf"))
 	if err != nil {
 		return fmt.Errorf("cannot list terraform files in %s:%+v", dir, err)
 	}
 	for _, file := range terraformFile {
 		backupFile := file + Extension
-		exist, err := afero.Exists(pkg.MPTFFs, backupFile)
+		exist, err := afero.Exists(filesystem.Fs, backupFile)
 		if err != nil {
 			return fmt.Errorf("cannot check backup file %s:%+v", backupFile, err)
 		}
@@ -25,17 +26,17 @@ func BackupFolder(dir string) error {
 			continue
 		}
 		// create the backup file, then copy the content of the terraform file to the backup file, with the same permission
-		content, err := afero.ReadFile(pkg.MPTFFs, file)
+		content, err := afero.ReadFile(filesystem.Fs, file)
 		if err != nil {
 			return fmt.Errorf("cannot read terraform file %s:%+v", file, err)
 		}
 		// get permission of the terraform file
-		info, err := pkg.MPTFFs.Stat(file)
+		info, err := filesystem.Fs.Stat(file)
 		if err != nil {
 			return fmt.Errorf("cannot get permission of terraform file %s:%+v", file, err)
 		}
 		// write the content to the backup file
-		if err = afero.WriteFile(pkg.MPTFFs, backupFile, content, info.Mode()); err != nil {
+		if err = afero.WriteFile(filesystem.Fs, backupFile, content, info.Mode()); err != nil {
 			return fmt.Errorf("cannot write backup file %s:%+v", backupFile, err)
 		}
 	}
@@ -43,13 +44,13 @@ func BackupFolder(dir string) error {
 }
 
 func RestoreBackup(dir string) error {
-	backupFiles, err := afero.Glob(pkg.MPTFFs, filepath.Join(dir, "*"+Extension))
+	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+Extension))
 	if err != nil {
 		return fmt.Errorf("cannot list backup files in %s:%+v", dir, err)
 	}
 	for _, backupFile := range backupFiles {
 		// read the content of the backup file
-		content, err := afero.ReadFile(pkg.MPTFFs, backupFile)
+		content, err := afero.ReadFile(filesystem.Fs, backupFile)
 		if err != nil {
 			return fmt.Errorf("cannot read backup file %s:%+v", backupFile, err)
 		}
@@ -59,11 +60,11 @@ func RestoreBackup(dir string) error {
 		if err != nil {
 			return err
 		}
-		if err = afero.WriteFile(pkg.MPTFFs, originalFile, content, info.Mode()); err != nil {
+		if err = afero.WriteFile(filesystem.Fs, originalFile, content, info.Mode()); err != nil {
 			return fmt.Errorf("cannot write original file %s:%+v", originalFile, err)
 		}
 		// delete the backup file
-		if err = pkg.MPTFFs.Remove(backupFile); err != nil {
+		if err = filesystem.Fs.Remove(backupFile); err != nil {
 			return fmt.Errorf("cannot delete backup file %s:%+v", backupFile, err)
 		}
 	}
@@ -71,13 +72,13 @@ func RestoreBackup(dir string) error {
 }
 
 func ClearBackup(dir string) error {
-	backupFiles, err := afero.Glob(pkg.MPTFFs, filepath.Join(dir, "*"+Extension))
+	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+Extension))
 	if err != nil {
 		return fmt.Errorf("cannot list backup files in %s:%+v", dir, err)
 	}
 	for _, backupFile := range backupFiles {
 		// delete the backup file
-		if err = pkg.MPTFFs.Remove(backupFile); err != nil {
+		if err = filesystem.Fs.Remove(backupFile); err != nil {
 			return fmt.Errorf("cannot delete backup file %s:%+v", backupFile, err)
 		}
 	}
@@ -87,7 +88,7 @@ func ClearBackup(dir string) error {
 func getFilePerm(originalFile string, backupFile string, err error) (os.FileInfo, error) {
 	var info os.FileInfo
 	for _, path := range []string{originalFile, backupFile} {
-		info, err = pkg.MPTFFs.Stat(path)
+		info, err = filesystem.Fs.Stat(path)
 		if err == nil {
 			break
 		}

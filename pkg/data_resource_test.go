@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
@@ -72,7 +73,7 @@ resource "fake_resource" that {
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+			stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 				"/main.tf": c.tfCode,
 			})).Stub(&terraform.RootBlockReflectionInformation, func(map[string]cty.Value, *terraform.RootBlock) {})
 			defer stub.Reset()
@@ -107,7 +108,7 @@ resource "fake_resource" that {
 }
 
 func TestResourceData_CustomizedToStringShouldContainsAllFields(t *testing.T) {
-	stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/main.tf": `resource "fake_resource" this {
 	id = 123
 }`,

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Azure/mapotf/pkg"
-	"github.com/Azure/mapotf/pkg/terraform"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
-	stub := gostub.Stub(&terraform.Fs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/main.tf": `resource "fake_resource" this {}`,
 	}))
 	defer stub.Reset()
@@ -29,7 +29,7 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 }
 
 func TestModulePathsWhenModulesJsonExists(t *testing.T) {
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/.terraform/modules/modules.json": `{
 			"Modules": [
 				{
@@ -60,7 +60,7 @@ func TestModulePathsWhenModulesJsonExists(t *testing.T) {
 }
 
 func TestModulePathsWhenModulesJsonDoesNotExist(t *testing.T) {
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{}))
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{}))
 	defer stub.Reset()
 
 	refs, err := pkg.ModuleRefs(".")

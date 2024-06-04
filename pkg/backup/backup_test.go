@@ -1,12 +1,12 @@
 package backup
 
 import (
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 
-	"github.com/Azure/mapotf/pkg"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 )
@@ -15,7 +15,7 @@ func TestMetaProgrammingTFPlan_OnlyTransformThatHasTargetShouldBeInThePlan(t *te
 	dir := "cfg"
 	expectedContent := `resource "fake_resource" this {
 }`
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		filepath.Join(dir, "main.tf"):                expectedContent,
 		filepath.Join(dir, "non-terraform-file.txt"): "",
 		filepath.Join("etc", "terraform.tf"):         "should_not_be_copied",
@@ -23,13 +23,13 @@ func TestMetaProgrammingTFPlan_OnlyTransformThatHasTargetShouldBeInThePlan(t *te
 	defer stub.Reset()
 	err := BackupFolder(dir)
 	require.NoError(t, err)
-	content, err := afero.ReadFile(pkg.MPTFFs, filepath.Join(dir, "main.tf"+Extension))
+	content, err := afero.ReadFile(filesystem.Fs, filepath.Join(dir, "main.tf"+Extension))
 	require.NoError(t, err)
 	assert.Equal(t, expectedContent, string(content))
-	exists, err := afero.Exists(pkg.MPTFFs, filepath.Join(dir, "non-terraform-file.txt"+Extension))
+	exists, err := afero.Exists(filesystem.Fs, filepath.Join(dir, "non-terraform-file.txt"+Extension))
 	require.NoError(t, err)
 	assert.False(t, exists)
-	exists, err = afero.Exists(pkg.MPTFFs, filepath.Join("etc", "terraform.tf"+Extension))
+	exists, err = afero.Exists(filesystem.Fs, filepath.Join("etc", "terraform.tf"+Extension))
 	require.NoError(t, err)
 	assert.False(t, exists)
 }
@@ -40,14 +40,14 @@ func TestBackupFolder_BackupFileAlreadyExists(t *testing.T) {
 }`
 	backupContent := `resource "fake_resource" this {
 } backup`
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		filepath.Join(dir, "main.tf"):           originalContent,
 		filepath.Join(dir, "main.tf"+Extension): backupContent,
 	}))
 	defer stub.Reset()
 	err := BackupFolder(dir)
 	require.NoError(t, err)
-	content, err := afero.ReadFile(pkg.MPTFFs, filepath.Join(dir, "main.tf"+Extension))
+	content, err := afero.ReadFile(filesystem.Fs, filepath.Join(dir, "main.tf"+Extension))
 	require.NoError(t, err)
 	assert.Equal(t, backupContent, string(content))
 }
@@ -58,17 +58,17 @@ func TestRestoreBackup(t *testing.T) {
 }`
 	backupContent := `resource "fake_resource" this {
 } backup`
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		filepath.Join(dir, "main.tf"):           originalContent,
 		filepath.Join(dir, "main.tf"+Extension): backupContent,
 	}))
 	defer stub.Reset()
 	err := RestoreBackup(dir)
 	require.NoError(t, err)
-	content, err := afero.ReadFile(pkg.MPTFFs, filepath.Join(dir, "main.tf"))
+	content, err := afero.ReadFile(filesystem.Fs, filepath.Join(dir, "main.tf"))
 	require.NoError(t, err)
 	assert.Equal(t, backupContent, string(content))
-	exists, err := afero.Exists(pkg.MPTFFs, filepath.Join(dir, "main.tf"+Extension))
+	exists, err := afero.Exists(filesystem.Fs, filepath.Join(dir, "main.tf"+Extension))
 	require.NoError(t, err)
 	assert.False(t, exists)
 }
@@ -83,17 +83,17 @@ func fakeFs(files map[string]string) afero.Fs {
 
 func TestClearBackup(t *testing.T) {
 	dir := "cfg"
-	stub := gostub.Stub(&pkg.MPTFFs, fakeFs(map[string]string{
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		filepath.Join(dir, "main.tf"):           "terraform content",
 		filepath.Join(dir, "main.tf"+Extension): "backupContent",
 	}))
 	defer stub.Reset()
 	err := ClearBackup(dir)
 	require.NoError(t, err)
-	exists, err := afero.Exists(pkg.MPTFFs, filepath.Join(dir, "main.tf"+Extension))
+	exists, err := afero.Exists(filesystem.Fs, filepath.Join(dir, "main.tf"+Extension))
 	require.NoError(t, err)
 	assert.False(t, exists)
-	exists, err = afero.Exists(pkg.MPTFFs, filepath.Join(dir, "main.tf"))
+	exists, err = afero.Exists(filesystem.Fs, filepath.Join(dir, "main.tf"))
 	require.NoError(t, err)
 	assert.True(t, exists)
 }

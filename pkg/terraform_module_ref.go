@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 )
 
+var AbsDir func(string) (string, error) = filepath.Abs
+
 type TerraformModuleRef struct {
 	Key     string `json:"Key"`
 	Source  string `json:"Source"`
@@ -53,7 +55,7 @@ func (m *TerraformModuleRef) LoadGitHash() {
 }
 
 func (m *TerraformModuleRef) LoadAbsDir() error {
-	absDir, err := filepath.Abs(m.Dir)
+	absDir, err := AbsDir(m.Dir)
 	if err != nil {
 		return fmt.Errorf("error getting absolute path for %s: %+v", m.Dir, err)
 	}

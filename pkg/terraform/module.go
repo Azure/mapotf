@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"github.com/Azure/mapotf/pkg/fs"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -10,7 +11,6 @@ import (
 	"sync"
 )
 
-var Fs = afero.NewOsFs()
 var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	"resource": func(m *Module) *[]*RootBlock {
 		return &m.ResourceBlocks
@@ -71,7 +71,7 @@ type TerraformModuleRef struct {
 }
 
 func LoadModule(mr TerraformModuleRef) (*Module, error) {
-	files, err := afero.ReadDir(Fs, mr.AbsDir)
+	files, err := afero.ReadDir(fs.Fs, mr.AbsDir)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func LoadModule(mr TerraformModuleRef) (*Module, error) {
 			continue
 		}
 		n := filepath.Join(mr.AbsDir, f.Name())
-		content, err := afero.ReadFile(Fs, n)
+		content, err := afero.ReadFile(fs.Fs, n)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (m *Module) SaveToDisk() error {
 	defer m.lock.Unlock()
 	for fn, wf := range m.writeFiles {
 		content := wf.Bytes()
-		err := afero.WriteFile(Fs, filepath.Join(m.Dir, fn), hclwrite.Format(content), 0644)
+		err := afero.WriteFile(fs.Fs, filepath.Join(m.Dir, fn), hclwrite.Format(content), 0644)
 		if err != nil {
 			return err
 		}
