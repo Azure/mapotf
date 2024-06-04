@@ -14,7 +14,7 @@ func main() {
 	os.Args = mptfArgs
 	cmd.NonMptfArgs = nonMptfArgs
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-ch
