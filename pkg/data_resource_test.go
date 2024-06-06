@@ -138,3 +138,39 @@ func TestResourceData_CustomizedToStringShouldContainsAllFields(t *testing.T) {
 	assert.Contains(t, sut, "use_for_each")
 	assert.Contains(t, sut, "result")
 }
+
+func TestResourceData_DifferentResourcesHaveAttributesWithSameNameButDifferentSchema(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `resource "fake_resource" this {
+  sku = {
+    name = "Standard"
+  }  
+}
+
+resource "fake_resource2" this {
+  sku = 1
+}
+`,
+	}))
+	defer stub.Reset()
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+
+	data := &pkg.ResourceData{
+		BaseBlock: golden.NewBaseBlock(cfg, nil),
+	}
+
+	err = data.ExecuteDuringPlan()
+	require.NoError(t, err)
+
+	var sut map[string]any
+	err = json.Unmarshal([]byte(data.String()), &sut)
+	require.NoError(t, err)
+	//assert.Contains(t, sut, "resource_type")
+	//assert.Contains(t, sut, "use_count")
+	//assert.Contains(t, sut, "use_for_each")
+	//assert.Contains(t, sut, "result")
+}
