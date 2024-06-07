@@ -44,20 +44,21 @@ func (rd *ResourceData) ExecuteDuringPlan() error {
 		})
 	}
 	res.ToSlice(&matched)
-	matchedBlocksWithSameType := terraform.ListOfObject(matched)
 	resourceBlocks := make(map[string]map[string]cty.Value)
-	for i := 0; i < matchedBlocksWithSameType.LengthInt(); i++ {
-		b := matched[i]
-		t := b.Labels[0]
-		address := b.Address
-		sm, ok := resourceBlocks[t]
+	for _, b := range matched {
+		resourceType := b.Labels[0]
+		m, ok := resourceBlocks[resourceType]
 		if !ok {
-			sm = make(map[string]cty.Value)
-			resourceBlocks[t] = sm
+			m = make(map[string]cty.Value)
+			resourceBlocks[resourceType] = m
 		}
-		sm[address] = matchedBlocksWithSameType.Index(cty.NumberIntVal(int64(i)))
+		m[b.Labels[1]] = b.EvalContext()
 	}
-	rd.Result = golden.ToCtyValue(resourceBlocks)
+	obj := make(map[string]cty.Value)
+	for k, m := range resourceBlocks {
+		obj[k] = cty.ObjectVal(m)
+	}
+	rd.Result = cty.ObjectVal(obj)
 	return nil
 }
 

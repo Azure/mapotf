@@ -232,7 +232,7 @@ transform update_in_place "fake_resource" {
 	err = cfg.RunPlan()
 	require.NoError(t, err)
 	vertices := cfg.BaseConfig.GetVertices()
-	b, ok := vertices["transform.update_in_place.fake_resource[resource.fake_resource.this]"]
+	b, ok := vertices["transform.update_in_place.fake_resource[this]"]
 	require.True(t, ok)
 	updateTransformBlock, ok := b.(*pkg.UpdateInPlaceTransform)
 	require.True(t, ok)
@@ -245,7 +245,7 @@ transform update_in_place "fake_resource" {
 })
 }`
 	assert.Equal(t, formatHcl(expected), formatHcl(actual))
-	b, ok = vertices["transform.update_in_place.fake_resource[resource.fake_resource.that]"]
+	b, ok = vertices["transform.update_in_place.fake_resource[that]"]
 	require.True(t, ok)
 	updateTransformBlock, ok = b.(*pkg.UpdateInPlaceTransform)
 	require.True(t, ok)
