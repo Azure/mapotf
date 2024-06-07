@@ -28,9 +28,9 @@ func TestResourceData_QueryResourceBlocks(t *testing.T) {
 			tfCode: `resource "fake_resource" this {
 	id = 123
 }`,
-			expected: cty.MapVal(map[string]cty.Value{
-				"fake_resource": cty.MapVal(map[string]cty.Value{
-					"resource.fake_resource.this": cty.ObjectVal(map[string]cty.Value{
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"fake_resource": cty.ObjectVal(map[string]cty.Value{
+					"this": cty.ObjectVal(map[string]cty.Value{
 						"id": cty.StringVal("123"),
 					}),
 				}),
@@ -45,9 +45,9 @@ resource "fake_resource" that {
 }
 `,
 			useCount: true,
-			expected: cty.MapVal(map[string]cty.Value{
-				"fake_resource": cty.MapVal(map[string]cty.Value{
-					"resource.fake_resource.that": cty.ObjectVal(map[string]cty.Value{
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"fake_resource": cty.ObjectVal(map[string]cty.Value{
+					"that": cty.ObjectVal(map[string]cty.Value{
 						"count": cty.StringVal("2"),
 					}),
 				}),
@@ -62,9 +62,9 @@ resource "fake_resource" that {
 }
 `,
 			useForEach: true,
-			expected: cty.MapVal(map[string]cty.Value{
-				"fake_resource": cty.MapVal(map[string]cty.Value{
-					"resource.fake_resource.that": cty.ObjectVal(map[string]cty.Value{
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"fake_resource": cty.ObjectVal(map[string]cty.Value{
+					"that": cty.ObjectVal(map[string]cty.Value{
 						"for_each": cty.StringVal("toset([1,2,3])"),
 					}),
 				}),
@@ -141,15 +141,19 @@ func TestResourceData_CustomizedToStringShouldContainsAllFields(t *testing.T) {
 
 func TestResourceData_DifferentResourcesHaveAttributesWithSameNameButDifferentSchema(t *testing.T) {
 	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
-		"/main.tf": `resource "fake_resource" this {
-  sku = {
-    name = "Standard"
-  }  
+		"/main.tf": `
+resource "azurerm_application_gateway" this {
+  sku {
+    name     = "Standard_v2"
+    tier     = "Standard_v2"
+    capacity = 1
+  }
 }
 
-resource "fake_resource2" this {
-  sku = 1
+resource "azurerm_public_ip" "pip" {
+  sku                 = "Standard"
 }
+
 `,
 	}))
 	defer stub.Reset()
@@ -169,8 +173,8 @@ resource "fake_resource2" this {
 	var sut map[string]any
 	err = json.Unmarshal([]byte(data.String()), &sut)
 	require.NoError(t, err)
-	//assert.Contains(t, sut, "resource_type")
-	//assert.Contains(t, sut, "use_count")
-	//assert.Contains(t, sut, "use_for_each")
-	//assert.Contains(t, sut, "result")
+	assert.Contains(t, sut, "resource_type")
+	assert.Contains(t, sut, "use_count")
+	assert.Contains(t, sut, "use_for_each")
+	assert.Contains(t, sut, "result")
 }
