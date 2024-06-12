@@ -22,7 +22,7 @@ to quickly create a Cobra application.`,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},
-	SilenceErrors: true,
+	SilenceErrors: false,
 	SilenceUsage:  true,
 }
 

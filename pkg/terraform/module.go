@@ -130,7 +130,7 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 	lock.Lock(fileName)
 	defer lock.Unlock(fileName)
 	tokens := writeFile.Body().BuildTokens(nil)
-	if tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
+	if len(tokens) > 1 && tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
 		writeFile.Body().AppendNewline()
 	}
 	writeFile.Body().AppendBlock(block)

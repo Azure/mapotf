@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/mapotf/cmd"
 )
 
+// TODO:revert new file created by new_block
+// TODO:avoid panic when --mptf-var is not valid, like --mptf-var var1
 func main() {
 	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
 	os.Args = mptfArgs
