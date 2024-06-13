@@ -53,7 +53,7 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 		d := moduleRef
 		err = backup.BackupFolder(d.AbsDir)
 		restore = append(restore, func() {
-			_ = backup.RestoreBackup(d.AbsDir)
+			_ = backup.Reset(d.AbsDir)
 		})
 		if err != nil {
 			return restore, err

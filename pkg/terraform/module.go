@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"github.com/Azure/mapotf/pkg/backup"
 	"github.com/Azure/mapotf/pkg/fs"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -109,8 +110,20 @@ func (m *Module) SaveToDisk() error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	for fn, wf := range m.writeFiles {
+		absPath := filepath.Join(m.Dir, fn)
+		exist, err := afero.Exists(fs.Fs, absPath)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			absNewFilePath := absPath + backup.NewFileExtension
+			err = afero.WriteFile(fs.Fs, absNewFilePath, []byte{}, 0644)
+			if err != nil {
+				return err
+			}
+		}
 		content := wf.Bytes()
-		err := afero.WriteFile(fs.Fs, filepath.Join(m.Dir, fn), hclwrite.Format(content), 0644)
+		err = afero.WriteFile(fs.Fs, absPath, hclwrite.Format(content), 0644)
 		if err != nil {
 			return err
 		}

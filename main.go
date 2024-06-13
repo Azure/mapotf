@@ -9,9 +9,8 @@ import (
 	"github.com/Azure/mapotf/cmd"
 )
 
-// TODO:revert new file created by new_block
 // TODO:avoid panic when --mptf-var is not valid, like --mptf-var var1
-// TODO:golden bug, variable in for_each might lead uninited variable evaluation, which leads to panic
+// TODO:we might apply multiple -mptf-dir, one --mptf-var might not be suitable for another --mptf-var, we should swallow the error
 func main() {
 	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
 	os.Args = mptfArgs

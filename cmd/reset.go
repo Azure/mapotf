@@ -28,7 +28,7 @@ func reset() error {
 	}
 	for _, tfDir := range moduleRefs {
 		d := tfDir
-		err = backup.RestoreBackup(d.AbsDir)
+		err = backup.Reset(d.AbsDir)
 		if err != nil {
 			return err
 		}

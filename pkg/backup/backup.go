@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/spf13/afero"
 )
 
-const Extension = ".mptfbackup"
+const BackupExtension = ".mptfbackup"
+const NewFileExtension = ".mptfnew"
 
 func BackupFolder(dir string) error {
 	terraformFile, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*.tf"))
@@ -17,7 +19,7 @@ func BackupFolder(dir string) error {
 		return fmt.Errorf("cannot list terraform files in %s:%+v", dir, err)
 	}
 	for _, file := range terraformFile {
-		backupFile := file + Extension
+		backupFile := file + BackupExtension
 		exist, err := afero.Exists(filesystem.Fs, backupFile)
 		if err != nil {
 			return fmt.Errorf("cannot check backup file %s:%+v", backupFile, err)
@@ -43,8 +45,33 @@ func BackupFolder(dir string) error {
 	return nil
 }
 
-func RestoreBackup(dir string) error {
-	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+Extension))
+func Reset(dir string) error {
+	err := restoreBackup(dir)
+	if err != nil {
+		return err
+	}
+	return removeNewFiles(dir)
+}
+
+func removeNewFiles(dir string) error {
+	newFileIndicators, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+NewFileExtension))
+	if err != nil {
+		return fmt.Errorf("cannot list new file indicators in %s:%+v", dir, err)
+	}
+	for _, newFileIndicator := range newFileIndicators {
+		newFile, _ := strings.CutSuffix(newFileIndicator, NewFileExtension)
+		if err = filesystem.Fs.Remove(newFile); err != nil {
+			return fmt.Errorf("cannot delete new file %s:%+v", newFile, err)
+		}
+		if err = filesystem.Fs.Remove(newFileIndicator); err != nil {
+			return fmt.Errorf("cannot delete new file indicator in %s:%+v", newFileIndicator, err)
+		}
+	}
+	return nil
+}
+
+func restoreBackup(dir string) error {
+	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+BackupExtension))
 	if err != nil {
 		return fmt.Errorf("cannot list backup files in %s:%+v", dir, err)
 	}
@@ -55,7 +82,7 @@ func RestoreBackup(dir string) error {
 			return fmt.Errorf("cannot read backup file %s:%+v", backupFile, err)
 		}
 		// write the content to the original file
-		originalFile := backupFile[:len(backupFile)-len(Extension)] // remove the extension to get the original file name
+		originalFile := backupFile[:len(backupFile)-len(BackupExtension)] // remove the extension to get the original file name
 		info, err := getFilePerm(originalFile, backupFile, err)
 		if err != nil {
 			return err
@@ -72,11 +99,16 @@ func RestoreBackup(dir string) error {
 }
 
 func ClearBackup(dir string) error {
-	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+Extension))
+	backupFiles, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+BackupExtension))
 	if err != nil {
 		return fmt.Errorf("cannot list backup files in %s:%+v", dir, err)
 	}
-	for _, backupFile := range backupFiles {
+	newFileIndicators, err := afero.Glob(filesystem.Fs, filepath.Join(dir, "*"+NewFileExtension))
+	if err != nil {
+		return fmt.Errorf("cannot list new file indicators in %s:%+v", dir, err)
+	}
+	files := append(backupFiles, newFileIndicators...)
+	for _, backupFile := range files {
 		// delete the backup file
 		if err = filesystem.Fs.Remove(backupFile); err != nil {
 			return fmt.Errorf("cannot delete backup file %s:%+v", backupFile, err)
