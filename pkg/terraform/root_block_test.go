@@ -214,6 +214,96 @@ resource "fake_resource" that {
 	assert.Equal(t, `"John"`, v.AsString())
 }
 
+func TestRootBlock_RemoveDeepNestedBlock(t *testing.T) {
+	cfg := `
+root_block "root" {
+  nested_block{
+    target_block {}
+  }
+  nested_block{
+    dynamic "target_block" {
+	  for_each = var.enabled ? [1] : []
+      content {
+		
+	  }
+    } 
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+    content {
+      target_block {}
+	}
+  }
+  dynamic "nested_block" {
+	for_each = var.enabled ? [1] : []
+    content {
+      dynamic "target_block" {
+		for_each = var.enabled ? [1] : []
+		content {
+		
+		}
+	  } 
+	}
+  }
+}
+`
+	expected := `
+root_block "root" {
+  nested_block{
+  }
+  nested_block{
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+    content {
+	}
+  }
+  dynamic "nested_block" {
+	for_each = var.enabled ? [1] : []
+    content {
+	}
+  }
+}
+`
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	rb := terraform.NewBlock(nil, sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveNestedBlock to remove the nested block
+	rb.RemoveNestedBlock("nested_block/target_block")
+
+	assert.Equal(t, formatHcl(expected), formatHcl(string(rb.WriteBlock.BuildTokens(nil).Bytes())))
+}
+
+func TestRootBlock_RemoveDynamicNestedBlock(t *testing.T) {
+	cfg := `
+root_block "root" {
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+    content {
+      target_block {}
+	}
+  }
+}
+`
+	expected := `
+root_block "root" {
+}
+`
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	rb := terraform.NewBlock(nil, sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveNestedBlock to remove the nested block
+	rb.RemoveNestedBlock("nested_block")
+
+	assert.Equal(t, formatHcl(expected), formatHcl(string(rb.WriteBlock.BuildTokens(nil).Bytes())))
+}
+
 func newBlock(t *testing.T, code string) *terraform.RootBlock {
 
 	// Parse the Terraform code

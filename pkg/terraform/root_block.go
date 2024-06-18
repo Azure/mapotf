@@ -64,6 +64,26 @@ type RootBlock struct {
 	Address      string
 }
 
+func (b *RootBlock) RemoveNestedBlock(path string) {
+	unlock := lockBlockFile(b)
+	defer unlock()
+	segs := strings.Split(path, "/")
+
+	nbs, ok := b.NestedBlocks[segs[0]]
+	if !ok {
+		return
+	}
+	if len(segs) == 1 {
+		for _, nb := range nbs {
+			b.WriteBody().RemoveBlock(nb.selfWriteBlock)
+		}
+		return
+	}
+	for _, nb := range nbs {
+		nb.RemoveNestedBlock(strings.Join(segs[1:], "/"))
+	}
+}
+
 func (b *RootBlock) SetAttributeRaw(name string, tokens hclwrite.Tokens) {
 	unlock := lockBlockFile(b)
 	defer unlock()

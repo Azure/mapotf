@@ -6,7 +6,6 @@ import (
 
 type Transform interface {
 	golden.ApplyBlock
-	golden.CustomDecode
 	Transform()
 }
 

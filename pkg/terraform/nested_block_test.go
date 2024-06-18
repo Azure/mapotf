@@ -1,10 +1,13 @@
 package terraform_test
 
 import (
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/stretchr/testify/require"
 	"github.com/zclconf/go-cty/cty"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -187,4 +190,120 @@ resource "fake_resource" this {
 	value, diag := exp.Value(ctx)
 	require.Falsef(t, diag.HasErrors(), diag.Error())
 	assert.Equal(t, `"John"`, value.AsString())
+}
+
+func TestNestedBlock_RemoveNestedBlock(t *testing.T) {
+	cfg := `
+root_block {
+  nested_block{}
+}
+`
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveNestedBlock to remove the nested block
+	nb.RemoveNestedBlock("nested_block")
+
+	// Assert that the nested block has been removed correctly
+	assert.Empty(t, nb.WriteBlock.Body().Blocks())
+}
+
+func TestNestedBlock_RemoveDynamicNestedBlock(t *testing.T) {
+	cfg := `
+root_block {
+  dynamic "nested_block" {
+	for_each = var.enabled ? [1] : []
+    content {
+	}
+  }
+}
+`
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveNestedBlock to remove the nested block
+	nb.RemoveNestedBlock("nested_block")
+
+	// Assert that the nested block has been removed correctly
+	assert.Empty(t, nb.WriteBlock.Body().Blocks())
+}
+
+func TestNestedBlock_RemoveDeepNestedBlock(t *testing.T) {
+	cfg := `
+root_block {
+  nested_block{
+   target_block {}
+  }
+  nested_block {
+   target_block {
+	 another_block {}
+   }
+	non_target_block {}
+  }
+  nested_block {
+    dynamic "target_block" {
+	   for_each = var.enabled ? [1] : []
+       content {
+	   }
+    }
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	  target_block {}
+	}
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	  dynamic "target_block" {
+	    for_each = var.enabled ? [1] : []
+        content {
+	    }
+     }
+	}
+  }
+}
+`
+	expected := `
+root_block {
+  nested_block{
+  }
+  nested_block {
+	non_target_block {}
+  }
+  nested_block {
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	}
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+    }
+  }
+}
+`
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveNestedBlock to remove the nested block
+	nb.RemoveNestedBlock("nested_block/target_block")
+
+	assert.Equal(t, formatHcl(expected), formatHcl(string(nb.WriteBlock.BuildTokens(nil).Bytes())))
+}
+
+func formatHcl(inputHcl string) string {
+	return strings.Trim(string(hclwrite.Format([]byte(inputHcl))), "\n")
 }
