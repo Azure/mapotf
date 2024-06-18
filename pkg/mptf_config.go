@@ -32,7 +32,15 @@ func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hcl
 		return nil, err
 	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig:     golden.NewBasicConfig(m.AbsDir, "mapotf", "mptf", varConfigDir, cliFlagAssignedVars, ctx),
+		BaseConfig: golden.NewBasicConfigFromArgs(golden.NewBaseConfigArgs{
+			Basedir:                  m.AbsDir,
+			DslFullName:              "mapotf",
+			DslAbbreviation:          "mptf",
+			VarConfigDir:             varConfigDir,
+			CliFlagAssignedVariables: cliFlagAssignedVars,
+			Ctx:                      ctx,
+			IgnoreUnknownVariables:   true,
+		}),
 		resourceBlocks: groupByType(module.ResourceBlocks),
 		dataBlocks:     groupByType(module.DataBlocks),
 		module:         module,

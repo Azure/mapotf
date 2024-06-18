@@ -10,7 +10,6 @@ import (
 )
 
 // TODO:avoid panic when --mptf-var is not valid, like --mptf-var var1
-// TODO:we might apply multiple -mptf-dir, one --mptf-var might not be suitable for another --mptf-var, we should swallow the error
 func main() {
 	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
 	os.Args = mptfArgs
