@@ -46,20 +46,24 @@ func (c *commonFlags) MptfDirs(ctx context.Context) ([]localizedMptfDir, error) 
 func varFlags(args []string) ([]golden.CliFlagAssignedVariables, error) {
 	var flags []golden.CliFlagAssignedVariables
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--mptf-var" || args[i] == "--mptf-var-file" {
-			if i+1 < len(args) {
-				arg := args[i+1]
-				if args[i] == "--mptf-var" {
-					varAssignment := strings.Split(arg, "=")
-					flags = append(flags, golden.NewCliFlagAssignedVariable(varAssignment[0], varAssignment[1]))
-				} else {
-					flags = append(flags, golden.NewCliFlagAssignedVariableFile(arg))
-				}
-				i++ // skip next arg
-			} else {
-				return nil, errors.New("missing value for " + args[i])
-			}
+		if args[i] != "--mptf-var" && args[i] != "--mptf-var-file" {
+			continue
 		}
+		if i+1 == len(args) {
+			return nil, errors.New("missing value for " + args[i])
+		}
+		arg := args[i+1]
+		if args[i] == "--mptf-var-file" {
+			flags = append(flags, golden.NewCliFlagAssignedVariableFile(arg))
+			i++
+			continue
+		}
+		varAssignment := strings.Split(arg, "=")
+		if len(varAssignment) != 2 {
+			return nil, fmt.Errorf("the given --mptf option \"%s\" is not correctly specified. Must be a variable name and value separated by an equals sign, like --mptf-var key=value", arg)
+		}
+		flags = append(flags, golden.NewCliFlagAssignedVariable(varAssignment[0], varAssignment[1]))
+		i++ // skip next arg
 	}
 	return flags, nil
 }
