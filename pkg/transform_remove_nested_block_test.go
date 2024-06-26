@@ -56,3 +56,60 @@ resource "fake_resource" this {
 	actual := formatHcl(string(after))
 	assert.Equal(t, expected, actual)
 }
+
+func TestRemoveNestedBlock_mergeAfterRemove(t *testing.T) {
+	mptfCfg := `
+transform "remove_nested_block" this {
+  target_block_address = "resource.fake_resource.this"
+  paths = ["identity"]
+}
+
+transform "update_in_place" this {
+  target_block_address = "resource.fake_resource.this"
+  asraw {
+    dynamic "identity" {
+	  for_each = var.enabled ? [1] : []
+      content {
+		type = "SystemAssigned"
+      }
+    }
+  }
+  depends_on = [transform.remove_nested_block.this]
+}
+`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `
+resource "fake_resource" this {
+  identity {}
+}
+`,
+		"/cfg/main.mptf.hcl": mptfCfg,
+	}))
+	defer stub.Reset()
+
+	hclBlocks, err := pkg.LoadMPTFHclBlocks(false, "/cfg")
+	require.NoError(t, err)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, hclBlocks, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	err = plan.Apply()
+	require.NoError(t, err)
+	after, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+	expected := formatHcl(`
+resource "fake_resource" this {
+  dynamic "identity" {
+	for_each = var.enabled ? [1] : []
+    content {
+      type = "SystemAssigned"
+    }
+  }
+}
+`)
+	actual := formatHcl(string(after))
+	assert.Equal(t, expected, actual)
+}
