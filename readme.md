@@ -12,7 +12,7 @@ Another scenario is, there are some common design patterns, such as creating pri
 
 ## How to install?
 
-`go install github.com/Azure/mapotf`
+`go install github.com/Azure/mapotf@latest`
 
 ## An example
 
