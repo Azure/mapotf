@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-getter/v2 v2.2.2
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/hcl/v2 v2.20.1
+	github.com/hashicorp/hcl/v2 v2.21.0
 	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
 	github.com/lonegunmanb/hclfuncs v0.8.0
 	github.com/peterh/liner v1.2.2
