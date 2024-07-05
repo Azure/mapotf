@@ -1,6 +1,10 @@
 package pkg_test
 
 import (
+	"context"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
+	"github.com/prashantv/gostub"
+	"github.com/spf13/afero"
 	"strings"
 	"testing"
 
@@ -156,4 +160,41 @@ func TestNewBlockTransform_DecodeTwiceShouldGotCorrectLabels(t *testing.T) {
 	err = sut.Decode(hclBlock, ctx)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"test"}, sut.Labels)
+}
+
+func TestNewBlockTransform_MalformedNewBlockShouldNotBlockSave(t *testing.T) {
+	code := `transform "new_block" test {
+	new_block_type = "variable"
+	filename = "variables.tf"
+	labels = ["test"]
+	asstring {
+	  type        = ".string"
+	}
+}`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{}))
+	defer stub.Reset()
+
+	readFile, diag := hclsyntax.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	err = plan.Apply()
+	require.NoError(t, err)
+	after, err := afero.ReadFile(filesystem.Fs, "/variables.tf")
+	require.NoError(t, err)
+	expected := `variable "test" {
+  type =.string
+}
+
+`
+	actual := string(after)
+	assert.Equal(t, expected, actual)
 }

@@ -73,8 +73,11 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 			continue
 		}
 	}
-	n.newWriteBlock, err = n.Format(n.newWriteBlock)
-	return err
+	formattedBlock, err := n.Format(n.newWriteBlock)
+	if err == nil {
+		n.newWriteBlock = formattedBlock
+	}
+	return nil
 }
 
 func (n *NewBlockTransform) Type() string {
