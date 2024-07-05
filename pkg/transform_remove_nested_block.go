@@ -13,7 +13,7 @@ type RemoveNestedBlockTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	TargetBlockAddress string   `hcl:"target_block_address"`
-	Paths              []string `hcl:"paths" v`
+	Paths              []string `hcl:"paths"`
 }
 
 func (r *RemoveNestedBlockTransform) isReservedField(name string) bool {
