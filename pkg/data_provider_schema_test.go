@@ -18,6 +18,9 @@ import (
 
 func TestDataProviderSchema_ConvertTFJsonSchemaToCtyValue(t *testing.T) {
 	schemaJson := `{
+  "format_version": "1.0",
+  "provider_schemas": {
+    "registry.terraform.io/hashicorp/local": {
       "provider": {
         "version": 0,
         "block": {
