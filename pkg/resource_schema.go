@@ -92,9 +92,6 @@ func (t TerraformCliProviderSchemaRetriever) getTerraformPath() (string, error) 
 	}
 
 	path := strings.TrimSpace(string(out))
-	if t.isWindows() && !strings.HasSuffix(path, ".exe") {
-		path += ".exe"
-	}
 	return path, nil
 }
 

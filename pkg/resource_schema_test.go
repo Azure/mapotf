@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"runtime"
 	"testing"
 
 	"github.com/Azure/mapotf/pkg"
@@ -10,6 +11,9 @@ import (
 )
 
 func TestTerraformCliProviderSchemaRetriever_retrieveLocalProviderSchema(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows since setup Terraform on windows seems not work with this test")
+	}
 	sut := pkg.NewTerraformCliProviderSchemaRetriever(context.Background())
 	schema, err := sut.Get("hashicorp/local", "2.5.1")
 	require.NoError(t, err)
