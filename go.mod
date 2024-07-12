@@ -10,6 +10,8 @@ require (
 	github.com/hashicorp/go-getter/v2 v2.2.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.21.0
+	github.com/hashicorp/terraform-exec v0.20.0
+	github.com/hashicorp/terraform-json v0.22.1
 	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
 	github.com/lonegunmanb/hclfuncs v0.8.0
 	github.com/peterh/liner v1.2.2
@@ -65,7 +67,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-sdk v0.5.3 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/hashicorp/terraform-json v0.21.0 // indirect
 	github.com/hashicorp/vault/api v1.10.0 // indirect
 	github.com/heimdalr/dag v1.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
