@@ -21,4 +21,5 @@ func registerTransform() {
 
 func registerData() {
 	golden.RegisterBlock(new(ResourceData))
+	golden.RegisterBlock(new(ProviderSchemaData))
 }
