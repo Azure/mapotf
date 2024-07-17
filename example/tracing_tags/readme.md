@@ -26,6 +26,9 @@ resource "azurerm_storage_account" "this" {
   location                 = azurerm_resource_group.this.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  tags = {
+    env = "prod"
+  }
 }
 
 resource "azurerm_subnet" "this" {
@@ -43,8 +46,12 @@ resource "azurerm_resource_group" "this" {
   location = "West US"
   name     = "example-resources"
   tags = {
-    hello = "world"
+    file           = "main.tf"
+    block          = "azurerm_resource_group.this"
+    module_source  = try(one(data.modtm_module_source.telemetry).module_source, "")
+    module_version = try(one(data.modtm_module_source.telemetry).module_version, "")
   }
+
 }
 
 resource "azurerm_storage_account" "this" {
@@ -53,9 +60,15 @@ resource "azurerm_storage_account" "this" {
   location                 = azurerm_resource_group.this.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  tags = {
-    hello = "world"
-  }
+  tags = merge({
+    env = "prod"
+    }, {
+    file           = "main.tf"
+    block          = "azurerm_storage_account.this"
+    module_source  = try(one(data.modtm_module_source.telemetry).module_source, "")
+    module_version = try(one(data.modtm_module_source.telemetry).module_version, "")
+  })
+
 }
 
 resource "azurerm_subnet" "this" {
@@ -67,3 +80,5 @@ resource "azurerm_subnet" "this" {
 ```
 
 `azurerm_resource_group` and `azurerm_storage_account` supports `tags` so a default tags has been added. `azurerm_subnet` doesn't has tags, so no changes.
+
+When `mapotf` applied default tags, the original tags on `azurerm_storage_account.this` would be honored by using `merge` function.

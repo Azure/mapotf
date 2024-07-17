@@ -9,6 +9,9 @@ resource "azurerm_storage_account" "this" {
   location                 = azurerm_resource_group.this.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  tags = {
+    env = "prod"
+  }
 }
 
 resource "azurerm_subnet" "this" {
@@ -17,3 +20,4 @@ resource "azurerm_subnet" "this" {
   resource_group_name  = ""
   virtual_network_name = ""
 }
+
