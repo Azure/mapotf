@@ -61,7 +61,14 @@ func (c *MetaProgrammingTFConfig) DataBlocks() []*terraform.RootBlock {
 	return c.slice(c.dataBlocks)
 }
 
-func (c *MetaProgrammingTFConfig) TerraformBlock(address string) *terraform.RootBlock {
+func (c *MetaProgrammingTFConfig) TerraformBlock() *terraform.RootBlock {
+	if len(c.module.TerraformBlocks) > 0 {
+		return c.module.TerraformBlocks[0]
+	}
+	return nil
+}
+
+func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock {
 	if strings.HasPrefix(address, "resource.") {
 		return c.resourceBlocks[address]
 	}
