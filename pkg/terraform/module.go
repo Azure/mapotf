@@ -22,20 +22,24 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	"module": func(m *Module) *[]*RootBlock {
 		return &m.ModuleBlocks
 	},
+	"terraform": func(m *Module) *[]*RootBlock {
+		return &m.TerraformBlocks
+	},
 }
 
 type Module struct {
-	Dir            string
-	AbsDir         string
-	writeFiles     map[string]*hclwrite.File
-	lock           *sync.Mutex
-	ResourceBlocks []*RootBlock
-	DataBlocks     []*RootBlock
-	ModuleBlocks   []*RootBlock
-	Key            string
-	Source         string
-	Version        string
-	GitHash        string
+	Dir             string
+	AbsDir          string
+	writeFiles      map[string]*hclwrite.File
+	lock            *sync.Mutex
+	ResourceBlocks  []*RootBlock
+	DataBlocks      []*RootBlock
+	ModuleBlocks    []*RootBlock
+	TerraformBlocks []*RootBlock
+	Key             string
+	Source          string
+	Version         string
+	GitHash         string
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {

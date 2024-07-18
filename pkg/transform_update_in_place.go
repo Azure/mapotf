@@ -38,7 +38,7 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 		return err
 	}
 	cfg := u.BaseBlock.Config().(*MetaProgrammingTFConfig)
-	b := cfg.TerraformBlock(u.TargetBlockAddress)
+	b := cfg.RootBlock(u.TargetBlockAddress)
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", u.TargetBlockAddress)
 	}

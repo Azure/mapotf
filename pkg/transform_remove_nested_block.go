@@ -31,7 +31,7 @@ func (r *RemoveNestedBlockTransform) Type() string {
 
 func (r *RemoveNestedBlockTransform) Apply() error {
 	cfg := r.BaseBlock.Config().(*MetaProgrammingTFConfig)
-	b := cfg.TerraformBlock(r.TargetBlockAddress)
+	b := cfg.RootBlock(r.TargetBlockAddress)
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", r.TargetBlockAddress)
 	}

@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"github.com/hashicorp/hcl/v2"
 	"path/filepath"
 	"testing"
 
@@ -64,4 +65,40 @@ func TestModule_SaveToDisk(t *testing.T) {
   new_attribute = "new_value"
 }`
 	assert.Equal(t, expectedContent, string(modifiedContent))
+}
+
+func TestLoadModuleShouldLoadTerraformBlock(t *testing.T) {
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+	_ = afero.WriteFile(mockFs, "/main.tf", []byte(`terraform {
+  required_version = "~> 1.1.9"
+  required_providers {
+    mycloud = {
+      source  = "mycorp/mycloud"
+      version = "~> 1.0"
+    }
+  }
+}`), 0644)
+	sut, err := LoadModule(TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	})
+	require.NoError(t, err)
+	assert.Len(t, sut.TerraformBlocks, 1)
+	tb := sut.TerraformBlocks[0]
+	terraformVersion, diag := tb.Attributes["required_version"].Expr.Value(&hcl.EvalContext{})
+	require.False(t, diag.HasErrors())
+	assert.Equal(t, "~> 1.1.9", terraformVersion.AsString())
+	rpbs, ok := tb.NestedBlocks["required_providers"]
+	require.True(t, ok)
+	assert.Len(t, rpbs, 1)
+	rpb := rpbs[0]
+	assert.Len(t, rpb.Attributes, 1)
+	providerConfig, ok := rpb.Attributes["mycloud"]
+	require.True(t, ok)
+	pc, diag := providerConfig.Expr.Value(&hcl.EvalContext{})
+	require.False(t, diag.HasErrors())
+	assert.Equal(t, cty.StringVal("mycorp/mycloud"), pc.GetAttr("source"))
+	assert.Equal(t, cty.StringVal("~> 1.0"), pc.GetAttr("version"))
 }
