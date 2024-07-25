@@ -6,7 +6,7 @@ This example configuration is designed to ensure that all Terraform-managed Azur
 
 The primary purpose of the `default_tags` configuration is to:
 
-- **Automate Tagging**: Automatically apply a default set of tags (`hello = "world"`) to all resources that support tagging, without the need to manually specify these tags for each resource.
+- **Automate Tagging**: Automatically apply a default set of tags to all resources that support tagging, without the need to manually specify these tags for each resource.
 - **Ensure Consistency**: Help maintain a consistent tagging strategy across your infrastructure, which is crucial for resource organization, cost tracking, and access control.
 - **Simplify Management**: By applying tags automatically, it simplifies the management of resources, especially in large-scale environments where manual tagging can be error-prone and time-consuming.
 
@@ -15,6 +15,15 @@ This configuration leverages the `mapotf` tool's capability to dynamically modif
 Before running this example, you would see [`main.tf`](./main.tf) file like this:
 
 ```hcl
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "3.112.0"
+    }
+  }
+}
+
 resource "azurerm_resource_group" "this" {
   location = "West US"
   name     = "example-resources"
@@ -39,18 +48,29 @@ resource "azurerm_subnet" "this" {
 }
 ```
 
+You might notice that both `azurerm_resource_group` and `azurerm_storage_account` support `tags`, there are already tags defined in `azurerm_storage_account` resource block. `azurerm_subnet` resource doesn't support `tags`. 
+
 You can run `mapotf transform --mptf-dir . --tf-dir .`, then you would see:
 
 ```hcl
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "3.112.0"
+    }
+  }
+}
+
 resource "azurerm_resource_group" "this" {
   location = "West US"
   name     = "example-resources"
-  tags = {
+  tags = var.tracing_tags_enabled ? {
     file           = "main.tf"
     block          = "azurerm_resource_group.this"
     module_source  = try(one(data.modtm_module_source.telemetry).module_source, "")
     module_version = try(one(data.modtm_module_source.telemetry).module_version, "")
-  }
+  } : {}
 
 }
 
@@ -62,12 +82,12 @@ resource "azurerm_storage_account" "this" {
   account_replication_type = "LRS"
   tags = merge({
     env = "prod"
-    }, {
+    }, var.tracing_tags_enabled ? {
     file           = "main.tf"
     block          = "azurerm_storage_account.this"
     module_source  = try(one(data.modtm_module_source.telemetry).module_source, "")
     module_version = try(one(data.modtm_module_source.telemetry).module_version, "")
-  })
+  } : {})
 
 }
 
