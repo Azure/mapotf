@@ -64,11 +64,15 @@ type RootBlock struct {
 	Address      string
 }
 
-func (b *RootBlock) RemoveNestedBlock(path string) {
+func (b *RootBlock) RemoveContent(path string) {
 	unlock := lockBlockFile(b)
 	defer unlock()
 	segs := strings.Split(path, "/")
-
+	_, ok := b.Attributes[segs[0]]
+	if ok {
+		b.WriteBody().RemoveAttribute(segs[0])
+		return
+	}
 	nbs, ok := b.NestedBlocks[segs[0]]
 	if !ok {
 		return
@@ -80,7 +84,7 @@ func (b *RootBlock) RemoveNestedBlock(path string) {
 		return
 	}
 	for _, nb := range nbs {
-		nb.RemoveNestedBlock(strings.Join(segs[1:], "/"))
+		nb.RemoveContent(strings.Join(segs[1:], "/"))
 	}
 }
 

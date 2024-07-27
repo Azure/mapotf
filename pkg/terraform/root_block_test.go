@@ -271,8 +271,8 @@ root_block "root" {
 	require.False(t, diag.HasErrors())
 	rb := terraform.NewBlock(nil, sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
 
-	// Call RemoveNestedBlock to remove the nested block
-	rb.RemoveNestedBlock("nested_block/target_block")
+	// Call RemoveContent to remove the nested block
+	rb.RemoveContent("nested_block/target_block")
 
 	assert.Equal(t, formatHcl(expected), formatHcl(string(rb.WriteBlock.BuildTokens(nil).Bytes())))
 }
@@ -298,8 +298,8 @@ root_block "root" {
 	require.False(t, diag.HasErrors())
 	rb := terraform.NewBlock(nil, sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
 
-	// Call RemoveNestedBlock to remove the nested block
-	rb.RemoveNestedBlock("nested_block")
+	// Call RemoveContent to remove the nested block
+	rb.RemoveContent("nested_block")
 
 	assert.Equal(t, formatHcl(expected), formatHcl(string(rb.WriteBlock.BuildTokens(nil).Bytes())))
 }

@@ -204,8 +204,8 @@ root_block {
 	require.False(t, diag.HasErrors())
 	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
 
-	// Call RemoveNestedBlock to remove the nested block
-	nb.RemoveNestedBlock("nested_block")
+	// Call RemoveContent to remove the nested block
+	nb.RemoveContent("nested_block")
 
 	// Assert that the nested block has been removed correctly
 	assert.Empty(t, nb.WriteBlock.Body().Blocks())
@@ -227,8 +227,8 @@ root_block {
 	require.False(t, diag.HasErrors())
 	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
 
-	// Call RemoveNestedBlock to remove the nested block
-	nb.RemoveNestedBlock("nested_block")
+	// Call RemoveContent to remove the nested block
+	nb.RemoveContent("nested_block")
 
 	// Assert that the nested block has been removed correctly
 	assert.Empty(t, nb.WriteBlock.Body().Blocks())
@@ -298,10 +298,11 @@ root_block {
 	require.False(t, diag.HasErrors())
 	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
 
-	// Call RemoveNestedBlock to remove the nested block
-	nb.RemoveNestedBlock("nested_block/target_block")
-
-	assert.Equal(t, formatHcl(expected), formatHcl(string(nb.WriteBlock.BuildTokens(nil).Bytes())))
+	// Call RemoveContent to remove the nested block
+	nb.RemoveContent("nested_block/target_block")
+	expected = formatHcl(expected)
+	actual := formatHcl(string(nb.WriteBlock.BuildTokens(nil).Bytes()))
+	assert.Equal(t, expected, actual)
 }
 
 func formatHcl(inputHcl string) string {

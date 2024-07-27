@@ -14,7 +14,7 @@ type Block interface {
 	SetAttributeRaw(name string, tokens hclwrite.Tokens)
 	AppendBlock(block *hclwrite.Block)
 	Range() hcl.Range
-	RemoveNestedBlock(path string)
+	RemoveContent(path string)
 }
 
 func lockBlockFile(b Block) func() {

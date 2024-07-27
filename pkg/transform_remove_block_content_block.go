@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-var _ Transform = &RemoveNestedBlockTransform{}
-var _ mptfBlock = &RemoveNestedBlockTransform{}
+var _ Transform = &RemoveBlockContentBlockTransform{}
+var _ mptfBlock = &RemoveBlockContentBlockTransform{}
 
-type RemoveNestedBlockTransform struct {
+type RemoveBlockContentBlockTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	TargetBlockAddress string   `hcl:"target_block_address"`
 	Paths              []string `hcl:"paths"`
 }
 
-func (r *RemoveNestedBlockTransform) isReservedField(name string) bool {
+func (r *RemoveBlockContentBlockTransform) isReservedField(name string) bool {
 	reserved := map[string]struct{}{
 		"target_block_address": {},
 		"for_each":             {},
@@ -25,11 +25,11 @@ func (r *RemoveNestedBlockTransform) isReservedField(name string) bool {
 	return ok
 }
 
-func (r *RemoveNestedBlockTransform) Type() string {
-	return "remove_nested_block"
+func (r *RemoveBlockContentBlockTransform) Type() string {
+	return "remove_block_content"
 }
 
-func (r *RemoveNestedBlockTransform) Apply() error {
+func (r *RemoveBlockContentBlockTransform) Apply() error {
 	cfg := r.BaseBlock.Config().(*MetaProgrammingTFConfig)
 	b := cfg.RootBlock(r.TargetBlockAddress)
 	if b == nil {
@@ -37,7 +37,7 @@ func (r *RemoveNestedBlockTransform) Apply() error {
 	}
 	for _, path := range r.Paths {
 		path = strings.TrimSpace(path)
-		b.RemoveNestedBlock(path)
+		b.RemoveContent(path)
 	}
 	return nil
 }

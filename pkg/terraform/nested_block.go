@@ -21,28 +21,39 @@ type NestedBlock struct {
 	NestedBlocks   NestedBlocks
 }
 
-func (nb *NestedBlock) RemoveNestedBlock(path string) {
+func (nb *NestedBlock) RemoveContent(path string) {
 	segs := strings.Split(path, "/")
+	current := segs[0]
 
-	myNbs, ok := nb.NestedBlocks[segs[0]]
+	if len(segs) > 1 {
+		myNbs, ok := nb.NestedBlocks[current]
+		if !ok {
+			return
+		}
+		nextPath := strings.Join(segs[1:], "/")
+		for _, myNb := range myNbs {
+			myNb.RemoveContent(nextPath)
+		}
+		return
+	}
+	_, ok := nb.Attributes[current]
+	if ok {
+		nb.WriteBody().RemoveAttribute(current)
+		return
+	}
+	myNbs, ok := nb.NestedBlocks[current]
 	if !ok {
 		return
 	}
-	if len(segs) == 1 {
-		block := nb.WriteBlock
-		if nb.Type == "dynamic" {
-			contentBlock := nb.WriteBlock.Body().Blocks()[0]
-			block = contentBlock
-		}
-		for _, myNb := range myNbs {
-			block.Body().RemoveBlock(myNb.selfWriteBlock)
-		}
-		return
+	block := nb.WriteBlock
+	if nb.Type == "dynamic" {
+		contentBlock := nb.WriteBlock.Body().Blocks()[0]
+		block = contentBlock
 	}
-	nextPath := strings.Join(segs[1:], "/")
 	for _, myNb := range myNbs {
-		myNb.RemoveNestedBlock(nextPath)
+		block.Body().RemoveBlock(myNb.selfWriteBlock)
 	}
+	return
 }
 
 func (nb *NestedBlock) SetAttributeRaw(name string, tokens hclwrite.Tokens) {
