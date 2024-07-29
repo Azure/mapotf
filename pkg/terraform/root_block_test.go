@@ -183,6 +183,47 @@ func TestBlockAddress_GetNonExistAttributeShouldUseTryFunction(t *testing.T) {
 	assert.True(t, value.IsNull())
 }
 
+func TestReflectionObjectInEvalContext(t *testing.T) {
+	// Define some Terraform code
+	sut := newBlock(t, `
+	resource "azurerm_resource_group" "example" {
+		name           = "test"
+		location 	   = "eastus"
+	}
+	`)
+
+	ctx := make(map[string]cty.Value)
+	terraform.RootBlockReflectionInformation(ctx, sut)
+	assert.Contains(t, ctx, "mptf")
+	obj := ctx["mptf"]
+	assert.Equal(t, cty.StringVal("resource.azurerm_resource_group.example"), obj.GetAttr("block_address"))
+	assert.Equal(t, cty.StringVal("azurerm_resource_group.example"), obj.GetAttr("terraform_address"))
+	assert.Equal(t, cty.StringVal("resource"), obj.GetAttr("block_type"))
+	assert.Equal(t, cty.ListVal([]cty.Value{
+		cty.StringVal("azurerm_resource_group"),
+		cty.StringVal("example"),
+	}), obj.GetAttr("block_labels"))
+	assert.Equal(t, cty.ListVal([]cty.Value{
+		cty.StringVal("azurerm_resource_group"),
+		cty.StringVal("example"),
+	}), obj.GetAttr("block_labels"))
+	assert.Equal(t, cty.ObjectVal(map[string]cty.Value{
+		"file_name":    cty.StringVal("test"),
+		"start_line":   cty.NumberIntVal(2),
+		"start_column": cty.NumberIntVal(2),
+		"end_line":     cty.NumberIntVal(5),
+		"end_column":   cty.NumberIntVal(3),
+	}), obj.GetAttr("range"))
+	assert.Equal(t, cty.ObjectVal(map[string]cty.Value{
+		"key":      cty.StringVal(""),
+		"version":  cty.StringVal(""),
+		"source":   cty.StringVal(""),
+		"dir":      cty.StringVal(""),
+		"abs_dir":  cty.StringVal(""),
+		"git_hash": cty.StringVal(""),
+	}), obj.GetAttr("module"))
+}
+
 func TestNestedBlock_SameResourceBlockContainsSameNestedBlocksWithDifferentSchema(t *testing.T) {
 	code := `
 resource "fake_resource" this {

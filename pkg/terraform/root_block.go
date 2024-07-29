@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"github.com/Azure/golden"
 	"sort"
 	"strings"
 
@@ -30,9 +31,12 @@ var RootBlockReflectionInformation = func(v map[string]cty.Value, b *RootBlock) 
 			"git_hash": cty.StringVal(b.module.GitHash),
 		})
 	}
+	labels := golden.ToCtyValue(b.Labels)
 	v["mptf"] = cty.ObjectVal(map[string]cty.Value{
 		"block_address":     cty.StringVal(b.Address),
 		"terraform_address": cty.StringVal(blockAddressToRef(b.Address)),
+		"block_type":        cty.StringVal(b.Type),
+		"block_labels":      labels,
 		"module":            moduleObj,
 		"range": cty.ObjectVal(map[string]cty.Value{
 			"file_name":    cty.StringVal(b.Range().Filename),
