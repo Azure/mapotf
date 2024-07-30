@@ -63,8 +63,8 @@ func (m *TerraformModuleRef) LoadAbsDir() error {
 	return nil
 }
 
-func (r *TerraformModuleRef) toTerraformPkgType() terraform.TerraformModuleRef {
-	return terraform.TerraformModuleRef{
+func (r *TerraformModuleRef) toTerraformPkgType() terraform.ModuleRef {
+	return terraform.ModuleRef{
 		Key:     r.Key,
 		Source:  r.Source,
 		Dir:     r.Dir,

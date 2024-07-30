@@ -25,6 +25,8 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	"terraform": func(m *Module) *[]*RootBlock {
 		return &m.TerraformBlocks
 	},
+	"variable": func(m *Module) *[]*RootBlock { return &m.Variables },
+	"output":   func(m *Module) *[]*RootBlock { return &m.Outputs },
 }
 
 type Module struct {
@@ -36,6 +38,9 @@ type Module struct {
 	DataBlocks      []*RootBlock
 	ModuleBlocks    []*RootBlock
 	TerraformBlocks []*RootBlock
+	Variables       []*RootBlock
+	Outputs         []*RootBlock
+	Locals          []*RootBlock
 	Key             string
 	Source          string
 	Version         string
@@ -55,6 +60,10 @@ func (m *Module) loadConfig(cfg, filename string) error {
 	readBlocks := readFile.Body.(*hclsyntax.Body).Blocks
 	writeBlocks := writeFile.Body().Blocks()
 	for i, rb := range readBlocks {
+		if rb.Type == "locals" {
+			m.loadLocals(rb, writeBlocks[i])
+			continue
+		}
 		getter, want := wantedTypes[rb.Type]
 		if !want {
 			continue
@@ -66,7 +75,7 @@ func (m *Module) loadConfig(cfg, filename string) error {
 	return nil
 }
 
-type TerraformModuleRef struct {
+type ModuleRef struct {
 	Key     string `json:"Key"`
 	Source  string `json:"Source"`
 	Dir     string `json:"Dir"`
@@ -75,7 +84,7 @@ type TerraformModuleRef struct {
 	GitHash string
 }
 
-func LoadModule(mr TerraformModuleRef) (*Module, error) {
+func LoadModule(mr ModuleRef) (*Module, error) {
 	files, err := afero.ReadDir(fs.Fs, mr.AbsDir)
 	if err != nil {
 		return nil, err
@@ -152,4 +161,26 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 	}
 	writeFile.Body().AppendBlock(block)
 	writeFile.Body().AppendNewline()
+}
+
+func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
+	for attrName, attr := range rb.Body.Attributes {
+		rootBlock := NewBlock(m, &hclsyntax.Block{
+			Type:   "local",
+			Labels: []string{},
+			Body: &hclsyntax.Body{
+				Attributes: map[string]*hclsyntax.Attribute{
+					attrName: attr,
+				},
+				Blocks:   []*hclsyntax.Block{},
+				SrcRange: rb.TypeRange,
+				EndRange: rb.CloseBraceRange,
+			},
+			TypeRange:       rb.TypeRange,
+			LabelRanges:     rb.LabelRanges,
+			OpenBraceRange:  rb.OpenBraceRange,
+			CloseBraceRange: rb.CloseBraceRange,
+		}, wb)
+		m.Locals = append(m.Locals, rootBlock)
+	}
 }
