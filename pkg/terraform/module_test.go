@@ -23,7 +23,7 @@ data "fake_data" this {}
 	_ = afero.WriteFile(mockFs, "/main2.tf", []byte(`resource "fake_resource" that {}
 data "fake_data" that {}
 `), 0644)
-	sut, err := LoadModule(TerraformModuleRef{
+	sut, err := LoadModule(ModuleRef{
 		Dir:    ".",
 		AbsDir: "/",
 	})
@@ -45,7 +45,7 @@ func TestModule_SaveToDisk(t *testing.T) {
 	_ = afero.WriteFile(mockFs, filename, []byte(originalContent), 0644)
 
 	// Load the config file into a Module
-	m, err := LoadModule(TerraformModuleRef{
+	m, err := LoadModule(ModuleRef{
 		Dir:    "tmp",
 		AbsDir: "tmp",
 	})
@@ -80,7 +80,7 @@ func TestLoadModuleShouldLoadTerraformBlock(t *testing.T) {
     }
   }
 }`), 0644)
-	sut, err := LoadModule(TerraformModuleRef{
+	sut, err := LoadModule(ModuleRef{
 		Dir:    ".",
 		AbsDir: "/",
 	})
@@ -101,4 +101,38 @@ func TestLoadModuleShouldLoadTerraformBlock(t *testing.T) {
 	require.False(t, diag.HasErrors())
 	assert.Equal(t, cty.StringVal("mycorp/mycloud"), pc.GetAttr("source"))
 	assert.Equal(t, cty.StringVal("~> 1.0"), pc.GetAttr("version"))
+}
+
+func TestLoadModuleShouldLoadLocalBlocks(t *testing.T) {
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+
+	// Write a Terraform configuration file with local blocks
+	_ = afero.WriteFile(mockFs, "/main.tf", []byte(`
+locals {
+  local_var1 = "value1"
+  local_var2 = "value2"
+}
+`), 0644)
+
+	// Load the configuration file into a Module
+	sut, err := LoadModule(ModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	})
+	require.NoError(t, err)
+
+	// Verify that the local blocks are loaded correctly
+	assert.Len(t, sut.Locals, 2)
+	localVar1 := sut.Locals[0].Attributes["local_var1"]
+	localVar2 := sut.Locals[1].Attributes["local_var2"]
+
+	localVar1Value, diag := localVar1.Expr.Value(&hcl.EvalContext{})
+	require.False(t, diag.HasErrors())
+	assert.Equal(t, "value1", localVar1Value.AsString())
+
+	localVar2Value, diag := localVar2.Expr.Value(&hcl.EvalContext{})
+	require.False(t, diag.HasErrors())
+	assert.Equal(t, "value2", localVar2Value.AsString())
 }

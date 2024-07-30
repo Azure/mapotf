@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"github.com/terraform-linters/tflint/terraform/lang"
 	"strings"
 	"testing"
 
@@ -428,6 +429,34 @@ block "example" {
 			assert.Equal(t, formatHcl(c.expectedDest), formatHcl(patched))
 		})
 	}
+}
+
+func TestRewrite(t *testing.T) {
+	src := []byte(
+		`
+resource "azurerm_resource_group" this {
+
+}
+
+locals {
+	rg = azurerm_resource_group.this
+	direct = azurerm_resource_group.this.name
+	rg_name = local.rg.name
+}
+`,
+	)
+	f, diags := hclsyntax.ParseConfig(src, "", hcl.Pos{Line: 1, Column: 1})
+	require.False(t, diags.HasErrors())
+
+	hclsyntax.VisitAll(f.Body.(*hclsyntax.Body), func(node hclsyntax.Node) hcl.Diagnostics {
+		attr, ok := node.(*hclsyntax.Attribute)
+		if !ok {
+			return nil
+		}
+		refs, diag := lang.ReferencesInExpr(attr.Expr)
+		println(len(refs))
+		return diag
+	})
 }
 
 func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
