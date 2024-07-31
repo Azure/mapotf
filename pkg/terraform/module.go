@@ -1,15 +1,19 @@
 package terraform
 
 import (
-	"github.com/Azure/mapotf/pkg/backup"
-	"github.com/Azure/mapotf/pkg/fs"
-	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/spf13/afero"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/Azure/mapotf/pkg/backup"
+	"github.com/Azure/mapotf/pkg/fs"
+	"github.com/ahmetb/go-linq/v3"
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/heimdalr/dag"
+	"github.com/spf13/afero"
 )
 
 var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
@@ -45,6 +49,7 @@ type Module struct {
 	Source          string
 	Version         string
 	GitHash         string
+	BlockDag        *dag.DAG
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -115,8 +120,7 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 			return nil, err
 		}
 	}
-
-	return m, err
+	return m, m.buildDag()
 }
 
 func (m *Module) SaveToDisk() error {
@@ -166,7 +170,7 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 	for attrName, attr := range rb.Body.Attributes {
 		rootBlock := NewBlock(m, &hclsyntax.Block{
-			Type:   "local",
+			Type:   "locals",
 			Labels: []string{},
 			Body: &hclsyntax.Body{
 				Attributes: map[string]*hclsyntax.Attribute{
@@ -183,4 +187,28 @@ func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 		}, wb)
 		m.Locals = append(m.Locals, rootBlock)
 	}
+}
+
+func (m *Module) buildDag() error {
+	m.BlockDag = dag.NewDAG()
+	for _, b := range m.blocks() {
+		if err := m.BlockDag.AddVertexByID(b.dagAddress(), b); err != nil {
+			return fmt.Errorf("error when add block %s to dag: %w", b.Address, err)
+		}
+	}
+	for _, b := range m.blocks() {
+		if diag := hclsyntax.Walk(b.Block, newDependencyWalker(b, m.BlockDag)); diag.HasErrors() {
+			return fmt.Errorf("error when analyze references in block %s: %+v", b.Address, diag)
+		}
+	}
+	return nil
+}
+
+func (m *Module) blocks() []*RootBlock {
+	var blocks []*RootBlock
+	linq.From(m.TerraformBlocks).Concat(linq.From(m.Locals)).
+		Concat(linq.From(m.Outputs)).Concat(linq.From(m.Variables)).
+		Concat(linq.From(m.DataBlocks)).Concat(linq.From(m.ResourceBlocks)).
+		Concat(linq.From(m.ModuleBlocks)).ToSlice(&blocks)
+	return blocks
 }
