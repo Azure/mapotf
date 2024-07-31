@@ -1,10 +1,11 @@
 package terraform
 
 import (
-	"github.com/Azure/golden"
+	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
@@ -152,6 +153,42 @@ func (b *RootBlock) EvalContext() cty.Value {
 		v[k] = values
 	}
 	return cty.ObjectVal(v)
+}
+
+func (b *RootBlock) dagAddress() string {
+	switch b.Type {
+	case "resource":
+		{
+			return fmt.Sprintf("resource.%s.%s", b.Labels[0], b.Labels[1])
+		}
+	case "data":
+		{
+			return fmt.Sprintf("data.%s.%s", b.Labels[0], b.Labels[1])
+		}
+	case "locals":
+		{
+			for attrName, _ := range b.Attributes {
+				return fmt.Sprintf("local.%s", attrName)
+			}
+		}
+	case "module":
+		{
+			return fmt.Sprintf("module.%s", b.Labels[0])
+		}
+	case "variable":
+		{
+			return fmt.Sprintf("var.%s", b.Labels[0])
+		}
+	case "output":
+		{
+			return fmt.Sprintf("output.%s", b.Labels[0])
+		}
+	case "terraform":
+		{
+			return "terraform"
+		}
+	}
+	return ""
 }
 
 func attributes(rb *hclsyntax.Body, wb *hclwrite.Body) map[string]*Attribute {
