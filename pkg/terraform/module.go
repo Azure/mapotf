@@ -1,7 +1,6 @@
 package terraform
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,7 +11,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/heimdalr/dag"
 	"github.com/spf13/afero"
 )
 
@@ -49,7 +47,6 @@ type Module struct {
 	Source          string
 	Version         string
 	GitHash         string
-	BlockDag        *dag.DAG
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -120,7 +117,7 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 			return nil, err
 		}
 	}
-	return m, m.buildDag()
+	return m, nil
 }
 
 func (m *Module) SaveToDisk() error {
@@ -189,22 +186,7 @@ func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 	}
 }
 
-func (m *Module) buildDag() error {
-	m.BlockDag = dag.NewDAG()
-	for _, b := range m.blocks() {
-		if err := m.BlockDag.AddVertexByID(b.dagAddress(), b); err != nil {
-			return fmt.Errorf("error when add block %s to dag: %w", b.Address, err)
-		}
-	}
-	for _, b := range m.blocks() {
-		if diag := hclsyntax.Walk(b.Block, newDependencyWalker(b, m.BlockDag)); diag.HasErrors() {
-			return fmt.Errorf("error when analyze references in block %s: %+v", b.Address, diag)
-		}
-	}
-	return nil
-}
-
-func (m *Module) blocks() []*RootBlock {
+func (m *Module) Blocks() []*RootBlock {
 	var blocks []*RootBlock
 	linq.From(m.TerraformBlocks).Concat(linq.From(m.Locals)).
 		Concat(linq.From(m.Outputs)).Concat(linq.From(m.Variables)).
