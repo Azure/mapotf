@@ -23,14 +23,16 @@ type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
 	resourceBlocks map[string]*terraform.RootBlock
 	dataBlocks     map[string]*terraform.RootBlock
+	variableBlocks map[string]*terraform.RootBlock
+	localBlocks    map[string]*terraform.RootBlock
+	outputBlocks   map[string]*terraform.RootBlock
+	moduleBlocks   map[string]*terraform.RootBlock
+	terraformBlock *terraform.RootBlock
+	allRootBlocks  []*terraform.RootBlock
 	module         *terraform.Module
 }
 
 func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
-	module, err := terraform.LoadModule(m.toTerraformPkgType())
-	if err != nil {
-		return nil, err
-	}
 	cfg := &MetaProgrammingTFConfig{
 		BaseConfig: golden.NewBasicConfigFromArgs(golden.NewBaseConfigArgs{
 			Basedir:                  m.AbsDir,
@@ -41,12 +43,27 @@ func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hcl
 			Ctx:                      ctx,
 			IgnoreUnknownVariables:   true,
 		}),
-		resourceBlocks: groupByType(module.ResourceBlocks),
-		dataBlocks:     groupByType(module.DataBlocks),
-		module:         module,
 	}
-	//TODO: inject vars here
+	if err := cfg.reloadTerraformModule(m); err != nil {
+		return nil, err
+	}
 	return cfg, golden.InitConfig(cfg, hclBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) error {
+	module, err := terraform.LoadModule(m.toTerraformPkgType())
+	if err != nil {
+		return err
+	}
+	c.resourceBlocks = groupByAddress(module.ResourceBlocks)
+	c.dataBlocks = groupByAddress(module.DataBlocks)
+	c.moduleBlocks = groupByAddress(module.ModuleBlocks)
+	c.variableBlocks = groupByAddress(module.Variables)
+	c.outputBlocks = groupByAddress(module.Outputs)
+	c.localBlocks = groupByAddress(module.Locals)
+	c.allRootBlocks = module.Blocks()
+	c.module = module
+	return nil
 }
 
 func (c *MetaProgrammingTFConfig) Init(hclBlocks []*golden.HclBlock) error {
@@ -59,6 +76,22 @@ func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.RootBlock {
 
 func (c *MetaProgrammingTFConfig) DataBlocks() []*terraform.RootBlock {
 	return c.slice(c.dataBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) VariableBlocks() []*terraform.RootBlock {
+	return c.slice(c.variableBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) OutputBlocks() []*terraform.RootBlock {
+	return c.slice(c.outputBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) LocalBlocks() []*terraform.RootBlock {
+	return c.slice(c.localBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) ModuleBlocks() []*terraform.RootBlock {
+	return c.slice(c.moduleBlocks)
 }
 
 func (c *MetaProgrammingTFConfig) TerraformBlock() *terraform.RootBlock {
@@ -74,6 +107,21 @@ func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock
 	}
 	if strings.HasPrefix(address, "data.") {
 		return c.dataBlocks[address]
+	}
+	if strings.HasPrefix(address, "var.") {
+		return c.variableBlocks[address]
+	}
+	if strings.HasPrefix(address, "local.") {
+		return c.localBlocks[address]
+	}
+	if strings.HasPrefix(address, "output.") {
+		return c.outputBlocks[address]
+	}
+	if strings.HasPrefix(address, "module.") {
+		return c.moduleBlocks[address]
+	}
+	if address == "terraform" {
+		return c.terraformBlock
 	}
 	return nil
 }
@@ -103,6 +151,7 @@ func LoadMPTFHclBlocks(ignoreUnsupportedBlock bool, dir string) ([]*golden.HclBl
 		}
 		writeFile, _ := hclwrite.ParseConfig(content, filename, hcl.InitialPos)
 		readBlocks := readFile.Body.(*hclsyntax.Body).Blocks
+
 		writeBlocks := writeFile.Body().Blocks()
 		blocks = append(blocks, golden.AsHclBlocks(readBlocks, writeBlocks)...)
 	}
@@ -171,7 +220,7 @@ func (c *MetaProgrammingTFConfig) AddBlock(filename string, block *hclwrite.Bloc
 	c.module.AddBlock(filename, block)
 }
 
-func groupByType(blocks []*terraform.RootBlock) map[string]*terraform.RootBlock {
+func groupByAddress(blocks []*terraform.RootBlock) map[string]*terraform.RootBlock {
 	r := make(map[string]*terraform.RootBlock)
 	for _, b := range blocks {
 		r[b.Address] = b

@@ -17,7 +17,7 @@ var _ mptfBlock = &UpdateInPlaceTransform{}
 type UpdateInPlaceTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	TargetBlockAddress string `hcl:"target_block_address"`
+	TargetBlockAddress string `hcl:"target_block_address" validator:"required"`
 	updateBlock        *hclwrite.Block
 	targetBlock        *terraform.RootBlock
 }

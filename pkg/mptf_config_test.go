@@ -28,6 +28,41 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	assert.NotEmpty(t, sut.ResourceBlocks)
 }
 
+func TestMetaProgrammingTFConfigBlocks(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `
+			resource "fake_resource" "this" {}
+			data "fake_data" "this" {}
+			variable "fake_variable" {}
+			output "fake_output" {}
+			locals {
+				fake_local = "value"
+			}
+			module "fake_module" {
+				source = "./module"
+			}
+			terraform {
+				required_version = ">= 0.12"
+			}
+		`,
+	}))
+	defer stub.Reset()
+
+	sut, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+
+	assert.NotEmpty(t, sut.ResourceBlocks(), "resourceBlocks should not be empty")
+	assert.NotEmpty(t, sut.DataBlocks(), "dataBlocks should not be empty")
+	assert.NotEmpty(t, sut.VariableBlocks(), "variableBlocks should not be empty")
+	assert.NotEmpty(t, sut.OutputBlocks(), "outputBlocks should not be empty")
+	assert.NotEmpty(t, sut.LocalBlocks(), "localBlocks should not be empty")
+	assert.NotEmpty(t, sut.ModuleBlocks(), "moduleBlocks should not be empty")
+	assert.NotNil(t, sut.TerraformBlock(), "terraformBlock should not be nil")
+}
+
 func TestModulePathsWhenModulesJsonExists(t *testing.T) {
 	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/.terraform/modules/modules.json": `{
