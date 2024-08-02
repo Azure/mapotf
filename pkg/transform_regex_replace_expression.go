@@ -1,12 +1,13 @@
 package pkg
 
 import (
+	"regexp"
+
 	"github.com/Azure/golden"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"regexp"
 )
 
 var _ Transform = &RegexReplaceExpressionTransform{}
@@ -41,14 +42,15 @@ func (r *RegexReplaceExpressionTransform) applyRegexReplace(body *hclwrite.Body,
 	for name, attr := range body.Attributes() {
 		oldValue := attr.Expr().BuildTokens(nil).Bytes()
 		newValue := re.ReplaceAll(oldValue, []byte(r.Replacement))
-		if string(oldValue) != string(newValue) {
-			tokens, diag := hclsyntax.LexExpression(newValue, filename, hcl.InitialPos)
-			if diag.HasErrors() {
-				err = multierror.Append(err, diag)
-				continue
-			}
-			body.SetAttributeRaw(name, writerTokens(tokens))
+		if string(oldValue) == string(newValue) {
+			continue
 		}
+		tokens, diag := hclsyntax.LexExpression(newValue, filename, hcl.InitialPos)
+		if diag.HasErrors() {
+			err = multierror.Append(err, diag)
+			continue
+		}
+		body.SetAttributeRaw(name, writerTokens(tokens))
 	}
 
 	for _, block := range body.Blocks() {
