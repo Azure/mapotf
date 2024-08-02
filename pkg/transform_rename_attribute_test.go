@@ -377,25 +377,3 @@ transform "rename_attribute" this {
 		})
 	}
 }
-
-//func TestAttributeRegex(t *testing.T) {
-//	resourceType := "azurerm_resource_group"
-//	attribute := "location"
-//	regex := fmt.Sprintf(pkg.RenamePattern, resourceType, attribute)
-//	re := regexp.MustCompile(regex)
-//	inputs := []string{
-//		"azurerm_resource_group.this.location",
-//		"azurerm_resource_group.that.location",
-//		"azurerm_resource_group.this[0].location",
-//		`azurerm_resource_group.this[coalesce(var.index, "hello")].location`,
-//		"azurerm_resource_group.this.\nlocation",
-//		"azurerm_resource_group.this.\r\nlocation",
-//		"azurerm_resource_group.\nthis.location",
-//		"azurerm_resource_group.\r\nthis.location",
-//		"azurerm_resource_group.\nthis.\r\nlocation",
-//		"azurerm_resource_group.\r\nthis.\r\nlocation",
-//	}
-//	for _, input := range inputs {
-//		assert.MatchRegex(t, input, re)
-//	}
-//}
