@@ -5,7 +5,9 @@ go 1.22.5
 require (
 	github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4
 	github.com/ahmetb/go-linq/v3 v3.2.0
+	github.com/emirpasic/gods v1.18.1
 	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-playground/assert/v2 v2.2.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-getter/v2 v2.2.2
 	github.com/hashicorp/go-multierror v1.1.1
@@ -40,7 +42,6 @@ require (
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
