@@ -68,7 +68,7 @@ resource "fake_resource" this {
 			mptf: `
 transform "remove_block_content" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/second_nested_block"]
+  paths = ["nested_block.second_nested_block"]
 }
 `,
 			tfConfig: `
@@ -123,7 +123,7 @@ resource "fake_resource" this {
 			mptf: `
 transform "remove_block_content" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/attr"]
+  paths = ["nested_block.attr"]
 }
 `,
 			tfConfig: `
@@ -147,7 +147,7 @@ resource "fake_resource" this {
 			mptf: `
 transform "remove_block_content" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/attr"]
+  paths = ["nested_block.attr"]
 }
 `,
 			tfConfig: `
