@@ -25,7 +25,7 @@ func TestRemoveBlockContent(t *testing.T) {
 		{
 			desc: "singlePath",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block"]
 }
@@ -45,7 +45,7 @@ resource "fake_resource" this {
 		{
 			desc: "multiplePath",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block", "nested_block2"]
 }
@@ -66,7 +66,7 @@ resource "fake_resource" this {
 		{
 			desc: "deepNestedPath",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block.second_nested_block"]
 }
@@ -97,7 +97,7 @@ resource "fake_resource" this {
 		{
 			desc: "removeAttribute",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["attr"]
 }
@@ -121,7 +121,7 @@ resource "fake_resource" this {
 		{
 			desc: "removeAttributeInStaticNestedBlock",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block.attr"]
 }
@@ -145,7 +145,7 @@ resource "fake_resource" this {
 		{
 			desc: "removeAttributeInDynamicNestedBlock",
 			mptf: `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block.attr"]
 }
@@ -205,7 +205,7 @@ resource "fake_resource" this {
 
 func TestRemoveNestedBlock_mergeAfterRemove(t *testing.T) {
 	mptfCfg := `
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["identity"]
 }
@@ -220,7 +220,7 @@ transform "update_in_place" this {
       }
     }
   }
-  depends_on = [transform.remove_block_content.this]
+  depends_on = [transform.remove_block_element.this]
 }
 `
 	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{

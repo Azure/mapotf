@@ -1,6 +1,6 @@
 # Remove Block Content Transform Block
 
-The `remove_block_content` transform block is a tool in Terraform that allows you to remove specific content from existing blocks. This is useful when you need to clean up or modify configurations by removing unwanted nested blocks or attributes.
+The `remove_block_element` transform block is a tool in Terraform that allows you to remove specific content from existing blocks. This is useful when you need to clean up or modify configurations by removing unwanted nested blocks or attributes.
 
 ## Arguments
 
@@ -10,10 +10,10 @@ The `remove_block_content` transform block is a tool in Terraform that allows yo
 
 ## Example
 
-Here is an example of how to use the `remove_block_content` transform block to remove nested blocks and attributes from a resource:
+Here is an example of how to use the `remove_block_element` transform block to remove nested blocks and attributes from a resource:
 
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths                = ["nested_block", "nested_block2/attr"]
 }
@@ -23,13 +23,13 @@ In this example, the `target_block_address` is set to the block address of the `
 
 ## Detailed Behavior
 
-The `remove_block_content` transform block works by traversing the specified paths and removing the corresponding content from the target block. The paths can point to both nested blocks and attributes. If a path points to a nested block, the entire block is removed. If a path points to an attribute, only the attribute is removed.
+The `remove_block_element` transform block works by traversing the specified paths and removing the corresponding content from the target block. The paths can point to both nested blocks and attributes. If a path points to a nested block, the entire block is removed. If a path points to an attribute, only the attribute is removed.
 
 ### Example Scenarios
 
 1. **Removing a Single Nested Block**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths                = ["nested_block"]
 }
@@ -51,7 +51,7 @@ resource "fake_resource" this {
 
 2. **Removing Multiple Nested Blocks**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block", "nested_block2"]
 }
@@ -74,7 +74,7 @@ resource "fake_resource" this {
 
 3. **Removing Deeply Nested Blocks**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block/second_nested_block"]
 }
@@ -105,7 +105,7 @@ resource "fake_resource" this {
 
 4. **Removing Attributes**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["attr"]
 }
@@ -131,7 +131,7 @@ resource "fake_resource" this {
 
 5. **Removing Attributes in Nested Blocks**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block/attr"]
 }
@@ -156,7 +156,7 @@ resource "fake_resource" this {
 
 6. **Removing Attributes in Dynamic Nested Blocks**:
 ```terraform
-transform "remove_block_content" this {
+transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
   paths = ["nested_block/attr"]
 }
@@ -185,4 +185,4 @@ resource "fake_resource" this {
 }
 ```
 
-In summary, the `remove_block_content` transform block is a versatile tool for cleaning up and modifying Terraform configurations by removing unwanted nested blocks and attributes.
+In summary, the `remove_block_element` transform block is a versatile tool for cleaning up and modifying Terraform configurations by removing unwanted nested blocks and attributes.

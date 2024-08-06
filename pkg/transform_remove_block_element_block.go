@@ -26,7 +26,7 @@ func (r *RemoveBlockContentBlockTransform) isReservedField(name string) bool {
 }
 
 func (r *RemoveBlockContentBlockTransform) Type() string {
-	return "remove_block_content"
+	return "remove_block_element"
 }
 
 func (r *RemoveBlockContentBlockTransform) Apply() error {
