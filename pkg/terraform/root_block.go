@@ -72,24 +72,45 @@ type RootBlock struct {
 func (b *RootBlock) RemoveContent(path string) {
 	unlock := lockBlockFile(b)
 	defer unlock()
-	segs := strings.Split(path, "/")
-	_, ok := b.Attributes[segs[0]]
+	b.removeContent(b.WriteBlock, path)
+}
+
+func (b *RootBlock) removeContent(wb *hclwrite.Block, path string) {
+	segs := strings.Split(path, ".")
+	var nbs []*hclwrite.Block
+	if wb.Type() == "dynamic" {
+		nbs = wb.Body().Blocks()
+	}
+	for _, nb := range nbs {
+		if nb.Type() != "content" {
+			continue
+		}
+		wb = nb
+		break
+	}
+	_, ok := wb.Body().Attributes()[segs[0]]
 	if ok {
-		b.WriteBody().RemoveAttribute(segs[0])
+		wb.Body().RemoveAttribute(segs[0])
 		return
 	}
-	nbs, ok := b.NestedBlocks[segs[0]]
-	if !ok {
+
+	nbs = make([]*hclwrite.Block, 0)
+	for _, nb := range wb.Body().Blocks() {
+		if nb.Type() == segs[0] || (nb.Type() == "dynamic" && nb.Labels()[0] == segs[0]) {
+			nbs = append(nbs, nb)
+		}
+	}
+	if len(nbs) == 0 {
 		return
 	}
 	if len(segs) == 1 {
 		for _, nb := range nbs {
-			b.WriteBody().RemoveBlock(nb.selfWriteBlock)
+			wb.Body().RemoveBlock(nb)
 		}
 		return
 	}
 	for _, nb := range nbs {
-		nb.RemoveContent(strings.Join(segs[1:], "/"))
+		b.removeContent(nb, strings.Join(segs[1:], "/"))
 	}
 }
 
