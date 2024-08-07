@@ -8,6 +8,8 @@ github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4 h1:bw4+5MxSk7nqJ+7TYL
 github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
 github.com/Azure/golden v0.0.0-20240807022525-13041ab3416e h1:RN3xEemyc3ZI64y7qKsd+c56bEW7XJwij7Ew/FhZiOE=
 github.com/Azure/golden v0.0.0-20240807022525-13041ab3416e/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
+github.com/Azure/golden v0.0.0-20240807125530-35d893709a68 h1:nX6eQuopmjM3xPsOU5z4j7wAtlpV488SNa0m1YBRa14=
+github.com/Azure/golden v0.0.0-20240807125530-35d893709a68/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
