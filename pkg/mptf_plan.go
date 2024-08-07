@@ -3,7 +3,6 @@ package pkg
 import (
 	"fmt"
 	"github.com/Azure/golden"
-	"github.com/hashicorp/go-multierror"
 	"strings"
 )
 
@@ -37,21 +36,18 @@ func (m *MetaProgrammingTFPlan) String() string {
 func (m *MetaProgrammingTFPlan) Apply() error {
 	var err error
 
-	for _, t := range m.Transforms {
-		if err = golden.Decode(t); err != nil {
-			err = multierror.Append(err, fmt.Errorf("%s(%s) decode error: %+v", t.Address(), t.HclBlock().Range().String(), err))
+	if err = golden.Traverse[Transform](m.c.BaseConfig, func(b Transform) error {
+		if err := golden.Decode(b); err != nil {
+			return fmt.Errorf("%s(%s) decode error: %+v", b.Address(), b.HclBlock().Range().String(), err)
 		}
-		if err != nil {
-			return err
-		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
-	for _, t := range m.Transforms {
-		if applyErr := t.Apply(); applyErr != nil {
-			err = multierror.Append(err, applyErr)
-		}
-	}
-	if err != nil {
+	if err = golden.Traverse[Transform](m.c.BaseConfig, func(b Transform) error {
+		return b.Apply()
+	}); err != nil {
 		return fmt.Errorf("errors applying transforms: %+v", err)
 	}
 	if err = m.c.SaveToDisk(); err != nil {
