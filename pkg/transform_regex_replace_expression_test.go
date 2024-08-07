@@ -231,3 +231,11 @@ func TestAttributeRegex(t *testing.T) {
 		assert.Equal(t, wanted[i], replaced)
 	}
 }
+
+func TestSplatMatch(t *testing.T) {
+	const pattern = "azurerm_linux_virtual_machine_scale_set\\.(\\s*\\r?\\n\\s*)?(\\w+)((?:\\[\\s*[^]]+\\s*\\]|\\.\\*)?(\\.))(\\s*\\r?\\n\\s*)?gallery_applications((?:\\[\\s*[^]]+\\s*\\]|\\.\\*)?(\\.))(\\s*\\r?\\n\\s*)?package_reference_id"
+	input := "azurerm_linux_virtual_machine_scale_set.this[0].gallery_applications.*.package_reference_id"
+	r := regexp.MustCompile(pattern)
+	actual := r.ReplaceAllString(input, "azurerm_linux_virtual_machine_scale_set.${1}${2}${3}${5}gallery_application${6}${8}version_id")
+	assert.Equal(t, "azurerm_linux_virtual_machine_scale_set.this[0].gallery_application.*.version_id", actual)
+}

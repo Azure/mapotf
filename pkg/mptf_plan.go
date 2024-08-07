@@ -36,6 +36,7 @@ func (m *MetaProgrammingTFPlan) String() string {
 
 func (m *MetaProgrammingTFPlan) Apply() error {
 	var err error
+
 	for _, t := range m.Transforms {
 		if err = golden.Decode(t); err != nil {
 			err = multierror.Append(err, fmt.Errorf("%s(%s) decode error: %+v", t.Address(), t.HclBlock().Range().String(), err))

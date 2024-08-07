@@ -3,7 +3,7 @@ module github.com/Azure/mapotf
 go 1.22.5
 
 require (
-	github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4
+	github.com/Azure/golden v0.0.0-20240807022525-13041ab3416e
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/emirpasic/gods v1.18.1
 	github.com/go-git/go-git/v5 v5.12.0
