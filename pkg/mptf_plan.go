@@ -35,8 +35,14 @@ func (m *MetaProgrammingTFPlan) String() string {
 
 func (m *MetaProgrammingTFPlan) Apply() error {
 	var err error
-
+	addresses := make(map[string]struct{})
+	for _, transform := range m.Transforms {
+		addresses[transform.Address()] = struct{}{}
+	}
 	if err = golden.Traverse[Transform](m.c.BaseConfig, func(b Transform) error {
+		if _, ok := addresses[b.Address()]; !ok {
+			return nil
+		}
 		if err := golden.Decode(b); err != nil {
 			return fmt.Errorf("%s(%s) decode error: %+v", b.Address(), b.HclBlock().Range().String(), err)
 		}
@@ -46,6 +52,9 @@ func (m *MetaProgrammingTFPlan) Apply() error {
 	}
 
 	if err = golden.Traverse[Transform](m.c.BaseConfig, func(b Transform) error {
+		if _, ok := addresses[b.Address()]; !ok {
+			return nil
+		}
 		return b.Apply()
 	}); err != nil {
 		return fmt.Errorf("errors applying transforms: %+v", err)
