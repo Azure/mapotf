@@ -362,6 +362,7 @@ transform "rename_block_element" this {
 			stub := gostub.Stub(&filesystem.Fs, fs)
 			defer stub.Reset()
 			hclBlocks, err := pkg.LoadMPTFHclBlocks(false, "/cfg")
+			require.NoError(t, err)
 			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
 				Dir:    "/",
 				AbsDir: "/",
@@ -888,6 +889,7 @@ resource "fake_resource" this {
 			stub := gostub.Stub(&filesystem.Fs, fs)
 			defer stub.Reset()
 			hclBlocks, err := pkg.LoadMPTFHclBlocks(false, "/cfg")
+			require.NoError(t, err)
 			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
 				Dir:    "/",
 				AbsDir: "/",

@@ -4,10 +4,6 @@ codeberg.org/6543/go-yaml2json v1.0.0 h1:heGqo9VEi7gY2yNqjj7X4ADs5nzlFIbGsJtgYDL
 codeberg.org/6543/go-yaml2json v1.0.0/go.mod h1:mz61q14LWF4ZABrgMEDMmk3t9dPi6zgR1uBh2VKV2RQ=
 dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
-github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4 h1:bw4+5MxSk7nqJ+7TYLW5OzU970/68i7Z0TZyWeeVAvY=
-github.com/Azure/golden v0.0.0-20240724054028-6928c9df4fd4/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
-github.com/Azure/golden v0.0.0-20240807022525-13041ab3416e h1:RN3xEemyc3ZI64y7qKsd+c56bEW7XJwij7Ew/FhZiOE=
-github.com/Azure/golden v0.0.0-20240807022525-13041ab3416e/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
 github.com/Azure/golden v0.0.0-20240807125530-35d893709a68 h1:nX6eQuopmjM3xPsOU5z4j7wAtlpV488SNa0m1YBRa14=
 github.com/Azure/golden v0.0.0-20240807125530-35d893709a68/go.mod h1:txtVd/xX4CFV17iwYE/BNV7Vv2EsRPDXmXc6yPXSvvE=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
@@ -372,10 +368,6 @@ github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1F
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/terraform-linters/tflint v0.52.0 h1:ZHzquuGCTpDXQUoZ8XCTnBeogZ9+V7fzS7iKv8GaUws=
-github.com/terraform-linters/tflint v0.52.0/go.mod h1:W2gKr4g7zdG8zL+7xIYpKCkKtcQbdWP+hDNtUuJju4s=
-github.com/terraform-linters/tflint-plugin-sdk v0.20.0 h1:e7vfAI2rvAtClPx+eY0fd7kvmY0plVRDycgSQL9UQ4o=
-github.com/terraform-linters/tflint-plugin-sdk v0.20.0/go.mod h1:ySt9h+KoEhCM/zjjigIZC2J2Tboyzf53437PAYjrKxc=
 github.com/timandy/routine v1.1.3 h1:lK7ix0Oyprtuw301bNle7WZw9V8eY680mjT9r5rmBLA=
 github.com/timandy/routine v1.1.3/go.mod h1:XWkchlwnVxH+yRwA/yxSuyzxqiaNuBUcFUHDglX56SY=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=

@@ -188,7 +188,7 @@ func (b *RootBlock) dagAddress() string {
 		}
 	case "locals":
 		{
-			for attrName, _ := range b.Attributes {
+			for attrName := range b.Attributes {
 				return fmt.Sprintf("local.%s", attrName)
 			}
 		}
