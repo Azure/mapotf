@@ -53,7 +53,6 @@ func (nb *NestedBlock) RemoveContent(path string) {
 	for _, myNb := range myNbs {
 		block.Body().RemoveBlock(myNb.selfWriteBlock)
 	}
-	return
 }
 
 func (nb *NestedBlock) SetAttributeRaw(name string, tokens hclwrite.Tokens) {

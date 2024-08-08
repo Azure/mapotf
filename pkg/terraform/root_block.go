@@ -1,7 +1,6 @@
 package terraform
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -174,42 +173,6 @@ func (b *RootBlock) EvalContext() cty.Value {
 		v[k] = values
 	}
 	return cty.ObjectVal(v)
-}
-
-func (b *RootBlock) dagAddress() string {
-	switch b.Type {
-	case "resource":
-		{
-			return fmt.Sprintf("resource.%s.%s", b.Labels[0], b.Labels[1])
-		}
-	case "data":
-		{
-			return fmt.Sprintf("data.%s.%s", b.Labels[0], b.Labels[1])
-		}
-	case "locals":
-		{
-			for attrName := range b.Attributes {
-				return fmt.Sprintf("local.%s", attrName)
-			}
-		}
-	case "module":
-		{
-			return fmt.Sprintf("module.%s", b.Labels[0])
-		}
-	case "variable":
-		{
-			return fmt.Sprintf("var.%s", b.Labels[0])
-		}
-	case "output":
-		{
-			return fmt.Sprintf("output.%s", b.Labels[0])
-		}
-	case "terraform":
-		{
-			return "terraform"
-		}
-	}
-	return ""
 }
 
 func attributes(rb *hclsyntax.Body, wb *hclwrite.Body) map[string]*Attribute {
