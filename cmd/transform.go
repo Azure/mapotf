@@ -71,11 +71,11 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 		mptfDirs = append(mptfDirs, localizedDir)
 	}
 	for _, mptfDir := range mptfDirs {
-		hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
-		if err != nil {
-			return nil, err
-		}
 		for _, tfDir := range moduleRefs {
+			hclBlocks, err := pkg.LoadMPTFHclBlocks(false, mptfDir)
+			if err != nil {
+				return nil, err
+			}
 			err = applyTransform(tfDir, hclBlocks, varFlags, ctx)
 			if err != nil {
 				return nil, err
