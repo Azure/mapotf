@@ -3,7 +3,7 @@ module github.com/Azure/mapotf
 go 1.22.5
 
 require (
-	github.com/Azure/golden v0.0.0-20240807125530-35d893709a68
+	github.com/Azure/golden v0.0.0-20240820025702-df7eb0ff9702
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/assert/v2 v2.2.0
@@ -70,7 +70,7 @@ require (
 	github.com/hashicorp/packer-plugin-sdk v0.5.3 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/hashicorp/vault/api v1.10.0 // indirect
-	github.com/heimdalr/dag v1.4.0 // indirect
+	github.com/heimdalr/dag v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
@@ -110,7 +110,7 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/timandy/routine v1.1.3 // indirect
+	github.com/timandy/routine v1.1.4 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.3 // indirect
@@ -118,9 +118,9 @@ require (
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
