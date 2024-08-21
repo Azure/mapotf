@@ -11,9 +11,10 @@ import (
 var _ Transform = &RenameAttributeOrNestedBlockTransform{}
 
 type Rename struct {
-	ResourceType  string   `hcl:"resource_type"`
-	AttributePath []string `hcl:"attribute_path" validator:"required"`
-	NewName       string   `hcl:"new_name" validator:"required"`
+	ResourceType            string   `hcl:"resource_type"`
+	AttributePath           []string `hcl:"attribute_path" validator:"required"`
+	NewName                 string   `hcl:"new_name" validator:"required"`
+	RenameOnlyNewNameAbsent bool     `hcl:"rename_only_new_name_absent,optional" default:"false"`
 }
 
 type RenameAttributeOrNestedBlockTransform struct {
@@ -47,17 +48,19 @@ func (r *RenameAttributeOrNestedBlockTransform) applyRename(rename Rename, cfg *
 			matchedBlocks = append(matchedBlocks, b)
 		}
 	}
-	r.rename(castBlockSlice(matchedBlocks), rename.AttributePath, rename.NewName)
+	r.rename(castBlockSlice(matchedBlocks), rename.AttributePath, rename.NewName, rename.RenameOnlyNewNameAbsent)
 }
 
-func (r *RenameAttributeOrNestedBlockTransform) rename(blocks []terraform.Block, attributePath []string, newName string) {
+func (r *RenameAttributeOrNestedBlockTransform) rename(blocks []terraform.Block, attributePath []string, newName string, renameOnlyNewNameAbsent bool) {
 	if len(attributePath) == 1 {
 		old := attributePath[0]
 		for _, b := range blocks {
 			body := b.WriteBody()
 			attr, ok := body.Attributes()[old]
 			if ok {
-				body.SetAttributeRaw(newName, attr.Expr().BuildTokens(nil))
+				if _, newNameExist := body.Attributes()[newName]; !newNameExist || !renameOnlyNewNameAbsent {
+					body.SetAttributeRaw(newName, attr.Expr().BuildTokens(nil))
+				}
 				body.RemoveAttribute(old)
 				continue
 			}
@@ -76,7 +79,7 @@ func (r *RenameAttributeOrNestedBlockTransform) rename(blocks []terraform.Block,
 		if !ok {
 			continue
 		}
-		r.rename(castBlockSlice(nestedBlocks), attributePath[1:], newName)
+		r.rename(castBlockSlice(nestedBlocks), attributePath[1:], newName, false)
 	}
 }
 

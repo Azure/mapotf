@@ -351,6 +351,32 @@ transform "rename_block_element" this {
 			tfCfg:       resourceGroupDataSourceTf,
 			expectedHCL: resourceGroupDataSourceTf,
 		},
+		{
+			desc: "Rename attribute only if new name is absent",
+			cfg: `
+transform "rename_block_element" this {
+	rename {
+		resource_type              = "azurerm_kubernetes_cluster"
+		attribute_path             = ["old_name"]
+		new_name                   = "name"
+		rename_only_new_name_absent = true
+	}
+}
+`,
+			tfCfg: `
+resource "azurerm_kubernetes_cluster" "example" {
+  old_name = "example-aks"
+  name     = "example-aks1"
+  location = azurerm_resource_group.example.location
+}
+`,
+			expectedHCL: `
+resource "azurerm_kubernetes_cluster" "example" {
+  name     = "example-aks1"
+  location = azurerm_resource_group.example.location
+}
+`,
+		},
 	}
 
 	for _, c := range cases {
