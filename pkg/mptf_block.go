@@ -23,10 +23,11 @@ func decodeAsStringBlock(u mptfBlock, dest *hclwrite.Block, src *golden.HclBlock
 		if err != nil {
 			return err
 		}
-		if value.Type() != cty.String {
+		valueType := value.Type()
+		if valueType != cty.String {
 			value, err = convert.Convert(value, cty.String)
 			if err != nil {
-				return fmt.Errorf("cannot convert value to string, got %s", value.Type().FriendlyName())
+				return fmt.Errorf("cannot convert value to string, got: %s", valueType.FriendlyName())
 			}
 		}
 		tokens, err := stringToHclWriteTokens(value.AsString())

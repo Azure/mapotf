@@ -56,9 +56,10 @@ func (r *RenameAttributeOrNestedBlockTransform) rename(blocks []terraform.Block,
 		old := attributePath[0]
 		for _, b := range blocks {
 			body := b.WriteBody()
-			attr, ok := body.Attributes()[old]
+			attributes := body.Attributes()
+			attr, ok := attributes[old]
 			if ok {
-				if _, newNameExist := body.Attributes()[newName]; !newNameExist || !renameOnlyNewNameAbsent {
+				if _, newNameExist := attributes[newName]; !newNameExist || !renameOnlyNewNameAbsent {
 					body.SetAttributeRaw(newName, attr.Expr().BuildTokens(nil))
 				}
 				body.RemoveAttribute(old)
