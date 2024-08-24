@@ -136,6 +136,42 @@ func TestNewBlockTransform_DecodeHybridNestedBlock(t *testing.T) {
 	assert.Equal(t, `"John"`, strings.TrimSpace(string(blocks[1].Body().Attributes()["name"].Expr().BuildTokens(nil).Bytes())))
 }
 
+func TestNewBlockTransform_NewBlockWithForEach(t *testing.T) {
+	code := `transform "new_block" test {
+	new_block_type = "resource"
+	filename = "main.tf"
+	labels = ["fake_resource", "foo"]
+	asstring {
+	  for_each = "var.for_each"
+	}
+}`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{}))
+	defer stub.Reset()
+	readFile, diag := hclsyntax.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	err = plan.Apply()
+	require.NoError(t, err)
+	after, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+	expected := `resource "fake_resource" "foo" {
+  for_each = var.for_each
+}
+
+`
+	actual := string(after)
+	assert.Equal(t, expected, actual)
+}
+
 func TestNewBlockTransform_DecodeTwiceShouldGotCorrectLabels(t *testing.T) {
 	code := `transform "new_block" test {
 	new_block_type = "variable"

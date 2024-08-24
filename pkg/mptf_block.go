@@ -10,15 +10,8 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-type mptfBlock interface {
-	isReservedField(name string) bool
-}
-
-func decodeAsStringBlock(u mptfBlock, dest *hclwrite.Block, src *golden.HclBlock, depth int, context *hcl.EvalContext) error {
+func decodeAsStringBlock(dest *hclwrite.Block, src *golden.HclBlock, depth int, context *hcl.EvalContext) error {
 	for n, attribute := range src.Attributes() {
-		if u.isReservedField(n) && depth == 0 {
-			continue
-		}
 		value, err := attribute.Value(context)
 		if err != nil {
 			return err
@@ -38,11 +31,8 @@ func decodeAsStringBlock(u mptfBlock, dest *hclwrite.Block, src *golden.HclBlock
 	}
 	for _, b := range src.NestedBlocks() {
 		blockType := b.Type
-		if u.isReservedField(blockType) && depth == 0 {
-			continue
-		}
 		newNestedBlock := dest.Body().AppendNewBlock(blockType, b.Labels)
-		if err := decodeAsStringBlock(u, newNestedBlock, b, depth+1, context); err != nil {
+		if err := decodeAsStringBlock(newNestedBlock, b, depth+1, context); err != nil {
 			return err
 		}
 	}

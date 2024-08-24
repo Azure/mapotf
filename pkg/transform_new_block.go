@@ -12,7 +12,6 @@ import (
 
 var _ golden.ApplyBlock = &NewBlockTransform{}
 var _ golden.CustomDecode = &NewBlockTransform{}
-var _ mptfBlock = &NewBlockTransform{}
 
 type NewBlockTransform struct {
 	*golden.BaseBlock
@@ -21,19 +20,6 @@ type NewBlockTransform struct {
 	FileName      string   `hcl:"filename" validate:"endswith=.tf"`
 	Labels        []string `hcl:"labels,optional"`
 	newWriteBlock *hclwrite.Block
-}
-
-func (n *NewBlockTransform) isReservedField(name string) bool {
-	reserved := map[string]struct{}{
-		"new_block_type": {},
-		"for_each":       {},
-		"asraw":          {},
-		"asstring":       {},
-		"labels":         {},
-		"filename":       {},
-	}
-	_, ok := reserved[name]
-	return ok
 }
 
 func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalContext) error {
@@ -67,7 +53,7 @@ func (n *NewBlockTransform) Decode(block *golden.HclBlock, context *hcl.EvalCont
 			continue
 		}
 		if b.Type == "asstring" {
-			if err := decodeAsStringBlock(n, n.newWriteBlock, b, 0, context); err != nil {
+			if err = decodeAsStringBlock(n.newWriteBlock, b, 0, context); err != nil {
 				return err
 			}
 			continue

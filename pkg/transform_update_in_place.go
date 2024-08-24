@@ -12,7 +12,6 @@ import (
 
 var _ Transform = &UpdateInPlaceTransform{}
 var _ golden.CustomDecode = &UpdateInPlaceTransform{}
-var _ mptfBlock = &UpdateInPlaceTransform{}
 
 type UpdateInPlaceTransform struct {
 	*golden.BaseBlock
@@ -52,7 +51,7 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 			continue
 		}
 		if b.Type == "asstring" {
-			if err := decodeAsStringBlock(u, u.updateBlock, b, 0, context); err != nil {
+			if err = decodeAsStringBlock(u.updateBlock, b, 0, context); err != nil {
 				return err
 			}
 			continue
@@ -97,17 +96,6 @@ func (u *UpdateInPlaceTransform) String() string {
 		panic(err.Error())
 	}
 	return string(str)
-}
-
-func (u *UpdateInPlaceTransform) isReservedField(name string) bool {
-	reserved := map[string]struct{}{
-		"target_block_address": {},
-		"for_each":             {},
-		"asraw":                {},
-		"asstring":             {},
-	}
-	_, ok := reserved[name]
-	return ok
 }
 
 // Copy from https://github.com/hashicorp/hcl/blob/v2.20.1/hclwrite/parser.go#L478-L517

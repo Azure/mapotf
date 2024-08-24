@@ -7,22 +7,12 @@ import (
 )
 
 var _ Transform = &RemoveBlockContentBlockTransform{}
-var _ mptfBlock = &RemoveBlockContentBlockTransform{}
 
 type RemoveBlockContentBlockTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	TargetBlockAddress string   `hcl:"target_block_address"`
 	Paths              []string `hcl:"paths"`
-}
-
-func (r *RemoveBlockContentBlockTransform) isReservedField(name string) bool {
-	reserved := map[string]struct{}{
-		"target_block_address": {},
-		"for_each":             {},
-	}
-	_, ok := reserved[name]
-	return ok
 }
 
 func (r *RemoveBlockContentBlockTransform) Type() string {
