@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/Azure/golden"
 	"github.com/hashicorp/go-multierror"
@@ -40,12 +41,12 @@ func (r *RegexReplaceExpressionTransform) Apply() error {
 func (r *RegexReplaceExpressionTransform) applyRegexReplace(body *hclwrite.Body, filename string, re *regexp.Regexp) error {
 	var err error
 	for name, attr := range body.Attributes() {
-		oldValue := attr.Expr().BuildTokens(nil).Bytes()
-		newValue := re.ReplaceAll(oldValue, []byte(r.Replacement))
-		if string(oldValue) == string(newValue) {
+		oldValue := strings.TrimSpace(string(attr.Expr().BuildTokens(nil).Bytes()))
+		newValue := re.ReplaceAllString(oldValue, r.Replacement)
+		if oldValue == newValue {
 			continue
 		}
-		tokens, diag := hclsyntax.LexExpression(newValue, filename, hcl.InitialPos)
+		tokens, diag := hclsyntax.LexExpression([]byte(newValue), filename, hcl.InitialPos)
 		if diag.HasErrors() {
 			err = multierror.Append(err, diag)
 			continue
