@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/mapotf/cmd"
 )
 
-// TODO: investigate dynamic merge with dynamic
 func main() {
 	mptfArgs, nonMptfArgs := cmd.FilterArgs(os.Args)
 	os.Args = mptfArgs

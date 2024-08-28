@@ -1,11 +1,12 @@
 package pkg
 
 import (
+	"strings"
+
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"strings"
 )
 
 var _ Transform = &RenameAttributeOrNestedBlockTransform{}

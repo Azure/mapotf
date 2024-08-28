@@ -52,7 +52,7 @@ func replFunc(tfDir, mptfDir *string) func(c *cobra.Command, args []string) erro
 		if err != nil {
 			return err
 		}
-		mod, err := pkg.NewTerraformModuleRef(".", "", "", "")
+		mod, err := pkg.NewTerraformModuleRef(*tfDir, "", "", "")
 		if err != nil {
 			return err
 		}
