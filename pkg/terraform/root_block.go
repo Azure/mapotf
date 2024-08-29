@@ -109,7 +109,7 @@ func (b *RootBlock) removeContent(wb *hclwrite.Block, path string) {
 		return
 	}
 	for _, nb := range nbs {
-		b.removeContent(nb, strings.Join(segs[1:], "/"))
+		b.removeContent(nb, strings.Join(segs[1:], "."))
 	}
 }
 

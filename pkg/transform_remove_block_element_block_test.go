@@ -259,3 +259,53 @@ resource "fake_resource" this {
 	actual := formatHcl(string(after))
 	assert.Equal(t, expected, actual)
 }
+
+func TestRemoveContent_MultipleLevel(t *testing.T) {
+	mptf := `
+transform "remove_block_element" this {
+  target_block_address = "resource.fake_resource.this"
+  paths = ["nested_block.second_nested_block.attr"]
+}
+`
+	tfConfig := `
+resource "fake_resource" this {
+  nested_block {
+    second_nested_block {
+      attr = "hello"
+    }
+  }
+}
+`
+	expected := `
+resource "fake_resource" this {
+  nested_block {
+    second_nested_block {
+    }
+  }
+}
+`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": tfConfig,
+	}))
+	defer stub.Reset()
+
+	readFile, diag := hclsyntax.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	err = plan.Apply()
+	require.NoError(t, err)
+	after, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+	expectedFormatted := formatHcl(expected)
+	actualFormatted := formatHcl(string(after))
+	assert.Equal(t, expectedFormatted, actualFormatted)
+}
