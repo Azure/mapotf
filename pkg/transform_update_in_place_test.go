@@ -430,59 +430,6 @@ block "example" {
 	}
 }
 
-//func TestRewrite(t *testing.T) {
-//	src := []byte(
-//		`
-//resource "azurerm_resource_group" this {
-//
-//}
-//
-//data "azurerm_client_config" "this" {
-//	count = 1
-//}
-//
-//module a {
-//}
-//
-//locals {
-//	rg = azurerm_resource_group.this
-//	direct = azurerm_resource_group.this.name
-//	rg_name = local.rg.name
-//	subscription_id = data.azurerm_client_config.this[0].subscription_id
-//	mod_name = module.a.name
-//}
-//`,
-//	)
-//	f, diags := hclsyntax.ParseConfig(src, "", hcl.Pos{Line: 1, Column: 1})
-//	require.False(t, diags.HasErrors())
-//
-//	hclsyntax.VisitAll(f.Body.(*hclsyntax.Body), func(node hclsyntax.Node) hcl.Diagnostics {
-//		attr, ok := node.(*hclsyntax.Attribute)
-//		if !ok {
-//			return nil
-//		}
-//		refs, diag := lang.ReferencesInExpr(attr.Expr)
-//		for _, ref := range refs {
-//			var i any = ref.Subject
-//			switch v := i.(type) {
-//			case addrs.Resource:
-//				{
-//					println(v.Name)
-//				}
-//			case addrs.ModuleCallInstanceOutput:
-//				{
-//					n := v.String()
-//					println(n)
-//				}
-//			default:
-//
-//			}
-//		}
-//		println(len(refs))
-//		return diag
-//	})
-//}
-
 func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
 	readFile, diag := hclsyntax.ParseConfig([]byte(code), "test.hcl", hcl.InitialPos)
 	require.Falsef(t, diag.HasErrors(), diag.Error())

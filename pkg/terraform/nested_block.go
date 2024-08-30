@@ -17,6 +17,7 @@ type NestedBlock struct {
 	selfWriteBlock *hclwrite.Block
 	WriteBlock     *hclwrite.Block
 	ForEach        *Attribute
+	Iterator       *Attribute
 	Attributes     map[string]*Attribute
 	NestedBlocks   NestedBlocks
 }
@@ -94,6 +95,9 @@ func (nb *NestedBlock) EvalContext() cty.Value {
 	if nb.ForEach != nil {
 		v["for_each"] = cty.StringVal(nb.ForEach.String())
 	}
+	if nb.Iterator != nil {
+		v["iterator"] = cty.StringVal(nb.Iterator.String())
+	}
 	for k, nbv := range nb.NestedBlocks.Values() {
 		v[k] = nbv
 	}
@@ -110,7 +114,7 @@ func (nbs NestedBlocks) Values() map[string]cty.Value {
 }
 
 func dynamicNestedBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *NestedBlock {
-	return &NestedBlock{
+	nb := &NestedBlock{
 		Type:           rb.Labels[0],
 		selfWriteBlock: wb,
 		Block:          rb.Body.Blocks[0],
@@ -119,6 +123,10 @@ func dynamicNestedBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *NestedBlock {
 		Attributes:     attributes(rb.Body.Blocks[0].Body, wb.Body().Blocks()[0].Body()),
 		NestedBlocks:   nestedBlocks(rb.Body.Blocks[0].Body, wb.Body().Blocks()[0].Body()),
 	}
+	if iteratorAttr, ok := rb.Body.Attributes["iterator"]; ok {
+		nb.Iterator = NewAttribute("iterator", iteratorAttr, wb.Body().GetAttribute("iterator"))
+	}
+	return nb
 }
 
 func staticNestedBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *NestedBlock {

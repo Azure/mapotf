@@ -65,6 +65,28 @@ func TestNewNestedBlock(t *testing.T) {
 	assert.Equal(t, `var.msdefender_log_analytics_workspace.id`, mdBlock.Attributes["log_analytics_workspace_id"].String())
 }
 
+func TestNestedBlock_Iterator(t *testing.T) {
+	// Define some Terraform code with a dynamic block that includes an iterator attribute
+	code := `
+resource "azurerm_kubernetes_cluster" "example" {
+	dynamic "microsoft_defender" {
+		for_each = var.msdefender_log_analytics_workspace == null ? ["microsoft_defender"] : []
+		iterator = defender
+		content {
+			log_analytics_workspace_id = var.msdefender_log_analytics_workspace.id
+		}
+	}
+}
+`
+	// Parse the Terraform code and create a NestedBlock
+	sut := newBlock(t, code)
+	mdBlock := sut.NestedBlocks["microsoft_defender"][0]
+
+	// Verify that the Iterator attribute has been decoded correctly
+	require.NotNil(t, mdBlock.Iterator)
+	assert.Equal(t, "defender", mdBlock.Iterator.String())
+}
+
 func TestNewNestedInNestedBlock(t *testing.T) {
 	cases := []struct {
 		desc string
@@ -303,6 +325,31 @@ root_block {
 	expected = formatHcl(expected)
 	actual := formatHcl(string(nb.WriteBlock.BuildTokens(nil).Bytes()))
 	assert.Equal(t, expected, actual)
+}
+
+func TestNestedBlock_EvalContextWithIterator(t *testing.T) {
+	// Define some Terraform code with a dynamic block that includes an iterator attribute
+	code := `
+resource "azurerm_kubernetes_cluster" "example" {
+	dynamic "microsoft_defender" {
+		for_each = var.msdefender_log_analytics_workspace == null ? ["microsoft_defender"] : []
+		iterator = defender
+		content {
+			log_analytics_workspace_id = var.msdefender_log_analytics_workspace.id
+		}
+	}
+}
+`
+	// Parse the Terraform code and create a NestedBlock
+	sut := newBlock(t, code)
+	mdBlock := sut.NestedBlocks["microsoft_defender"][0]
+
+	// Call the EvalContext method
+	obj := mdBlock.EvalContext()
+
+	// Verify that the iterator attribute is correctly included in the evaluation context
+	require.NotNil(t, obj)
+	assert.Equal(t, cty.StringVal("defender"), obj.GetAttr("iterator"))
 }
 
 func formatHcl(inputHcl string) string {
