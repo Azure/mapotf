@@ -16,7 +16,7 @@ var _ golden.CustomDecode = &UpdateInPlaceTransform{}
 type UpdateInPlaceTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	TargetBlockAddress string `hcl:"target_block_address" validator:"required"`
+	TargetBlockAddress string `hcl:"target_block_address" validate:"required"`
 	updateBlock        *hclwrite.Block
 	targetBlock        *terraform.RootBlock
 }

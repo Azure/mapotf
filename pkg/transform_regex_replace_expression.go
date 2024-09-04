@@ -16,7 +16,7 @@ var _ Transform = &RegexReplaceExpressionTransform{}
 type RegexReplaceExpressionTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	Regex       string `hcl:"regex" validator:"required"`
+	Regex       string `hcl:"regex" validate:"required"`
 	Replacement string `hcl:"replacement"`
 }
 

@@ -12,9 +12,11 @@ import (
 var _ Transform = &RenameAttributeOrNestedBlockTransform{}
 
 type Rename struct {
-	ResourceType            string   `hcl:"resource_type"`
-	AttributePath           []string `hcl:"attribute_path" validator:"required"`
-	NewName                 string   `hcl:"new_name" validator:"required"`
+	ResourceType string `hcl:"resource_type"`
+	// We'll deprecate `attribute_path` in favor of `element_path`.
+	AttributePath           []string `hcl:"attribute_path,optional" validate:"excluded_with=element_path"`
+	ElementPath             []string `hcl:"element_path,optional" validate:"excluded_with=attribute_path,required_without=attribute_path"`
+	NewName                 string   `hcl:"new_name" validate:"required"`
 	RenameOnlyNewNameAbsent bool     `hcl:"rename_only_new_name_absent,optional" default:"false"`
 }
 
@@ -49,7 +51,11 @@ func (r *RenameAttributeOrNestedBlockTransform) applyRename(rename Rename, cfg *
 			matchedBlocks = append(matchedBlocks, b)
 		}
 	}
-	r.rename(castBlockSlice(matchedBlocks), rename.AttributePath, rename.NewName, rename.RenameOnlyNewNameAbsent)
+	path := rename.AttributePath
+	if len(path) == 0 {
+		path = rename.ElementPath
+	}
+	r.rename(castBlockSlice(matchedBlocks), path, rename.NewName, rename.RenameOnlyNewNameAbsent)
 }
 
 func (r *RenameAttributeOrNestedBlockTransform) rename(blocks []terraform.Block, attributePath []string, newName string, renameOnlyNewNameAbsent bool) {

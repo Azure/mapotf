@@ -377,6 +377,41 @@ resource "azurerm_kubernetes_cluster" "example" {
 }
 `,
 		},
+		{
+			desc: "Rename single attribute using element_path",
+			cfg: `
+transform "rename_block_element" this {
+	rename {
+		resource_type  = "azurerm_kubernetes_cluster"
+		element_path   = ["location"]
+		new_name       = "region"
+	}
+}
+`,
+			tfCfg: aksResourceTf,
+			expectedHCL: `
+resource "azurerm_kubernetes_cluster" "example" {
+  name                = "example-aks1"
+  resource_group_name = azurerm_resource_group.example.name
+  dns_prefix          = "exampleaks1"
+  default_node_pool {
+    name       = "default"
+    node_count = 1
+    vm_size    = "Standard_D2_v2"
+    linux_os_config {
+      swap_file_size_mb = 100
+    }
+  }
+  identity {
+    type = "SystemAssigned"
+  }
+  tags = {
+    Environment = "Production"
+  }
+  region = azurerm_resource_group.example.location
+}
+`,
+		},
 	}
 
 	for _, c := range cases {
