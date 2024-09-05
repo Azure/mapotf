@@ -61,6 +61,9 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 	c.variableBlocks = groupByAddress(module.Variables)
 	c.outputBlocks = groupByAddress(module.Outputs)
 	c.localBlocks = groupByAddress(module.Locals)
+	if len(module.TerraformBlocks) > 0 {
+		c.terraformBlock = module.TerraformBlocks[0]
+	}
 	c.allRootBlocks = module.Blocks()
 	c.module = module
 	return nil
@@ -95,10 +98,7 @@ func (c *MetaProgrammingTFConfig) ModuleBlocks() []*terraform.RootBlock {
 }
 
 func (c *MetaProgrammingTFConfig) TerraformBlock() *terraform.RootBlock {
-	if len(c.module.TerraformBlocks) > 0 {
-		return c.module.TerraformBlocks[0]
-	}
-	return nil
+	return c.terraformBlock
 }
 
 func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock {

@@ -28,6 +28,20 @@ func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
 	assert.NotEmpty(t, sut.ResourceBlocks)
 }
 
+func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlock(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `terraform {}`,
+	}))
+	defer stub.Reset()
+
+	sut, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+	assert.NotNil(t, sut.TerraformBlock())
+}
+
 func TestMetaProgrammingTFConfigBlocks(t *testing.T) {
 	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
 		"/main.tf": `

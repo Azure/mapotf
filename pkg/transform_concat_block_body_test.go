@@ -27,7 +27,7 @@ func TestConcatBlockBodyTransform_Apply(t *testing.T) {
 			cfg: `
 transform "concat_block_body" this {
 	target_block_address = "resource.fake_resource.this"
-	block_body = "{tags = { hello = world }}"
+	block_body = "tags = { hello = world }"
 }
 `,
 			expectedConcatedBlock: `resource "fake_resource" this {
@@ -39,7 +39,7 @@ transform "concat_block_body" this {
 			cfg: `
 transform "concat_block_body" this {
 	target_block_address = "resource.fake_resource.this"
-	block_body = "{ \n nested_block {\n id = 123\n }\n}"
+	block_body = "nested_block {\n id = 123\n }"
 }
 `,
 			expectedConcatedBlock: `resource "fake_resource" this {
@@ -54,7 +54,7 @@ transform "concat_block_body" this {
 			cfg: `
 transform "concat_block_body" this {
 	target_block_address = "resource.fake_resource.this"
-	block_body = "{ \ntags = {\n hello = world\n } \n nested_block {\n id = 123\n } \n}"
+	block_body = "tags = {\n hello = world\n } \n nested_block {\n id = 123\n }"
 }
 `,
 			expectedConcatedBlock: `resource "fake_resource" this {
@@ -88,6 +88,7 @@ resource "fake_resource" this {
 			require.NoError(t, err)
 			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
 			require.NoError(t, err)
+			require.NotEmpty(t, plan.String())
 			require.NoError(t, plan.Apply())
 			tfFile, err := afero.ReadFile(filesystem.Fs, "/main.tf")
 			require.NoError(t, err)
