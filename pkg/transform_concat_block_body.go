@@ -16,8 +16,6 @@ type ConcatBlockBodyTransform struct {
 	*BaseTransform
 	TargetBlockAddress string `hcl:"target_block_address" validate:"required"`
 	BlockBody          string `hcl:"block_body" validate:"required"`
-	concatBody         *hclwrite.Body
-	targetBlock        *terraform.RootBlock
 }
 
 func (u *ConcatBlockBodyTransform) Type() string {
@@ -30,13 +28,11 @@ func (u *ConcatBlockBodyTransform) Apply() error {
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", u.TargetBlockAddress)
 	}
-	u.targetBlock = b
-	cfg, diag := hclwrite.ParseConfig([]byte("concat "+u.BlockBody), "concat.hcl", hcl.InitialPos)
+	cfg, diag := hclwrite.ParseConfig([]byte("concat {\n"+u.BlockBody+"\n}"), "concat.hcl", hcl.InitialPos)
 	if diag.HasErrors() {
 		return diag
 	}
-	u.concatBody = cfg.Body().Blocks()[0].Body()
-	u.PatchWriteBlock(u.targetBlock, u.concatBody)
+	u.PatchWriteBlock(b, cfg.Body().Blocks()[0].Body())
 	return nil
 }
 
@@ -57,7 +53,7 @@ func (u *ConcatBlockBodyTransform) String() string {
 	content := make(map[string]any)
 	content["id"] = u.Id()
 	content["target_block_address"] = u.TargetBlockAddress
-	content["concat"] = string(u.concatBody.BuildTokens(nil).Bytes())
+	content["concat"] = u.BlockBody
 	str, err := json.Marshal(content)
 	if err != nil {
 		panic(err.Error())
