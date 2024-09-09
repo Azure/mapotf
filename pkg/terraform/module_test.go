@@ -140,3 +140,25 @@ locals {
 	require.False(t, diag.HasErrors())
 	assert.Equal(t, "value2", localVar2Value.AsString())
 }
+
+func TestLoadModuleShouldBypassOverrideFiles(t *testing.T) {
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+
+	// Write Terraform configuration files including override files
+	_ = afero.WriteFile(mockFs, "/main.tf", []byte(`resource "fake_resource" "this" {}`), 0644)
+	_ = afero.WriteFile(mockFs, "/main_override.tf", []byte(`resource "fake_resource" "override" {}`), 0644)
+	_ = afero.WriteFile(mockFs, "/override.tf", []byte(`resource "fake_resource" "another_override" {}`), 0644)
+
+	// Load the configuration files into a Module
+	sut, err := LoadModule(ModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	})
+	require.NoError(t, err)
+
+	// Verify that the override files are bypassed
+	assert.Len(t, sut.ResourceBlocks, 1)
+	assert.Equal(t, "this", sut.ResourceBlocks[0].Labels[1])
+}

@@ -105,7 +105,7 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 		if f.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(f.Name(), ".tf") {
+		if !strings.HasSuffix(f.Name(), ".tf") || f.Name() == "override.tf" || strings.HasSuffix(f.Name(), "_override.tf") {
 			continue
 		}
 		n := filepath.Join(mr.AbsDir, f.Name())

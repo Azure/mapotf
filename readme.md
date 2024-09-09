@@ -58,4 +58,8 @@ If you press `no`, Terraform would quit, and all `.tf` file would be reverted, a
 
 You can also use `transform` command to carry the transforms without invoke Terraform `mapotf transform -r --mptf-dir git::https://github.com/Azure/mapotf.git//example/customize_aks_ignore_changes`, then like `apply`, but we'll leave transformed `.tf` files along with `.tf.mptfbacup` files there for you, you can check them, apply them by calling `terraform` command, or revert all changes by `mapotf reset`. If you decide to keep these changes and remove all backup files, you can run `mapotf clean-backup`.
 
+## Override files
+
+Since blocks defined in `override.tf` and `*_override.tf` files are meant to be patch block and might contain only partial content, they might cause analyze error in Mapotf so we WON'T process these override files.
+
 This tool is still in development, but you're welcome to give it a try.
