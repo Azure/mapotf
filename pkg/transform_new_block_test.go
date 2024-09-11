@@ -2,17 +2,17 @@ package pkg_test
 
 import (
 	"context"
-	filesystem "github.com/Azure/mapotf/pkg/fs"
-	"github.com/prashantv/gostub"
-	"github.com/spf13/afero"
 	"strings"
 	"testing"
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/prashantv/gostub"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zclconf/go-cty/cty"
@@ -73,6 +73,19 @@ func TestNewBlockTransform_DecodeBody(t *testing.T) {
 			expected: map[string]string{
 				"description": `"This is description"`,
 				"type":        "string",
+			},
+		},
+		{
+			desc: "body_string",
+			code: `transform "new_block" test {
+	new_block_type = "variable"
+	filename = "variables.tf"
+	labels = ["test"]
+	body = "type = \"string\"\n description = \"description\""
+}`,
+			expected: map[string]string{
+				"description": `"description"`,
+				"type":        "\"string\"",
 			},
 		},
 	}
