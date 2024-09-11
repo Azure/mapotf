@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/zclconf/go-cty/cty/function"
 	"path/filepath"
 	"strings"
 
@@ -33,16 +34,20 @@ type MetaProgrammingTFConfig struct {
 }
 
 func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
+	baseConfig := golden.NewBasicConfigFromArgs(golden.NewBaseConfigArgs{
+		Basedir:                  m.AbsDir,
+		DslFullName:              "mapotf",
+		DslAbbreviation:          "mptf",
+		VarConfigDir:             varConfigDir,
+		CliFlagAssignedVariables: cliFlagAssignedVars,
+		Ctx:                      ctx,
+		IgnoreUnknownVariables:   true,
+	})
+	baseConfig.OverrideFunctions = map[string]function.Function{
+		"tohcl": ToHclFunc,
+	}
 	cfg := &MetaProgrammingTFConfig{
-		BaseConfig: golden.NewBasicConfigFromArgs(golden.NewBaseConfigArgs{
-			Basedir:                  m.AbsDir,
-			DslFullName:              "mapotf",
-			DslAbbreviation:          "mptf",
-			VarConfigDir:             varConfigDir,
-			CliFlagAssignedVariables: cliFlagAssignedVars,
-			Ctx:                      ctx,
-			IgnoreUnknownVariables:   true,
-		}),
+		BaseConfig: baseConfig,
 	}
 	if err := cfg.reloadTerraformModule(m); err != nil {
 		return nil, err
