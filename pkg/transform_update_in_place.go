@@ -17,6 +17,7 @@ type UpdateInPlaceTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	TargetBlockAddress string `hcl:"target_block_address" validate:"required"`
+	DynamicBlockBody   string `hcl:"dynamic_block_body,optional"`
 	updateBlock        *hclwrite.Block
 	targetBlock        *terraform.RootBlock
 }
@@ -43,18 +44,50 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 	}
 	u.targetBlock = b
 	u.updateBlock = hclwrite.NewBlock("patch", []string{})
-	for _, b := range block.NestedBlocks() {
-		if b.Type == "asraw" {
-			if err := decodeAsRawBlock(u.updateBlock, b); err != nil {
-				return err
-			}
-			continue
+	dynamicBlockBody, err := getOptionalStringAttribute("dynamic_block_body", block, context)
+	if err != nil {
+		return err
+	}
+	if dynamicBlockBody != nil {
+		u.DynamicBlockBody = *dynamicBlockBody
+		patch, diag := hclwrite.ParseConfig([]byte(fmt.Sprintf("patch {\n%s\n}", u.DynamicBlockBody)), u.Address(), hcl.InitialPos)
+		if diag.HasErrors() {
+			return fmt.Errorf("error while parsing patch body: %s", diag.Error())
 		}
-		if b.Type == "asstring" {
-			if err = decodeAsStringBlock(u.updateBlock, b, 0, context); err != nil {
-				return err
+		if err = decodeAsDynamicBlockBody(u.updateBlock, patch.Body().Blocks()[0]); err != nil {
+			return err
+		}
+	}
+	for _, b := range block.NestedBlocks() {
+		switch b.Type {
+		case "asraw":
+			{
+				if err = decodeAsRawBlock(u.updateBlock, b); err != nil {
+					return err
+				}
+				continue
 			}
-			continue
+		case "asstring":
+			{
+				if err = decodeAsStringBlock(u.updateBlock, b, 0, context); err != nil {
+					return err
+				}
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func decodeAsDynamicBlockBody(dest *hclwrite.Block, patch *hclwrite.Block) error {
+	for n, attribute := range patch.Body().Attributes() {
+		dest.Body().SetAttributeRaw(n, attribute.Expr().BuildTokens(nil))
+	}
+	for _, b := range patch.Body().Blocks() {
+		blockType := b.Type()
+		newNestedBlock := dest.Body().AppendNewBlock(blockType, b.Labels())
+		if err := decodeAsDynamicBlockBody(newNestedBlock, b); err != nil {
+			return err
 		}
 	}
 	return nil

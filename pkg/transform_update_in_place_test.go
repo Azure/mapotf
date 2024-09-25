@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"github.com/spf13/afero"
 	"strings"
 	"testing"
 
@@ -426,6 +427,116 @@ block "example" {
 			sut.PatchWriteBlock(dstBlock, patchFile.Body().Blocks()[0])
 			patched := string(dstBlock.WriteBlock.BuildTokens(hclwrite.Tokens{}).Bytes())
 			assert.Equal(t, formatHcl(c.expectedDest), formatHcl(patched))
+		})
+	}
+}
+
+func TestUpdateInPlaceTransform_BlockBody(t *testing.T) {
+	cases := []struct {
+		desc          string
+		cfg           string
+		expectedBlock string
+	}{
+		{
+			desc: "patch attributes",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	dynamic_block_body = "tags = { hello = world }"
+}
+`,
+			expectedBlock: `resource "fake_resource" this {
+  tags = { hello = world }
+  nested_block { 
+    id = 123 
+  }
+}`,
+		},
+		{
+			desc: "patch nested blocks",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	dynamic_block_body = "nested_block {\n id = 456\n }"
+}
+`,
+			expectedBlock: `resource "fake_resource" this {
+  tags = null
+  nested_block { 
+    id = 456 
+  }
+}`,
+		},
+		{
+			desc: "patch attributes and nested blocks",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	dynamic_block_body = "tags = {\n hello = world\n } \n nested_block {\n id = 456\n }"
+}
+`,
+			expectedBlock: `resource "fake_resource" this {
+  tags = { 
+    hello = world 
+  }
+  nested_block { 
+    id = 456 
+  }
+}`,
+		},
+		{
+			desc: "new attributes and nested blocks",
+			cfg: `
+transform "update_in_place" this {
+	target_block_address = "resource.fake_resource.this"
+	dynamic_block_body = "tags2 = {\n hello = world\n } \n nested_block2 {\n id = 456\n }"
+}
+`,
+			expectedBlock: `resource "fake_resource" this {
+  tags = null
+  nested_block { 
+    id = 123
+  }
+  tags2 = {
+    hello = world
+  }
+  nested_block2 {
+    id = 456
+  }
+}`,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+				"/main.tf": `
+resource "fake_resource" this {
+  tags = null
+  nested_block { 
+    id = 123 
+  }
+}`,
+			}))
+			defer stub.Reset()
+			readFile, diag := hclsyntax.ParseConfig([]byte(c.cfg), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			writeFile, diag := hclwrite.ParseConfig([]byte(c.cfg), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+				Dir:    "/",
+				AbsDir: "/",
+			}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+			require.NoError(t, err)
+			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+			require.NoError(t, err)
+			require.NotEmpty(t, plan.String())
+			require.NoError(t, plan.Apply())
+			tfFile, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+			require.NoError(t, err)
+			actual := string(tfFile)
+			assert.Equal(t, formatHcl(c.expectedBlock), formatHcl(actual))
 		})
 	}
 }

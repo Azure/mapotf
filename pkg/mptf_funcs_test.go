@@ -1,9 +1,9 @@
 package pkg_test
 
 import (
-	"github.com/Azure/mapotf/pkg"
 	"testing"
 
+	"github.com/Azure/mapotf/pkg"
 	"github.com/zclconf/go-cty/cty"
 )
 
