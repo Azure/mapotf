@@ -101,7 +101,25 @@ func (nb *NestedBlock) EvalContext() cty.Value {
 	for k, nbv := range nb.NestedBlocks.Values() {
 		v[k] = nbv
 	}
+	v["mptf"] = nb.MptfObject()
 
+	return cty.ObjectVal(v)
+}
+
+func (nb *NestedBlock) String() string {
+	return string(nb.selfWriteBlock.BuildTokens(nil).Bytes())
+}
+
+func (nb *NestedBlock) MptfObject() cty.Value {
+	v := map[string]cty.Value{}
+	v["tostring"] = cty.StringVal(nb.String())
+	v["range"] = cty.ObjectVal(map[string]cty.Value{
+		"file_name":    cty.StringVal(nb.Range().Filename),
+		"start_line":   cty.NumberIntVal(int64(nb.Range().Start.Line)),
+		"start_column": cty.NumberIntVal(int64(nb.Range().Start.Column)),
+		"end_line":     cty.NumberIntVal(int64(nb.Range().End.Line)),
+		"end_column":   cty.NumberIntVal(int64(nb.Range().End.Column)),
+	})
 	return cty.ObjectVal(v)
 }
 

@@ -352,6 +352,70 @@ resource "azurerm_kubernetes_cluster" "example" {
 	assert.Equal(t, cty.StringVal("defender"), obj.GetAttr("iterator"))
 }
 
+func TestNestedBlock_NestedBlockToString(t *testing.T) {
+	cfg := `
+root_block {
+  nested_block{
+   target_block {}
+  }
+  nested_block {
+   target_block {
+	 another_block {}
+   }
+	non_target_block {}
+  }
+  nested_block {
+    dynamic "target_block" {
+	   for_each = var.enabled ? [1] : []
+       content {
+	   }
+    }
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	  target_block {}
+	}
+  }
+  dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	  dynamic "target_block" {
+	    for_each = var.enabled ? [1] : []
+        content {
+	    }
+     }
+	}
+  }
+}
+`
+	expected := cfg
+	sFile, diag := hclsyntax.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	wFile, diag := hclwrite.ParseConfig([]byte(cfg), "test.hcl", hcl.InitialPos)
+	require.False(t, diag.HasErrors())
+	nb := terraform.NewNestedBlock(sFile.Body.(*hclsyntax.Body).Blocks[0], wFile.Body().Blocks()[0])
+
+	// Call RemoveContent to remove the nested block
+	str := nb.EvalContext().GetAttr("mptf").GetAttr("tostring").AsString()
+	expected = formatHcl(expected)
+	actual := formatHcl(str)
+	assert.Equal(t, expected, actual)
+	lastBlockStr := nb.EvalContext().GetAttr("nested_block").Index(cty.NumberIntVal(4)).GetAttr("mptf").GetAttr("tostring").AsString()
+	expected = formatHcl(`dynamic "nested_block" {
+    for_each = var.enabled ? [1] : []
+	content {
+	  dynamic "target_block" {
+	    for_each = var.enabled ? [1] : []
+        content {
+	    }
+     }
+	}
+  }`)
+	actual = formatHcl(lastBlockStr)
+	assert.Equal(t, expected, actual)
+}
+
 func formatHcl(inputHcl string) string {
 	return strings.Trim(string(hclwrite.Format([]byte(inputHcl))), "\n")
 }
