@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.21.0
 	github.com/hashicorp/terraform-json v0.22.1
 	github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb
-	github.com/lonegunmanb/hclfuncs v0.8.0
+	github.com/lonegunmanb/hclfuncs v0.9.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.11.0
@@ -45,6 +45,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.22.1 // indirect
@@ -67,9 +68,9 @@ require (
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-sdk v0.5.3 // indirect
+	github.com/hashicorp/packer-plugin-sdk v0.5.4 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/hashicorp/vault/api v1.10.0 // indirect
+	github.com/hashicorp/vault/api v1.14.0 // indirect
 	github.com/heimdalr/dag v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect

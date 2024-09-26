@@ -30,7 +30,7 @@ func (u *ConcatBlockBodyTransform) Apply() error {
 	}
 	cfg, diag := hclwrite.ParseConfig([]byte("concat {\n"+u.BlockBody+"\n}"), "concat.hcl", hcl.InitialPos)
 	if diag.HasErrors() {
-		return diag
+		return fmt.Errorf("failed to parse block body in %s, body is %s: %s", u.Address(), u.BlockBody, diag.Error())
 	}
 	u.PatchWriteBlock(b, cfg.Body().Blocks()[0].Body())
 	return nil
