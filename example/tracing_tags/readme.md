@@ -1,10 +1,10 @@
-## Applying Default Tags with `default_tags` Configuration
+## Applying Default Tags with `tracing_tags` Configuration
 
 This example configuration is designed to ensure that all Terraform-managed AzureRM resources within a project that support tagging are automatically tagged with a predefined set of tags. This is particularly useful for maintaining consistency, facilitating resource management, and adhering to organizational policies regarding resource tagging.
 
 ### Purpose
 
-The primary purpose of the `default_tags` configuration is to:
+The primary purpose of the `tracing_tags` configuration is to:
 
 - **Automate Tagging**: Automatically apply a default set of tags to all resources that support tagging, without the need to manually specify these tags for each resource.
 - **Ensure Consistency**: Help maintain a consistent tagging strategy across your infrastructure, which is crucial for resource organization, cost tracking, and access control.

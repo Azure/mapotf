@@ -6,11 +6,13 @@ The `update_in_place` transform block is a powerful tool in Terraform that allow
 
 - `target_block_address`: This argument is used to specify the address of the block that the transformation will be applied to. The block address is a string that uniquely identifies a block in a Terraform configuration.
 
-- `asstring`: This attribute is used to specify the transformation that will be applied to the resources. The transformation is defined as a string of Terraform code.
+- `dynamic_block_body`: This optional argument allows you to specify a dynamic block of HCL code that will be parsed and applied to the target block. This can be used to add or modify attributes and nested blocks within the target block.
 
-- `asraw`: This attribute is used to specify the transformation that will be applied to the resources. The transformation is defined as raw HCL code. The code is not parsed or evaluated, but is directly inserted into the Terraform configuration. This allows you to write complex transformations that cannot be expressed as a single Terraform expression.
+- `asstring`: This nested block is used to specify the transformation that will be applied to the resources. The transformation is defined as a string of Terraform code.
 
-## Example
+- `asraw`: This nested block is used to specify the transformation that will be applied to the resources. The transformation is defined as raw HCL code. The code is not parsed or evaluated, but is directly inserted into the Terraform configuration. This allows you to write complex transformations that cannot be expressed as a single Terraform expression.
+
+## Example - Auto-generated Tags for Azure Kubernetes Cluster
 
 Here is an example of how to use the `update_in_place` transform block to add tags to Azure Kubernetes Cluster resources:
 
@@ -37,6 +39,30 @@ TAGS
 ```
 
 In this example, the `for_each` argument is set to the result of the `azurerm_kubernetes_cluster` data source. The `target_block_address` argument is set to the block address of each resource in the collection. The `asstring` attribute is used to define a transformation that merges a set of new tags with the existing tags of each resource. The new tags include the file name, block address, git hash, module source, and module version of the resource.
+
+An equative implementation of the above example using the `dynamic_block_body` attribute is as follows:
+
+```terraform
+data "resource" azurerm_kubernetes_cluster {
+  resource_type = "azurerm_kubernetes_cluster"
+}
+
+transform "update_in_place" tracing_tags {
+  for_each             = try(data.resource.azurerm_kubernetes_cluster.result.azurerm_kubernetes_cluster, {})
+  target_block_address = each.value.mptf.block_address
+  dynamic_block_body = <<-DYNAMIC_BODY
+    tags = merge({
+      file = "${each.value.mptf.range.file_name}"
+      block = "${each.value.mptf.terraform_address}"
+      git_hash = "${each.value.mptf.module.git_hash}"
+      module_source = "${each.value.mptf.module.source}"
+      module_version = "${each.value.mptf.module.version}"
+    }, ${try(each.value.tags, "{}")})
+DYNAMIC_BODY
+}
+```
+
+## Example - Prevent Destroy for Terraform Resources
 
 In the [`prevent_destroy\main.mptf.hcl`](../example/prevent_destroy/main.mptf.hcl) example, the `mapotf` tool is used to control the `prevent_destroy` lifecycle setting of Terraform resources. This is achieved by using the `update_in_place` transform block. Here's a step-by-step explanation of how it works:
 
@@ -85,6 +111,28 @@ transform "update_in_place" set_prevent_destroy {
       prevent_destroy = var.prevent_destroy
     }
   }
+}
+```
+
+Since we are using the `asstring` attribute, `mapotf` would try to evaluate value of `var.prevent_destroy` in mapotf context. Let's say the value is `false` in `bool` type, which could be converted to `false` in `string` type automatically, then the generated patch block would be like:
+
+```hcl
+lifecycle {
+  prevent_destroy = false
+}
+```
+
+You can also use `dynamic_block_body` attribute to achieve the same result:
+
+```terraform
+transform "update_in_place" set_prevent_destroy {
+  for_each             = try(local.addresses, [])
+  target_block_address = each.value
+  dynamic_block_body = <<-DYNAMIC_BODY
+    lifecycle {
+      prevent_destroy = ${var.prevent_destroy}
+    }
+DYNAMIC_BODY
 }
 ```
 
