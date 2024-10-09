@@ -25,7 +25,7 @@ func TestConcatBlockBodyTransform_Apply(t *testing.T) {
 		{
 			desc: "concatenate attributes",
 			cfg: `
-transform "concat_block_body" this {
+transform "append_block_body" this {
 	target_block_address = "resource.fake_resource.this"
 	block_body = "tags = { hello = world }"
 }
@@ -37,7 +37,7 @@ transform "concat_block_body" this {
 		{
 			desc: "concatenate nested blocks",
 			cfg: `
-transform "concat_block_body" this {
+transform "append_block_body" this {
 	target_block_address = "resource.fake_resource.this"
 	block_body = "nested_block {\n id = 123\n }"
 }
@@ -52,7 +52,7 @@ transform "concat_block_body" this {
 		{
 			desc: "concatenate attributes and nested blocks",
 			cfg: `
-transform "concat_block_body" this {
+transform "append_block_body" this {
 	target_block_address = "resource.fake_resource.this"
 	block_body = "tags = {\n hello = world\n } \n nested_block {\n id = 123\n }"
 }

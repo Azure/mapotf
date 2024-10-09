@@ -19,7 +19,7 @@ func registerTransform() {
 	golden.RegisterBlock(new(RemoveBlockContentBlockTransform))
 	golden.RegisterBlock(new(RenameAttributeOrNestedBlockTransform))
 	golden.RegisterBlock(new(RegexReplaceExpressionTransform))
-	golden.RegisterBlock(new(ConcatBlockBodyTransform))
+	golden.RegisterBlock(new(AppendBlockBodyTransform))
 }
 
 func registerData() {
