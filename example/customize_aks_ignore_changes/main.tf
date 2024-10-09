@@ -1,25 +1,25 @@
-resource "azurerm_resource_group" "example" {
-  name     = "example-resources"
-  location = "West Europe"
+variable "resource_group_name" {
+  type    = string
+  default = "aks_test"
 }
 
-resource "azurerm_kubernetes_cluster" "example" {
-  name                = "example-aks1"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  dns_prefix          = "exampleaks1"
+provider "azurerm" {
+  features {}
+}
 
-  default_node_pool {
-    name       = "default"
-    node_count = 1
-    vm_size    = "Standard_D2_v2"
-  }
+resource "random_pet" "this" {}
 
-  identity {
-    type = "SystemAssigned"
-  }
+resource "azurerm_resource_group" "rg" {
+  location = "eastus"
+  name     = "${var.resource_group_name}-${random_pet.this.id}"
+}
 
-  tags = {
-    Environment = "Production"
-  }
+module "aks" {
+  source  = "Azure/aks/azurerm"
+  version = "9.1.0"
+
+  cluster_name        = "aks-test"
+  prefix              = "akstest"
+  resource_group_name = azurerm_resource_group.rg.name
+  rbac_aad            = false
 }

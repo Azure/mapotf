@@ -2,7 +2,7 @@
 
 This example configuration is designed to ensure that all Terraform-managed AzureRM resources within a project that support tagging are automatically tagged with a predefined set of tags. This is particularly useful for maintaining consistency, facilitating resource management, and adhering to organizational policies regarding resource tagging.
 
-### Purpose
+## Purpose
 
 The primary purpose of the `tracing_tags` configuration is to:
 

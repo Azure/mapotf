@@ -2,7 +2,7 @@
 
 This example configuration demonstrates how to use the `mapotf` tool to control the `prevent_destroy` lifecycle setting of Terraform resources. This is achieved by using the `update_in_place` transform block. Here's a step-by-step explanation of how it works:
 
-### Purpose
+## Purpose
 
 The primary purpose of the `prevent_destroy` configuration is to:
 
@@ -10,7 +10,7 @@ The primary purpose of the `prevent_destroy` configuration is to:
 - **Control Resource Lifecycle**: Provide a mechanism to control the lifecycle of resources dynamically based on configuration variables.
 - **Flexibility**: Allow the configuration to be applied only to the root module or to all modules based on the `root_only` variable.
 
-### Configuration
+## Configuration
 
 1. **Define Variables**: Two variables are defined at the beginning of the file. The `prevent_destroy` variable is a boolean that determines whether to prevent the destruction of resources. The `root_only` variable is also a boolean that determines whether to apply the transformation only to the root module.
 
@@ -82,7 +82,7 @@ DYNAMIC_BODY
 }
 ```
 
-### Example
+## Example
 
 Before running this example, you would see the `main.tf` file like this:
 
