@@ -1,4 +1,4 @@
-# Update In Place Transform Block
+# `update_in_place` Transform Block
 
 The `update_in_place` transform block is a powerful tool in Mapotf that allows you to modify existing blocks in place. This is particularly useful when you want to add or modify attributes of a resource without recreating it.
 
