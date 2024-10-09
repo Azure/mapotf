@@ -1,6 +1,6 @@
 # Regex Replace Expression Transform Block
 
-The `regex_replace_expression` transform block is a tool in Terraform that allows you to replace specific patterns in expressions using regular expressions. This is useful when you need to modify configurations by replacing certain patterns with new values.
+The `regex_replace_expression` transform block is a tool in Mapotf that allows you to replace specific patterns in expressions using regular expressions. This is useful when you need to modify configurations by replacing certain patterns with new values.
 
 ## Arguments
 

@@ -1,6 +1,6 @@
 # Update In Place Transform Block
 
-The `update_in_place` transform block is a powerful tool in Terraform that allows you to modify existing blocks in place. This is particularly useful when you want to add or modify attributes of a resource without recreating it.
+The `update_in_place` transform block is a powerful tool in Mapotf that allows you to modify existing blocks in place. This is particularly useful when you want to add or modify attributes of a resource without recreating it.
 
 ## Arguments
 
@@ -64,7 +64,7 @@ DYNAMIC_BODY
 
 ## Example - Prevent Destroy for Terraform Resources
 
-In the [`prevent_destroy\main.mptf.hcl`](../example/prevent_destroy/main.mptf.hcl) example, the `mapotf` tool is used to control the `prevent_destroy` lifecycle setting of Terraform resources. This is achieved by using the `update_in_place` transform block. Here's a step-by-step explanation of how it works:
+In the [`prevent_destroy\main.mptf.hcl`](../../example/prevent_destroy/main.mptf.hcl) example, the `mapotf` tool is used to control the `prevent_destroy` lifecycle setting of Terraform resources. This is achieved by using the `update_in_place` transform block. Here's a step-by-step explanation of how it works:
 
 1. **Define Variables**: Two variables are defined at the beginning of the file. The `prevent_destroy` variable is a boolean that determines whether to prevent the destruction of resources. The `root_only` variable is also a boolean that determines whether to apply the transformation only to the root module.
 
