@@ -2,6 +2,8 @@
 
 The `provider_schema` data source retrieves the schema from a specified Terraform provider. This schema includes information about the provider's resources, their attributes, and nested blocks.
 
+Only resource schemas would be exported this time.
+
 ## Example Usage
 
 ```hcl
