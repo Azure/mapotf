@@ -41,17 +41,17 @@ Meanwhile, you would see `*.tf.mptfbackup` files for each `.tf` file, which cont
 
 ```hcl
 lifecycle {
-    ignore_changes = [
-      microsoft_defender[0].log_analytics_workspace_id,
-      http_application_routing_enabled,
-      http_proxy_config[0].no_proxy,
-      kubernetes_version,
-      public_network_access_enabled,
-      # we might have a random suffix in cluster's name so we have to ignore it here, but we've traced user supplied cluster name by `null_resource.kubernetes_cluster_name_keeper` so when the name is changed we'll recreate this resource.
-      name,
-    ]
-    ...
-  }
+  ignore_changes = [
+    microsoft_defender[0].log_analytics_workspace_id,
+    http_application_routing_enabled,
+    http_proxy_config[0].no_proxy,
+    kubernetes_version,
+    public_network_access_enabled,
+    # we might have a random suffix in cluster's name so we have to ignore it here, but we've traced user supplied cluster name by `null_resource.kubernetes_cluster_name_keeper` so when the name is changed we'll recreate this resource.
+    name,
+  ]
+  ...
+}
 ```
 
 If you press `no`, Terraform would quit, and all `.tf` file would be reverted, all `.tf.mptfbackup` files would be removed.

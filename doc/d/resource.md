@@ -1,4 +1,4 @@
-# Data "Resource" Block
+# Data "resource" Block
 
 The `data "resource"` block is used to query and retrieve `resource` blocks from a Terraform configuration. This block allows you to filter and collect resource blocks based on specific criteria such as the resource type, and whether `count` or `for_each` is used.
 

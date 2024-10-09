@@ -1,4 +1,4 @@
-# Remove Block Element Transform Block
+# `remove_block_element` Transform Block
 
 The `remove_block_element` transform block is a tool in Mapotf that allows you to remove specific content from existing blocks. This is useful when you need to clean up or modify configurations by removing unwanted nested blocks or attributes.
 

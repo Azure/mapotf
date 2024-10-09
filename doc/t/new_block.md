@@ -1,4 +1,4 @@
-# New Block Transform Block
+# `new_block` Transform Block
 
 The `new_block` transform block is a powerful tool in Mapotf that allows you to create new blocks dynamically. This is particularly useful when you want to add new resources, variables, or other Terraform blocks programmatically.
 

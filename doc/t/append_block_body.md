@@ -1,4 +1,4 @@
-# Append Block Body Transform Block
+# `append_block_body` Transform Block
 
 The `append_block_body` transform block in Mapotf is designed to append additional content to an existing block in a Terraform configuration. This is useful when you need to dynamically add attributes or nested blocks to an existing block.
 

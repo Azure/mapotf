@@ -1,4 +1,4 @@
-# Data "Data" Block
+# Data "data" Block
 
 The `data` data block is used to query and retrieve `data` blocks from a Terraform configuration. This block allows you to filter and collect data blocks based on specific criteria such as the data source type, and whether `count` or `for_each` is used.
 
