@@ -2,7 +2,7 @@
 
 This example configuration demonstrates how to use Terraform to create a private endpoint for an Azure Cognitive Services account. This is achieved by defining the necessary resources and configurations in Terraform. Here's a step-by-step explanation of how it works:
 
-### Purpose
+## Purpose
 
 The primary purpose of the `new_private_endpoint_for_cognitive_account` configuration is to:
 
@@ -10,7 +10,7 @@ The primary purpose of the `new_private_endpoint_for_cognitive_account` configur
 - **Automate Resource Creation**: Provide a mechanism to automate the creation of the necessary resources, including the private endpoint and the associated network configurations.
 - **Flexibility**: Allow the configuration to be easily adapted to different environments and requirements.
 
-### Configuration
+## Configuration
 
 1. **Fetch All Cognitive Account Resources**: The `data "resource" "cognitive_account"` block is used to fetch all cognitive account resources in the Terraform configuration.
 
@@ -119,7 +119,7 @@ transform "new_block" "private_endpoints_resource" {
 }
 ```
 
-### Example
+## Example
 
 Before running this example, you would see the `main.tf` file like this:
 
