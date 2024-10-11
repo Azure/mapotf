@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"github.com/zclconf/go-cty/cty"
 	"testing"
 
 	"github.com/Azure/golden"
@@ -10,6 +11,33 @@ import (
 	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/require"
 )
+
+func TestTerraformData_BlockMptfInfo(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `terraform {
+  required_providers {
+    mycloud = {
+      source  = "mycorp/mycloud"
+      version = "~> 1.0"
+    }
+  }
+}`,
+	}))
+	defer stub.Reset()
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+
+	data := &pkg.TerraformData{
+		BaseBlock: golden.NewBaseBlock(cfg, nil),
+	}
+
+	err = data.ExecuteDuringPlan()
+	require.NoError(t, err)
+	require.NotEqual(t, cty.NilVal, data.Block)
+}
 
 func TestTerraformData_RequiredProviders(t *testing.T) {
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type RequiredProvider struct {
@@ -19,6 +20,7 @@ type TerraformData struct {
 
 	RequiredVersion   *string                     `attribute:"required_version"`
 	RequiredProviders map[string]RequiredProvider `attribute:"required_providers"`
+	Block             cty.Value                   `attribute:"block"`
 }
 
 func (d *TerraformData) Type() string {
@@ -26,10 +28,12 @@ func (d *TerraformData) Type() string {
 }
 
 func (d *TerraformData) ExecuteDuringPlan() error {
+	d.Block = cty.NilVal
 	tb := d.BaseBlock.Config().(*MetaProgrammingTFConfig).TerraformBlock()
 	if tb == nil {
 		return nil
 	}
+	d.Block = tb.EvalContext()
 	requiredTerraformVersion, ok := tb.Attributes["required_version"]
 	if ok {
 		v, diag := requiredTerraformVersion.Expr.Value(&hcl.EvalContext{})
