@@ -20,7 +20,7 @@ require (
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	github.com/zclconf/go-cty v1.15.0
+	github.com/zclconf/go-cty v1.15.1
 )
 
 require (
