@@ -223,8 +223,8 @@ github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb h1:hokHLMBhWudl
 github.com/lonegunmanb/avmfix v0.0.0-20240424025931-0cf4616639fb/go.mod h1:6TnCwblFzgTrfR6VC7kumobRsPzi5hJiTrpEO/B0rGM=
 github.com/lonegunmanb/go-defaults v1.4.0 h1:Lf/wnb28dYqoUdpRTL+e+bFkW79ThpSH7AwYSe0Nmdg=
 github.com/lonegunmanb/go-defaults v1.4.0/go.mod h1:TwYUNCQyY/Qz5UzoH5Nlj7YPIT4EkgNANrPN8U9h9MU=
-github.com/lonegunmanb/hclfuncs v0.9.0 h1:kGWLDCrioAWACWCeJ65c5LsRalPBdKYNQIUvmRnKm6E=
-github.com/lonegunmanb/hclfuncs v0.9.0/go.mod h1:AuSpk7QOsYdWgZsor+ST7xtvIgzYhLxjc9H88N9T9FI=
+github.com/lonegunmanb/hclfuncs v0.10.0 h1:hfXCQRJxb+44b0nPwigBiwo4kh3vh3njo1coVotW1EM=
+github.com/lonegunmanb/hclfuncs v0.10.0/go.mod h1:nQI2IOJoxgAA2LiIZcSFHypiadOoHjxZF6x35dxr3oc=
 github.com/lonegunmanb/terraform-alicloud-schema v1.222.0 h1:X+dfy6vUMkjftc7x1YD8SumjOk3+A/6I+UEheiTpSeY=
 github.com/lonegunmanb/terraform-alicloud-schema v1.222.0/go.mod h1:TbJ5DLekn73hv3AV81qhwDK0kbmKOSRI0HDr91K1cd0=
 github.com/lonegunmanb/terraform-aws-schema/v5 v5.46.0 h1:JeVwnJEPw10+GzjjTEZeI5jyR6SCsgNxEcL5iPi4tjo=
@@ -380,8 +380,8 @@ github.com/zclconf/go-cty v1.15.1 h1:RgQYm4j2EvoBRXOPxhUvxPzRrGDo1eCOhHXuGfrj5S0
 github.com/zclconf/go-cty v1.15.1/go.mod h1:VvMs5i0vgZdhYawQNq5kePSpLAoz8u1xvZgrPIxfnZE=
 github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940 h1:4r45xpDWB6ZMSMNJFMOjqrGHynW3DIBuR2H9j0ug+Mo=
 github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940/go.mod h1:CmBdvvj3nqzfzJ6nTCIwDTPZ56aVGvDrmztiO5g3qrM=
-github.com/zclconf/go-cty-yaml v1.0.3 h1:og/eOQ7lvA/WWhHGFETVWNduJM7Rjsv2RRpx1sdFMLc=
-github.com/zclconf/go-cty-yaml v1.0.3/go.mod h1:9YLUH4g7lOhVWqUbctnVlZ5KLpg7JAprQNgxSZ1Gyxs=
+github.com/zclconf/go-cty-yaml v1.1.0 h1:nP+jp0qPHv2IhUVqmQSzjvqAWcObN0KBkUl2rWBdig0=
+github.com/zclconf/go-cty-yaml v1.1.0/go.mod h1:9YLUH4g7lOhVWqUbctnVlZ5KLpg7JAprQNgxSZ1Gyxs=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392/go.mod h1:/lpIB1dKB+9EgE3H3cr1v9wB50oz8l4C4h62xy7jSTY=
