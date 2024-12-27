@@ -42,7 +42,7 @@ jobs:
       - name: golangci-lint
         if: runner.os == 'Linux'
         run: |
-          docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.57.2 golangci-lint run -v --timeout=3600s
+          docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:latest-alpine golangci-lint run -v --timeout=3600s
       - name: Run Gosec Security Scanner
         uses: securego/gosec@55d79496019a560e16e73e1948dee20a1fad631a #v2.18.2
         if: runner.os == 'Linux'
