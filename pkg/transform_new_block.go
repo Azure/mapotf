@@ -116,7 +116,7 @@ func (n *NewBlockTransform) Format(block *hclwrite.Block) (*hclwrite.Block, erro
 	syntaxBlock := syntaxFile.Body.(*hclsyntax.Body).Blocks[0]
 	avmBlock := avmfix.NewHclBlock(syntaxBlock, block)
 	if block.Type() == "resource" || block.Type() == "data" {
-		resourceBlock := avmfix.BuildResourceBlock(avmBlock, &hcl.File{})
+		resourceBlock := avmfix.BuildBlockWithSchema(avmBlock, &hcl.File{})
 		resourceBlock.AutoFix()
 		return resourceBlock.HclBlock.WriteBlock, nil
 	}
