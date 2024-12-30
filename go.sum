@@ -223,8 +223,8 @@ github.com/lonegunmanb/avmfix v0.0.0-20241225085255-3e09be9bba6a h1:o5z0X+MGJ35D
 github.com/lonegunmanb/avmfix v0.0.0-20241225085255-3e09be9bba6a/go.mod h1:zcYo7cqAg4ed+opECdXjw1mEu1+Pcu4/KFnBGY2kvrU=
 github.com/lonegunmanb/go-defaults v1.4.0 h1:Lf/wnb28dYqoUdpRTL+e+bFkW79ThpSH7AwYSe0Nmdg=
 github.com/lonegunmanb/go-defaults v1.4.0/go.mod h1:TwYUNCQyY/Qz5UzoH5Nlj7YPIT4EkgNANrPN8U9h9MU=
-github.com/lonegunmanb/hclfuncs v0.10.0 h1:hfXCQRJxb+44b0nPwigBiwo4kh3vh3njo1coVotW1EM=
-github.com/lonegunmanb/hclfuncs v0.10.0/go.mod h1:nQI2IOJoxgAA2LiIZcSFHypiadOoHjxZF6x35dxr3oc=
+github.com/lonegunmanb/hclfuncs v0.11.0 h1:qJQhVNUbWdXSYfxpDwzVQ7qkVBMmEGMRRkXrCvtAZYU=
+github.com/lonegunmanb/hclfuncs v0.11.0/go.mod h1:2ftNk+HhjTELCAGefdiyl6QtaqPAqt7AVcIA7HQWzUI=
 github.com/lonegunmanb/terraform-alicloud-schema v1.239.0 h1:E/sKWxdfsiydLb6pR9GVhv3eyE3asSDHCCrinfZLptY=
 github.com/lonegunmanb/terraform-alicloud-schema v1.239.0/go.mod h1:4VcSMRyaeebgix29LEpJHqeJj23RUwL2znNyRBBZ0rk=
 github.com/lonegunmanb/terraform-aws-schema/v5 v5.82.2-b h1:0FzHlBAUsRVgvUg6vAWmYCaUYYJ56l9HogBci/kwBTo=
