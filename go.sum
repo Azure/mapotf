@@ -169,8 +169,8 @@ github.com/hashicorp/go-version v1.7.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.4 h1:YDjusn29QI/Das2iO9M0BHnIbxPeyuCHsjMW+lJfyTc=
 github.com/hashicorp/golang-lru v0.5.4/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
-github.com/hashicorp/hc-install v0.9.0 h1:2dIk8LcvANwtv3QZLckxcjyF5w8KVtiMxu6G6eLhghE=
-github.com/hashicorp/hc-install v0.9.0/go.mod h1:+6vOP+mf3tuGgMApVYtmsnDoKWMDcFXeTxCACYZ8SFg=
+github.com/hashicorp/hc-install v0.9.1 h1:gkqTfE3vVbafGQo6VZXcy2v5yoz2bE0+nhZXruCuODQ=
+github.com/hashicorp/hc-install v0.9.1/go.mod h1:pWWvN/IrfeBK4XPeXXYkL6EjMufHkCK5DvwxeLKuBf0=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
 github.com/hashicorp/hcl/v2 v2.23.0 h1:Fphj1/gCylPxHutVSEOf2fBOh1VE4AuLV7+kbJf3qos=
@@ -183,8 +183,8 @@ github.com/hashicorp/packer-plugin-sdk v0.5.4 h1:5Bl5DMEa//G4gBNcl842JopM9L4KSSs
 github.com/hashicorp/packer-plugin-sdk v0.5.4/go.mod h1:ALm0ZIK3c/F4iOqPNi7xVuHTgrR5dxzOK+DhFN5DHj4=
 github.com/hashicorp/serf v0.10.1 h1:Z1H2J60yRKvfDYAOZLd2MU0ND4AH/WDz7xYHDWQsIPY=
 github.com/hashicorp/serf v0.10.1/go.mod h1:yL2t6BqATOLGc5HF7qbFkTfXoPIY0WZdWHfEvMqbG+4=
-github.com/hashicorp/terraform-exec v0.21.0 h1:uNkLAe95ey5Uux6KJdua6+cv8asgILFVWkd/RG0D2XQ=
-github.com/hashicorp/terraform-exec v0.21.0/go.mod h1:1PPeMYou+KDUSSeRE9szMZ/oHf4fYUmB923Wzbq1ICg=
+github.com/hashicorp/terraform-exec v0.22.0 h1:G5+4Sz6jYZfRYUCg6eQgDsqTzkNXV+fP8l+uRmZHj64=
+github.com/hashicorp/terraform-exec v0.22.0/go.mod h1:bjVbsncaeh8jVdhttWYZuBGj21FcYw6Ia/XfHcNO7lQ=
 github.com/hashicorp/terraform-json v0.24.0 h1:rUiyF+x1kYawXeRth6fKFm/MdfBS6+lW4NbeATsYz8Q=
 github.com/hashicorp/terraform-json v0.24.0/go.mod h1:Nfj5ubo9xbu9uiAoZVBsNOjvNKB66Oyrvtit74kC7ow=
 github.com/hashicorp/vault/api v1.14.0 h1:Ah3CFLixD5jmjusOgm8grfN9M0d+Y8fVR2SW0K6pJLU=
