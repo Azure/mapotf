@@ -31,7 +31,7 @@ func (r *RenameAttributeOrNestedBlockTransform) Type() string {
 }
 
 func (r *RenameAttributeOrNestedBlockTransform) Apply() error {
-	cfg := r.BaseBlock.Config().(*MetaProgrammingTFConfig)
+	cfg := r.Config().(*MetaProgrammingTFConfig)
 	for _, rename := range r.Renames {
 		r.applyRename(rename, cfg)
 	}
