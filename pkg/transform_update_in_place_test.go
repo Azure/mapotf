@@ -232,7 +232,7 @@ transform update_in_place "fake_resource" {
 	require.NoError(t, err)
 	err = cfg.RunPlan()
 	require.NoError(t, err)
-	vertices := cfg.BaseConfig.GetVertices()
+	vertices := cfg.GetVertices()
 	b, ok := vertices["transform.update_in_place.fake_resource[this]"]
 	require.True(t, ok)
 	updateTransformBlock, ok := b.(*pkg.UpdateInPlaceTransform)

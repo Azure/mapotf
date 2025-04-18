@@ -20,7 +20,7 @@ func (r *RemoveBlockContentBlockTransform) Type() string {
 }
 
 func (r *RemoveBlockContentBlockTransform) Apply() error {
-	cfg := r.BaseBlock.Config().(*MetaProgrammingTFConfig)
+	cfg := r.Config().(*MetaProgrammingTFConfig)
 	b := cfg.RootBlock(r.TargetBlockAddress)
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", r.TargetBlockAddress)
