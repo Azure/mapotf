@@ -193,7 +193,7 @@ func nestedBlocks(rb *hclsyntax.Body, wb *hclwrite.Body) NestedBlocks {
 	}
 	for _, v := range r {
 		sort.Slice(v, func(i, j int) bool {
-			return v[i].Block.Range().Start.Line < v[j].Block.Range().Start.Line
+			return v[i].Range().Start.Line < v[j].Range().Start.Line
 		})
 	}
 	return r

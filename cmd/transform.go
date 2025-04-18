@@ -102,7 +102,7 @@ func applyTransform(m *pkg.TerraformModuleRef, hclBlocks []*golden.HclBlock, var
 	fmt.Println(plan.String())
 	err = plan.Apply()
 	if err != nil {
-		return fmt.Errorf("error applying plan: %s\n", err.Error())
+		return fmt.Errorf("error applying plan: %s", err.Error())
 	}
 	return nil
 }

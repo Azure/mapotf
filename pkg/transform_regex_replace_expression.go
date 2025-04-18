@@ -25,7 +25,7 @@ func (r *RegexReplaceExpressionTransform) Type() string {
 }
 
 func (r *RegexReplaceExpressionTransform) Apply() error {
-	cfg := r.BaseBlock.Config().(*MetaProgrammingTFConfig)
+	cfg := r.Config().(*MetaProgrammingTFConfig)
 	re, err := regexp.Compile(r.Regex)
 	if err != nil {
 		return err

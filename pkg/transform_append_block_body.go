@@ -24,7 +24,7 @@ func (u *AppendBlockBodyTransform) Type() string {
 }
 
 func (u *AppendBlockBodyTransform) Apply() error {
-	c := u.BaseBlock.Config().(*MetaProgrammingTFConfig)
+	c := u.Config().(*MetaProgrammingTFConfig)
 	b := c.RootBlock(u.TargetBlockAddress)
 	if b == nil {
 		return fmt.Errorf("cannot find block: %s", u.TargetBlockAddress)

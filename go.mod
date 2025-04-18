@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/Azure/golden v0.0.0-20241227032857-b230a21ba291
+	github.com/Azure/golden v0.0.0-20250408054457-b83fcc43c053
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/go-playground/assert/v2 v2.2.0
@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-exec v0.22.0
 	github.com/hashicorp/terraform-json v0.24.0
-	github.com/lonegunmanb/avmfix v0.0.0-20241225085255-3e09be9bba6a
+	github.com/lonegunmanb/avmfix v0.0.0-20250415012449-743d3cf460aa
 	github.com/lonegunmanb/hclfuncs v0.11.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -27,7 +27,7 @@ require (
 
 require (
 	codeberg.org/6543/go-yaml2json v1.0.0 // indirect
-	dario.cat/mergo v1.0.0 // indirect
+	dario.cat/mergo v1.0.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.5 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -43,13 +43,13 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fatih/color v1.17.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.23.0 // indirect
+	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -81,22 +81,22 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
-	github.com/lonegunmanb/terraform-alicloud-schema v1.239.0 // indirect
-	github.com/lonegunmanb/terraform-aws-schema/v5 v5.82.2-b // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.24.0 // indirect
+	github.com/lonegunmanb/terraform-alicloud-schema v1.247.0 // indirect
+	github.com/lonegunmanb/terraform-aws-schema/v5 v5.94.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v1.36.0 // indirect
 	github.com/lonegunmanb/terraform-azapi-schema v1.15.0 // indirect
-	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.0.2 // indirect
-	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.14.0-b // indirect
+	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
+	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.26.0 // indirect
 	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
-	github.com/lonegunmanb/terraform-google-schema/v6 v6.14.1-b // indirect
+	github.com/lonegunmanb/terraform-google-schema/v6 v6.29.0 // indirect
 	github.com/lonegunmanb/terraform-helm-schema/v2 v2.17.0 // indirect
-	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.35.1 // indirect
+	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.36.0 // indirect
 	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.2 // indirect
-	github.com/lonegunmanb/terraform-modtm-schema v0.3.2 // indirect
+	github.com/lonegunmanb/terraform-modtm-schema v0.3.5 // indirect
 	github.com/lonegunmanb/terraform-null-schema/v3 v3.2.3 // indirect
-	github.com/lonegunmanb/terraform-random-schema/v3 v3.6.3 // indirect
+	github.com/lonegunmanb/terraform-random-schema/v3 v3.7.1 // indirect
 	github.com/lonegunmanb/terraform-template-schema/v2 v2.2.0 // indirect
-	github.com/lonegunmanb/terraform-time-schema v0.12.1 // indirect
+	github.com/lonegunmanb/terraform-time-schema v0.13.0 // indirect
 	github.com/lonegunmanb/terraform-tls-schema/v4 v4.0.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -118,11 +118,11 @@ require (
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
