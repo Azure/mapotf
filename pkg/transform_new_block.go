@@ -117,13 +117,13 @@ func (n *NewBlockTransform) Format(block *hclwrite.Block) (*hclwrite.Block, erro
 	avmBlock := avmfix.NewHclBlock(syntaxBlock, block)
 	if block.Type() == "resource" || block.Type() == "data" {
 		resourceBlock := avmfix.BuildBlockWithSchema(avmBlock, &hcl.File{})
-		resourceBlock.AutoFix()
-		return resourceBlock.HclBlock.WriteBlock, nil
+		err := resourceBlock.AutoFix()
+		return resourceBlock.HclBlock.WriteBlock, err
 	}
 	if block.Type() == "variable" {
 		variableBlock := avmfix.BuildVariableBlock(&hcl.File{}, avmBlock)
-		variableBlock.AutoFix()
-		return variableBlock.Block.WriteBlock, nil
+		err := variableBlock.AutoFix()
+		return variableBlock.Block.WriteBlock, err
 	}
 	return nil, nil
 }
