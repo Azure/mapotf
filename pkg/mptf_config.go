@@ -113,7 +113,7 @@ func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock
 	if strings.HasPrefix(address, "data.") {
 		return c.dataBlocks[address]
 	}
-	if strings.HasPrefix(address, "var.") {
+	if strings.HasPrefix(address, "variable.") {
 		return c.variableBlocks[address]
 	}
 	if strings.HasPrefix(address, "local.") {
