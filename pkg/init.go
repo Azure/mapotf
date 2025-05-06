@@ -27,4 +27,6 @@ func registerData() {
 	golden.RegisterBlock(new(ProviderSchemaData))
 	golden.RegisterBlock(new(TerraformData))
 	golden.RegisterBlock(new(DataSourceData))
+	golden.RegisterBlock(new(DataVariable))
+	golden.RegisterBlock(new(DataOutput))
 }
