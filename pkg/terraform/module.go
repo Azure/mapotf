@@ -167,8 +167,8 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 	for attrName, attr := range rb.Body.Attributes {
 		rootBlock := NewBlock(m, &hclsyntax.Block{
-			Type:   "locals",
-			Labels: []string{},
+			Type:   "local",
+			Labels: []string{attrName},
 			Body: &hclsyntax.Body{
 				Attributes: map[string]*hclsyntax.Attribute{
 					attrName: attr,

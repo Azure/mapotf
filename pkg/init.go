@@ -29,4 +29,5 @@ func registerData() {
 	golden.RegisterBlock(new(DataSourceData))
 	golden.RegisterBlock(new(DataVariable))
 	golden.RegisterBlock(new(DataOutput))
+	golden.RegisterBlock(new(DataLocal))
 }
