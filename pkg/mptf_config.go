@@ -65,9 +65,6 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 	c.moduleBlocks = groupByAddress(module.ModuleBlocks)
 	c.variableBlocks = groupByAddress(module.Variables)
 	c.outputBlocks = groupByAddress(module.Outputs)
-	//for _, localBlock := range module.Locals {
-	//	localBlock.WriteBody().AppendNewline()
-	//}
 	c.localBlocks = groupByAddress(module.Locals)
 	if len(module.TerraformBlocks) > 0 {
 		c.terraformBlock = module.TerraformBlocks[0]
