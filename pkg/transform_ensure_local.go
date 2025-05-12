@@ -18,6 +18,7 @@ type EnsureLocalTransform struct {
 	FallbackFileName string `hcl:"fallback_file_name" validate:"required"`
 	writeBlock       *hclwrite.Block
 	tokens           hclwrite.Tokens
+	newWriteBlock    bool
 }
 
 func (u *EnsureLocalTransform) Type() string {
@@ -26,6 +27,10 @@ func (u *EnsureLocalTransform) Type() string {
 
 func (u *EnsureLocalTransform) Apply() error {
 	u.writeBlock.Body().SetAttributeRaw(u.LocalName, u.tokens)
+	if u.newWriteBlock {
+		cfg := u.Config().(*MetaProgrammingTFConfig)
+		cfg.AddBlock(u.FallbackFileName, u.writeBlock)
+	}
 	return nil
 }
 
@@ -40,9 +45,11 @@ func (u *EnsureLocalTransform) Decode(block *golden.HclBlock, context *hcl.EvalC
 		return err
 	}
 	cfg := u.Config().(*MetaProgrammingTFConfig)
-	b, ok := cfg.localBlocks[fmt.Sprintf("local.%s", u.LocalName)]
-	if ok {
+	if b, ok := cfg.localBlocks[fmt.Sprintf("local.%s", u.LocalName)]; ok {
 		u.writeBlock = b.WriteBlock
+	} else {
+		u.writeBlock = hclwrite.NewBlock("locals", []string{})
+		u.newWriteBlock = true
 	}
 	asString, err := getOptionalStringAttribute("value_as_string", block, context)
 	if err != nil {
