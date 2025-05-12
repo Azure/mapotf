@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-exec v0.23.0
 	github.com/hashicorp/terraform-json v0.24.0
-	github.com/lonegunmanb/avmfix v0.0.0-20250506005923-76e7ab0889b7
+	github.com/lonegunmanb/avmfix v0.1.1
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -84,7 +84,7 @@ require (
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
 	github.com/lonegunmanb/terraform-alicloud-schema v1.248.0 // indirect
 	github.com/lonegunmanb/terraform-aws-schema/v5 v5.97.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.38.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v1.39.0 // indirect
 	github.com/lonegunmanb/terraform-azapi-schema v1.15.0 // indirect
 	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
 	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.27.0 // indirect
