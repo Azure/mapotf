@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-exec v0.23.0
 	github.com/hashicorp/terraform-json v0.24.0
-	github.com/lonegunmanb/avmfix v0.1.1
+	github.com/lonegunmanb/avmfix v0.2.0
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -84,12 +84,12 @@ require (
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
 	github.com/lonegunmanb/terraform-alicloud-schema v1.248.0 // indirect
 	github.com/lonegunmanb/terraform-aws-schema/v5 v5.97.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.39.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v1.40.0 // indirect
 	github.com/lonegunmanb/terraform-azapi-schema v1.15.0 // indirect
 	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
-	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.27.0 // indirect
+	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.28.0 // indirect
 	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
-	github.com/lonegunmanb/terraform-google-schema/v6 v6.33.0 // indirect
+	github.com/lonegunmanb/terraform-google-schema/v6 v6.34.0 // indirect
 	github.com/lonegunmanb/terraform-helm-schema/v2 v2.17.0 // indirect
 	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.36.0 // indirect
 	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.2 // indirect
