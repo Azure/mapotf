@@ -164,6 +164,42 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 	writeFile.Body().AppendNewline()
 }
 
+func (m *Module) RemoveBlock(block *hclwrite.Block) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	targetType := block.Type()
+	targetLabels := block.Labels()
+
+	// Look through all files to find the block
+	for _, file := range m.writeFiles {
+		body := file.Body()
+		blocks := body.Blocks()
+		for _, b := range blocks {
+			bType := b.Type()
+			if bType == targetType && labelsEqual(b.Labels(), targetLabels) {
+				body.RemoveBlock(b)
+				return
+			}
+		}
+	}
+}
+
+// Helper function to compare if two label slices are equal
+func labelsEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 	for attrName, attr := range rb.Body.Attributes {
 		rootBlock := NewBlock(m, &hclsyntax.Block{
