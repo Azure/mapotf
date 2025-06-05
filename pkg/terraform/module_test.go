@@ -2,10 +2,12 @@ package terraform
 
 import (
 	"path/filepath"
+	"sync"
 	"testing"
 
 	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -161,4 +163,145 @@ func TestLoadModuleShouldBypassOverrideFiles(t *testing.T) {
 	// Verify that the override files are bypassed
 	assert.Len(t, sut.ResourceBlocks, 1)
 	assert.Equal(t, "this", sut.ResourceBlocks[0].Labels[1])
+}
+
+func TestModule_AddBlock(t *testing.T) {
+	// Create a mock file system
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+
+	// Create a directory for our module
+	err := mockFs.MkdirAll("tmp", 0755)
+	require.NoError(t, err)
+
+	// Create a module
+	m := &Module{
+		Dir:        "tmp",
+		AbsDir:     "tmp",
+		writeFiles: make(map[string]*hclwrite.File),
+		lock:       &sync.Mutex{},
+	}
+
+	// Create a new HCL block
+	newBlock := hclwrite.NewBlock("resource", []string{"azurerm_resource_group", "example"})
+	newBlock.Body().SetAttributeValue("name", cty.StringVal("test-rg"))
+
+	// Add the block to a new file
+	m.AddBlock("new_file.tf", newBlock)
+
+	// Verify that the block was added to the writeFiles map
+	require.Contains(t, m.writeFiles, "new_file.tf")
+
+	// Save the changes to disk
+	err = m.SaveToDisk()
+	require.NoError(t, err)
+
+	// Verify that the file was created with the correct content
+	content, err := afero.ReadFile(mockFs, "tmp/new_file.tf")
+	require.NoError(t, err)
+
+	// The expected content should contain our resource block
+	expectedContent := `resource "azurerm_resource_group" "example" {
+  name = "test-rg"
+}
+
+`
+	assert.Equal(t, expectedContent, string(content))
+}
+
+func TestModule_RemoveBlock(t *testing.T) {
+	// Create a mock file system
+
+	testCases := []struct {
+		name          string
+		fileName      string
+		content       string
+		blockToRemove []string
+		expected      string
+	}{
+		{
+			name:          "RemoveOnlyBlock",
+			fileName:      "only_block.tf",
+			content:       `resource "azurerm_resource_group" "example" {}`,
+			blockToRemove: []string{"azurerm_resource_group", "example", "only-rg"},
+			expected:      ``,
+		},
+		{
+			name:     "RemoveFirstBlock",
+			fileName: "first_block.tf",
+			content: `resource "azurerm_resource_group" "first" {
+  				name = "first-rg"
+}
+resource "azurerm_resource_group" "second" {
+  				name = "second-rg"
+}`,
+			blockToRemove: []string{"azurerm_resource_group", "first", "first-rg"},
+			expected: `resource "azurerm_resource_group" "second" {
+  name = "second-rg"
+}`,
+		},
+		{
+			name:     "RemoveMiddleBlock",
+			fileName: "middle_block.tf",
+			content: `resource "azurerm_resource_group" "first" {}
+resource "azurerm_resource_group" "middle" {}
+resource "azurerm_resource_group" "last" {}`,
+			blockToRemove: []string{"azurerm_resource_group", "middle", "middle-rg"},
+			expected: `resource "azurerm_resource_group" "first" {}
+resource "azurerm_resource_group" "last" {}`,
+		},
+		{
+			name:     "RemoveLastBlock",
+			fileName: "last_block.tf",
+			content: `resource "azurerm_resource_group" "first" {}
+resource "azurerm_resource_group" "last" {}`,
+			blockToRemove: []string{"azurerm_resource_group", "last", "last-rg"},
+			expected: `resource "azurerm_resource_group" "first" {}
+`,
+		},
+		{
+			name:          "RemoveNonExistentBlock",
+			fileName:      "non_existent_block.tf",
+			content:       `resource "azurerm_resource_group" "first" {}`,
+			blockToRemove: []string{"azurerm_resource_group", "non_existent", "non-existent-rg"},
+			expected:      `resource "azurerm_resource_group" "first" {}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockFs := afero.NewMemMapFs()
+			stub := gostub.Stub(&filesystem.Fs, mockFs)
+			defer stub.Reset()
+
+			require.NoError(t, afero.WriteFile(mockFs, filepath.Join("tmp", tc.fileName), []byte(tc.content), 0644))
+			m, err := LoadModule(ModuleRef{
+				Dir:    "tmp",
+				AbsDir: "tmp",
+			})
+			require.NoError(t, err)
+			blockToRemove := createResourceBlock(tc.blockToRemove[0], tc.blockToRemove[1], tc.blockToRemove[2])
+
+			// Remove the block
+			m.RemoveBlock(blockToRemove)
+
+			// Save the changes to disk
+			require.NoError(t, m.SaveToDisk())
+
+			// Verify the file contains or doesn't contain expected blocks
+			content, err := afero.ReadFile(mockFs, filepath.Join("tmp", tc.fileName))
+			require.NoError(t, err)
+			contentStr := string(content)
+
+			assert.Equal(t, tc.expected, contentStr)
+		})
+	}
+}
+
+// Helper function to create a resource block
+func createResourceBlock(resourceType, name, resourceName string) *hclwrite.Block {
+	b := hclwrite.NewBlock("resource", []string{resourceType, name})
+	b.Body().SetAttributeValue("name", cty.StringVal(resourceName))
+	return b
 }
