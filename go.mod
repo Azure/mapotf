@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/Azure/golden v0.0.0-20250424042438-89a3a669d5f0
 	github.com/ahmetb/go-linq/v3 v3.2.0
-	github.com/go-git/go-git/v5 v5.16.0
+	github.com/go-git/go-git/v5 v5.16.2
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-getter/v2 v2.2.3
