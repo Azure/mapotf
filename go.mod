@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-exec v0.23.0
 	github.com/hashicorp/terraform-json v0.25.0
-	github.com/lonegunmanb/avmfix v0.6.0
+	github.com/lonegunmanb/avmfix v0.7.0
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -82,14 +82,14 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
-	github.com/lonegunmanb/terraform-alicloud-schema v1.250.0 // indirect
+	github.com/lonegunmanb/terraform-alicloud-schema v1.251.0 // indirect
 	github.com/lonegunmanb/terraform-aws-schema/v5 v5.99.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.43.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v1.44.0 // indirect
 	github.com/lonegunmanb/terraform-azapi-schema/v2 v2.4.0 // indirect
 	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
-	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.31.0 // indirect
+	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.32.0 // indirect
 	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
-	github.com/lonegunmanb/terraform-google-schema/v6 v6.37.0 // indirect
+	github.com/lonegunmanb/terraform-google-schema/v6 v6.39.0 // indirect
 	github.com/lonegunmanb/terraform-helm-schema/v2 v2.17.0 // indirect
 	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.37.0 // indirect
 	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.3 // indirect
@@ -117,15 +117,15 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/mod v0.25.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
+	golang.org/x/tools v0.34.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
