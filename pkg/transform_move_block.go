@@ -3,7 +3,6 @@ package pkg
 import (
 	"fmt"
 	"github.com/Azure/golden"
-	"github.com/hashicorp/hcl/v2/hclwrite"
 )
 
 var _ Transform = &MoveBlockTransform{}
@@ -35,23 +34,4 @@ func (m *MoveBlockTransform) Apply() error {
 	cfg.AddBlock(m.FileName, writeBlock)
 	cfg.module.RemoveBlock(writeBlock)
 	return nil
-}
-
-// copyHclBlock creates a copy of an HCL block
-func copyHclBlock(block *hclwrite.Block) *hclwrite.Block {
-	// Create a new block with the same type and labels
-	newBlock := hclwrite.NewBlock(block.Type(), block.Labels())
-
-	// Copy all attributes
-	for name, attr := range block.Body().Attributes() {
-		newBlock.Body().SetAttributeRaw(name, attr.Expr().BuildTokens(nil))
-	}
-
-	// Copy all nested blocks
-	for _, nestedBlock := range block.Body().Blocks() {
-		newNestedBlock := copyHclBlock(nestedBlock)
-		newBlock.Body().AppendBlock(newNestedBlock)
-	}
-
-	return newBlock
 }
