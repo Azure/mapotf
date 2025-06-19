@@ -38,7 +38,10 @@ func localizeConfigFolder(path string, ctx context.Context) (configPath string, 
 		Pwd: pwd,
 	}
 
-	getter := getter.Client{}
+	getter := getter.Client{
+		DisableSymlinks: true,
+	}
+
 	result, err := getter.Get(ctx, req)
 	if err != nil {
 		return "", cleaner, err
