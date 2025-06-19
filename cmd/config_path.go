@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	filesystem "github.com/Azure/mapotf/pkg/fs"
 	"os"
 	"path/filepath"
+
+	filesystem "github.com/Azure/mapotf/pkg/fs"
 
 	"github.com/Azure/mapotf/pkg"
 	"github.com/google/uuid"
@@ -25,12 +26,27 @@ func localizeConfigFolder(path string, ctx context.Context) (configPath string, 
 	cleaner := func() {
 		_ = os.RemoveAll(tmp)
 	}
-	result, err := getter.Get(ctx, tmp, path)
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", cleaner, fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	req := &getter.Request{
+		Src: path,
+		Dst: tmp,
+		Pwd: pwd,
+	}
+
+	getter := getter.Client{}
+	result, err := getter.Get(ctx, req)
 	if err != nil {
 		return "", cleaner, err
 	}
+
 	if result == nil {
 		return "", cleaner, fmt.Errorf("cannot get config path")
 	}
+
 	return result.Dst, cleaner, nil
 }
