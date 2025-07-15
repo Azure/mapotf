@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.2
 
 require (
-	github.com/Azure/golden v0.0.0-20250424042438-89a3a669d5f0
+	github.com/Azure/golden v0.0.0-20250715010524-de5f4919b5dd
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/go-playground/assert/v2 v2.2.0
@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-exec v0.23.0
 	github.com/hashicorp/terraform-json v0.25.0
-	github.com/lonegunmanb/avmfix v0.7.0
+	github.com/lonegunmanb/avmfix v0.7.1-0.20250715004112-79836ebeb8de
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -49,7 +49,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.26.0 // indirect
+	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -82,20 +82,20 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
-	github.com/lonegunmanb/terraform-alicloud-schema v1.251.0 // indirect
-	github.com/lonegunmanb/terraform-aws-schema/v5 v5.99.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.44.0 // indirect
-	github.com/lonegunmanb/terraform-azapi-schema/v2 v2.4.0 // indirect
+	github.com/lonegunmanb/terraform-alicloud-schema v1.253.0 // indirect
+	github.com/lonegunmanb/terraform-aws-schema/v6 v6.3.0 // indirect
+	github.com/lonegunmanb/terraform-awscc-schema v1.49.0 // indirect
+	github.com/lonegunmanb/terraform-azapi-schema/v2 v2.5.0 // indirect
 	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
-	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.32.0 // indirect
+	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.36.0 // indirect
 	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
-	github.com/lonegunmanb/terraform-google-schema/v6 v6.39.0 // indirect
-	github.com/lonegunmanb/terraform-helm-schema/v2 v2.17.0 // indirect
+	github.com/lonegunmanb/terraform-google-schema/v6 v6.43.0 // indirect
+	github.com/lonegunmanb/terraform-helm-schema/v3 v3.0.2 // indirect
 	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.37.0 // indirect
 	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.3 // indirect
 	github.com/lonegunmanb/terraform-modtm-schema v0.3.5 // indirect
 	github.com/lonegunmanb/terraform-null-schema/v3 v3.2.4 // indirect
-	github.com/lonegunmanb/terraform-random-schema/v3 v3.7.1-ephemeral // indirect
+	github.com/lonegunmanb/terraform-random-schema/v3 v3.7.2 // indirect
 	github.com/lonegunmanb/terraform-template-schema/v2 v2.2.0 // indirect
 	github.com/lonegunmanb/terraform-time-schema v0.13.0 // indirect
 	github.com/lonegunmanb/terraform-tls-schema/v4 v4.1.0-ephemeral // indirect
@@ -117,15 +117,15 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/mod v0.26.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
