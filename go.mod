@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.24.0
-	github.com/hashicorp/terraform-exec v0.23.0
+	github.com/hashicorp/terraform-exec v0.24.0
 	github.com/hashicorp/terraform-json v0.27.2
 	github.com/lonegunmanb/avmfix v0.7.1-0.20250715004112-79836ebeb8de
 	github.com/lonegunmanb/hclfuncs v0.12.0
