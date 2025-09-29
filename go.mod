@@ -19,7 +19,7 @@ require (
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
-	github.com/spf13/afero v1.14.0
+	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/zclconf/go-cty v1.16.4
@@ -123,7 +123,7 @@ require (
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
