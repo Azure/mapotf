@@ -1,8 +1,6 @@
 module github.com/Azure/mapotf
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.25
 
 require (
 	github.com/Azure/golden v0.0.0-20250715010524-de5f4919b5dd
@@ -22,7 +20,7 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/zclconf/go-cty v1.17.0
+	github.com/zclconf/go-cty v1.18.0
 )
 
 require (
