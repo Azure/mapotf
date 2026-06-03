@@ -2,18 +2,30 @@ package pkg
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	avmfix "github.com/lonegunmanb/avmfix/pkg"
 	"github.com/zclconf/go-cty/cty"
 )
 
 var _ golden.ApplyBlock = &NewBlockTransform{}
 var _ golden.CustomDecode = &NewBlockTransform{}
+
+// variableAttributePriorities mirrors the avmfix priority map used to order
+// the attributes inside a `variable` block: lower number wins. Attributes not
+// in this map fall back to math.MaxInt so they're emitted after the recognised
+// ones, in alphabetical order.
+var variableAttributePriorities = map[string]int{
+	"type":        0,
+	"default":     1,
+	"description": 2,
+	"nullable":    3,
+	"sensitive":   4,
+}
 
 type NewBlockTransform struct {
 	*golden.BaseBlock
@@ -105,27 +117,84 @@ func (n *NewBlockTransform) NewWriteBlock() *hclwrite.Block {
 }
 
 func (n *NewBlockTransform) Format(block *hclwrite.Block) (*hclwrite.Block, error) {
-	if block.Type() != "resource" && block.Type() != "data" && block.Type() != "variable" {
+	if block.Type() != "variable" {
+		// For resource / data blocks the legacy avmfix path called
+		// BuildBlockWithSchema with an empty hcl.File, which made it a no-op.
+		// Match that behaviour exactly.
 		return block, nil
 	}
+	return formatVariableBlock(block)
+}
+
+// formatVariableBlock applies the avmfix-equivalent layout to a `variable`
+// block: attributes ordered type → default → description → nullable → sensitive
+// (unknown attrs after, alphabetically); `nullable = true` and `sensitive = false`
+// literal defaults dropped; nested blocks preserved after the attributes with a
+// blank-line separator.
+func formatVariableBlock(block *hclwrite.Block) (*hclwrite.Block, error) {
 	bytes := block.BuildTokens(nil).Bytes()
 	syntaxFile, diag := hclsyntax.ParseConfig(bytes, "dummy.hcl", hcl.InitialPos)
 	if diag.HasErrors() {
 		return nil, diag
 	}
 	syntaxBlock := syntaxFile.Body.(*hclsyntax.Body).Blocks[0]
-	avmBlock := avmfix.NewHclBlock(syntaxBlock, block)
-	if block.Type() == "resource" || block.Type() == "data" {
-		resourceBlock := avmfix.BuildBlockWithSchema(avmBlock, &hcl.File{})
-		err := resourceBlock.AutoFix()
-		return resourceBlock.HclBlock.WriteBlock, err
+
+	body := block.Body()
+	writeAttrs := body.Attributes()
+	writeBlocks := body.Blocks()
+
+	keep := make([]string, 0, len(writeAttrs))
+	for name := range writeAttrs {
+		if dropDefaultBoolLiteral(name, syntaxBlock.Body.Attributes) {
+			continue
+		}
+		keep = append(keep, name)
 	}
-	if block.Type() == "variable" {
-		variableBlock := avmfix.BuildVariableBlock(&hcl.File{}, avmBlock)
-		err := variableBlock.AutoFix()
-		return variableBlock.Block.WriteBlock, err
+	sort.SliceStable(keep, func(i, j int) bool {
+		pi, oki := variableAttributePriorities[keep[i]]
+		pj, okj := variableAttributePriorities[keep[j]]
+		if oki != okj {
+			return oki && !okj
+		}
+		if pi != pj {
+			return pi < pj
+		}
+		return keep[i] < keep[j]
+	})
+
+	body.Clear()
+	body.AppendNewline()
+	for _, name := range keep {
+		body.AppendUnstructuredTokens(writeAttrs[name].BuildTokens(nil))
 	}
-	return nil, nil
+	if len(writeBlocks) > 0 {
+		body.AppendNewline()
+		for _, nb := range writeBlocks {
+			body.AppendBlock(nb)
+		}
+	}
+	return block, nil
+}
+
+// dropDefaultBoolLiteral returns true when the attribute represents a
+// redundant default that avmfix used to strip: `nullable = true` or
+// `sensitive = false`, expressed as a literal boolean.
+func dropDefaultBoolLiteral(name string, attrs map[string]*hclsyntax.Attribute) bool {
+	syn, ok := attrs[name]
+	if !ok {
+		return false
+	}
+	literal, ok := syn.Expr.(*hclsyntax.LiteralValueExpr)
+	if !ok {
+		return false
+	}
+	switch name {
+	case "nullable":
+		return literal.Val.True()
+	case "sensitive":
+		return literal.Val.False()
+	}
+	return false
 }
 
 func getRequiredStringAttribute(name string, block *golden.HclBlock, context *hcl.EvalContext) (string, error) {
