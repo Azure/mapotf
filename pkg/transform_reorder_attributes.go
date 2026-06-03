@@ -115,7 +115,7 @@ func computeReorderedAttributeNames(head, tail []string, writeAttrs map[string]*
 			continue
 		}
 		entry := middleEntry{name: name}
-		if syn, ok := block.Block.Body.Attributes[name]; ok && syn != nil {
+		if syn, ok := block.Body.Attributes[name]; ok && syn != nil {
 			entry.hasSource = true
 			entry.line = syn.SrcRange.Start.Line
 			entry.col = syn.SrcRange.Start.Column
@@ -163,7 +163,7 @@ func orderedAttributeNamesFromWriteBody(writeAttrs map[string]*hclwrite.Attribut
 	entries := make([]entry, 0, len(writeAttrs))
 	for name := range writeAttrs {
 		e := entry{name: name}
-		if syn, ok := block.Block.Body.Attributes[name]; ok && syn != nil {
+		if syn, ok := block.Body.Attributes[name]; ok && syn != nil {
 			e.hasSource = true
 			e.line = syn.SrcRange.Start.Line
 			e.col = syn.SrcRange.Start.Column
