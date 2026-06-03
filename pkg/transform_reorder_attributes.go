@@ -225,10 +225,11 @@ func sortReorderMiddle(elems []reorderElement, alphabetical bool) {
 //     head→middle and middle→tail section boundaries.
 //
 // A blank line is always emitted before a nested block (so user-facing
-// readability matches typical Terraform style), but never doubled up when one
-// was just emitted for a section boundary.
+// readability matches typical Terraform style). When the head→middle and
+// middle→tail boundaries collapse to the same index (empty middle) only one
+// blank line is emitted, because `needBlank` is a single boolean per
+// iteration.
 func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd, tailStart int, headTailLineBreaks bool) {
-	lastWasBlank := false
 	for i, el := range elements {
 		if i > 0 {
 			needBlank := false
@@ -241,9 +242,8 @@ func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd
 			if el.isNested {
 				needBlank = true
 			}
-			if needBlank && !lastWasBlank {
+			if needBlank {
 				body.AppendNewline()
-				lastWasBlank = true
 			}
 		}
 		if el.isNested {
@@ -251,7 +251,6 @@ func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd
 		} else {
 			body.AppendUnstructuredTokens(el.attr.BuildTokens(nil))
 		}
-		lastWasBlank = false
 	}
 }
 
