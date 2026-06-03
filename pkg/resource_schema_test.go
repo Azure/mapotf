@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"os/exec"
 	"runtime"
 	"testing"
 
@@ -13,6 +14,9 @@ import (
 func TestTerraformCliProviderSchemaRetriever_retrieveLocalProviderSchema(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping test on Windows since setup Terraform on windows seems not work with this test")
+	}
+	if _, err := exec.LookPath("terraform"); err != nil {
+		t.Skip("Skipping test because Terraform is not available on PATH")
 	}
 	sut := pkg.NewTerraformCliProviderSchemaRetriever(context.Background())
 	schema, err := sut.Get("hashicorp/local", "2.5.1")
