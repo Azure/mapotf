@@ -183,3 +183,7 @@ fabric.properties
 # GoReleaser output
 dist/
 
+
+# In-flight implementation plans (session-local, never merged)
+plan.md
+
