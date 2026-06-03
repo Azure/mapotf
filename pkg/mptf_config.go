@@ -28,6 +28,7 @@ type MetaProgrammingTFConfig struct {
 	localBlocks    map[string]*terraform.RootBlock
 	outputBlocks   map[string]*terraform.RootBlock
 	moduleBlocks   map[string]*terraform.RootBlock
+	movedBlocks    map[string]*terraform.RootBlock
 	terraformBlock *terraform.RootBlock
 	allRootBlocks  []*terraform.RootBlock
 	module         *terraform.Module
@@ -66,6 +67,7 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 	c.variableBlocks = groupByAddress(module.Variables)
 	c.outputBlocks = groupByAddress(module.Outputs)
 	c.localBlocks = groupByAddress(module.Locals)
+	c.movedBlocks = groupByAddress(module.MovedBlocks)
 	if len(module.TerraformBlocks) > 0 {
 		c.terraformBlock = module.TerraformBlocks[0]
 	}
@@ -102,6 +104,10 @@ func (c *MetaProgrammingTFConfig) ModuleBlocks() []*terraform.RootBlock {
 	return c.slice(c.moduleBlocks)
 }
 
+func (c *MetaProgrammingTFConfig) MovedBlocks() []*terraform.RootBlock {
+	return c.slice(c.movedBlocks)
+}
+
 func (c *MetaProgrammingTFConfig) TerraformBlock() *terraform.RootBlock {
 	return c.terraformBlock
 }
@@ -124,6 +130,9 @@ func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock
 	}
 	if strings.HasPrefix(address, "module.") {
 		return c.moduleBlocks[address]
+	}
+	if strings.HasPrefix(address, "moved.") {
+		return c.movedBlocks[address]
 	}
 	if address == "terraform" {
 		return c.terraformBlock
