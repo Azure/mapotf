@@ -67,9 +67,11 @@ module "example" {
 `,
 			expected: `
 module "example" {
-  source     = "./module"
-  version    = "1.0.0"
-  custom     = "x"
+  source  = "./module"
+  version = "1.0.0"
+
+  custom = "x"
+
   depends_on = [null_resource.this]
 }
 `,
@@ -114,7 +116,7 @@ variable "example" {
 			errorSubstring: "cannot be in both head_attributes and tail_attributes",
 		},
 		{
-			desc: "nested_blocks_preserved_after_attributes",
+			desc: "nested_block_sorts_into_middle_alphabetically_with_blank_line",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "resource.fake_resource.this"
@@ -135,14 +137,16 @@ resource "fake_resource" this {
 `,
 			expected: `
 resource "fake_resource" this {
-  count      = 1
-  attr_b     = 2
-  attr_a     = 1
-  depends_on = [other.thing]
+  count = 1
+
+  attr_a = 1
+  attr_b = 2
 
   nested {
     inside = "yes"
   }
+
+  depends_on = [other.thing]
 }
 `,
 		},
@@ -183,6 +187,248 @@ variable "other" {
 			expected:       ``,
 			wantErr:        true,
 			errorSubstring: "cannot find block",
+		},
+		{
+			desc: "head_tail_line_breaks_false_suppresses_section_blanks",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address     = "module.example"
+  head_attributes          = ["source", "version"]
+  tail_attributes          = ["depends_on"]
+  head_tail_line_breaks    = false
+}
+`,
+			tfConfig: `
+module "example" {
+  depends_on = [null_resource.this]
+  custom     = "x"
+  version    = "1.0.0"
+  source     = "./module"
+}
+`,
+			expected: `
+module "example" {
+  source     = "./module"
+  version    = "1.0.0"
+  custom     = "x"
+  depends_on = [null_resource.this]
+}
+`,
+		},
+		{
+			desc: "nested_block_listed_in_head_renders_first",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  head_attributes      = ["lifecycle", "count"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  attr_b = 2
+  attr_a = 1
+  count  = 1
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  lifecycle {
+    create_before_destroy = true
+  }
+  count = 1
+
+  attr_a = 1
+  attr_b = 2
+}
+`,
+		},
+		{
+			desc: "nested_block_listed_in_tail_renders_last",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  tail_attributes      = ["lifecycle"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  attr_b = 2
+  attr_a = 1
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  attr_a = 1
+  attr_b = 2
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`,
+		},
+		{
+			desc: "multiple_nested_blocks_each_get_leading_blank_line",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  attr_b = 2
+  attr_a = 1
+  first {
+    a = 1
+  }
+  second {
+    b = 2
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  attr_a = 1
+  attr_b = 2
+
+  first {
+    a = 1
+  }
+
+  second {
+    b = 2
+  }
+}
+`,
+		},
+		{
+			desc: "dynamic_block_addressable_by_label",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  head_attributes      = ["count", "subnet"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  attr_b = 2
+  attr_a = 1
+  count  = 1
+  dynamic "subnet" {
+    for_each = var.subnets
+    content {
+      name = subnet.value
+    }
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  count = 1
+
+  dynamic "subnet" {
+    for_each = var.subnets
+    content {
+      name = subnet.value
+    }
+  }
+
+  attr_a = 1
+  attr_b = 2
+}
+`,
+		},
+		{
+			desc: "sort_middle_alphabetically_false_preserves_source_order",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address       = "resource.fake_resource.this"
+  head_attributes            = ["count"]
+  tail_attributes            = ["depends_on"]
+  sort_middle_alphabetically = false
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  depends_on = [other.thing]
+  zeta       = 1
+  alpha      = 2
+  count      = 1
+  middle {
+    inside = "yes"
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  count = 1
+
+  zeta  = 1
+  alpha = 2
+
+  middle {
+    inside = "yes"
+  }
+
+  depends_on = [other.thing]
+}
+`,
+		},
+		{
+			desc: "sort_middle_alphabetically_false_still_inserts_nested_block_blank",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address       = "resource.fake_resource.this"
+  sort_middle_alphabetically = false
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  zeta = 1
+  middle {
+    inside = "yes"
+  }
+  alpha = 2
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  zeta = 1
+
+  middle {
+    inside = "yes"
+  }
+  alpha = 2
+}
+`,
+		},
+		{
+			desc: "middle_only_no_head_no_tail_sorts_alphabetically_no_section_blanks",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+}
+`,
+			tfConfig: `
+variable "example" {
+  zeta  = 3
+  alpha = 1
+  mid   = 2
+}
+`,
+			expected: `
+variable "example" {
+  alpha = 1
+  mid   = 2
+  zeta  = 3
+}
+`,
 		},
 	}
 
