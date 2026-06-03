@@ -37,7 +37,7 @@ archives:
           - zip
     files:
       - LICENSE
-      - readme.md
+      - README.md
 
 checksum:
   name_template: 'checksums.txt'
