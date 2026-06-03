@@ -27,7 +27,7 @@ type MetaProgrammingTFPlan struct {
 func (m *MetaProgrammingTFPlan) String() string {
 	sb := strings.Builder{}
 	for _, t := range m.Transforms {
-		sb.WriteString(fmt.Sprintf("%s would be apply:\n %s\n", t.Address(), golden.BlockToString(t)))
+		fmt.Fprintf(&sb, "%s would be apply:\n %s\n", t.Address(), golden.BlockToString(t))
 		sb.WriteString("\n---\n")
 	}
 	return sb.String()
