@@ -61,8 +61,7 @@ transform "regex_replace_expression" this {
 `, strings.ReplaceAll(fmt.Sprintf(attributePattern, "azurerm_kubernetes_cluster", "location"), `\`, `\\`),
 				strings.ReplaceAll(fmt.Sprintf(replPattern, "azurerm_kubernetes_cluster", "region"), `${`, `$${`)),
 			tfCfg: sampleTfConfig,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -132,8 +131,7 @@ resource "fake_resource" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   count               = 1
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
@@ -191,7 +189,7 @@ resource "fake_resource" {
 			tfFile, err := afero.ReadFile(fs, "/main.tf")
 			require.NoError(t, err)
 			actual := string(tfFile)
-			assert.Equal(t, normalizeForCompare(c.expectedHCL), normalizeForCompare(actual))
+			assert.Equal(t, c.expectedHCL, actual)
 		})
 	}
 }
