@@ -185,6 +185,126 @@ func TestNewBlockTransform_NewBlockWithForEach(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestNewBlockTransform_FormatVariableBlock(t *testing.T) {
+	cases := []struct {
+		desc     string
+		code     string
+		expected string
+	}{
+		{
+			desc: "orders_attributes_and_drops_redundant_bool_defaults",
+			code: `transform "new_block" test {
+	new_block_type = "variable"
+	filename       = "variables.tf"
+	labels         = ["test"]
+	asraw {
+	  z_custom    = "last"
+	  sensitive   = false
+	  nullable    = true
+	  description = "A test variable."
+	  default     = "value"
+	  type        = string
+	  a_custom    = "first"
+	}
+}`,
+			expected: `variable "test" {
+  type        = string
+  default     = "value"
+  description = "A test variable."
+  a_custom    = "first"
+  z_custom    = "last"
+}
+`,
+		},
+		{
+			desc: "keeps_non_default_bool_literals",
+			code: `transform "new_block" test {
+	new_block_type = "variable"
+	filename       = "variables.tf"
+	labels         = ["test"]
+	asraw {
+	  sensitive = true
+	  nullable  = false
+	  type      = string
+	}
+}`,
+			expected: `variable "test" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+`,
+		},
+		{
+			desc: "keeps_non_literal_bool_expressions",
+			code: `transform "new_block" test {
+	new_block_type = "variable"
+	filename       = "variables.tf"
+	labels         = ["test"]
+	asraw {
+	  sensitive = var.sensitive
+	  nullable  = var.nullable
+	  type      = string
+	}
+}`,
+			expected: `variable "test" {
+  type      = string
+  nullable  = var.nullable
+  sensitive = var.sensitive
+}
+`,
+		},
+		{
+			desc: "preserves_nested_blocks_after_attributes",
+			code: `transform "new_block" test {
+	new_block_type = "variable"
+	filename       = "variables.tf"
+	labels         = ["test"]
+	asraw {
+	  validation {
+	    condition     = true
+	  }
+	  description = "A test variable."
+	  type        = string
+	}
+}`,
+			expected: "variable \"test\" {\n" +
+				"  type        = string\n" +
+				"  description = \"A test variable.\"\n" +
+				"\n" +
+				"  validation {\n" +
+				"    condition = true\n" +
+				"  }\n" +
+				"}\n",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{}))
+			defer stub.Reset()
+
+			readFile, diag := hclsyntax.ParseConfig([]byte(c.code), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			writeFile, diag := hclwrite.ParseConfig([]byte(c.code), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+				Dir:    "/",
+				AbsDir: "/",
+			}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+			require.NoError(t, err)
+			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+			require.NoError(t, err)
+			err = plan.Apply()
+			require.NoError(t, err)
+			after, err := afero.ReadFile(filesystem.Fs, "/variables.tf")
+			require.NoError(t, err)
+			assert.Equal(t, formatHcl(c.expected), formatHcl(string(after)))
+		})
+	}
+}
+
 func TestNewBlockTransform_DecodeTwiceShouldGotCorrectLabels(t *testing.T) {
 	code := `transform "new_block" test {
 	new_block_type = "variable"

@@ -163,7 +163,6 @@ func formatVariableBlock(block *hclwrite.Block) (*hclwrite.Block, error) {
 	})
 
 	body.Clear()
-	body.AppendNewline()
 	for _, name := range keep {
 		body.AppendUnstructuredTokens(writeAttrs[name].BuildTokens(nil))
 	}
