@@ -21,23 +21,23 @@ var _ Transform = &ReorderAttributesTransform{}
 //     are identified by their label (`X`), so they line up with the static
 //     block they emit.
 //   - Elements named in `head_attributes` come first, in the listed order.
-//   - Elements named in `tail_attributes` come last, in the listed order.
-//   - Every other element is the "middle". By default the middle is sorted
-//     alphabetically by name; set `sort_middle_alphabetically = false` to
+//   - Elements named in `foot_attributes` come last, in the listed order.
+//   - Every other element is the "body". By default the body is sorted
+//     alphabetically by name; set `sort_body_alphabetically = false` to
 //     preserve the original source order instead.
-//   - When `head_tail_line_breaks` is true (default) a blank line is inserted
-//     between the head section and the middle, and between the middle and the
-//     tail section. Set to `false` to suppress these blank lines.
+//   - When `head_foot_line_breaks` is true (default) a blank line is inserted
+//     between the head section and the body, and between the body and the
+//     foot section. Set to `false` to suppress these blank lines.
 //   - Every nested block in the output is preceded by a blank line, except
 //     when the previous element is a nested block sharing the same orderable
 //     name. Adjacent same-kind siblings (e.g. two `validation {}` blocks of
 //     a variable, two `dynamic "subnet" {}` blocks of a resource) stay
 //     grouped without a blank line between them, matching typical Terraform
-//     formatting. If a section boundary (head/tail) coincides with the
+//     formatting. If a section boundary (head/foot) coincides with the
 //     adjacency the section blank line still wins.
-//   - Names in `head_attributes` / `tail_attributes` that are not present on
+//   - Names in `head_attributes` / `foot_attributes` that are not present on
 //     the block are silently skipped.
-//   - The same name in both `head_attributes` and `tail_attributes` is a
+//   - The same name in both `head_attributes` and `foot_attributes` is a
 //     configuration error.
 //
 // This transform never adds, removes, or mutates attribute values — only the
@@ -45,11 +45,11 @@ var _ Transform = &ReorderAttributesTransform{}
 type ReorderAttributesTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	TargetBlockAddress       string   `hcl:"target_block_address"`
-	HeadAttributes           []string `hcl:"head_attributes,optional"`
-	TailAttributes           []string `hcl:"tail_attributes,optional"`
-	HeadTailLineBreaks       *bool    `hcl:"head_tail_line_breaks,optional"`
-	SortMiddleAlphabetically *bool    `hcl:"sort_middle_alphabetically,optional"`
+	TargetBlockAddress     string   `hcl:"target_block_address"`
+	HeadAttributes         []string `hcl:"head_attributes,optional"`
+	FootAttributes         []string `hcl:"foot_attributes,optional"`
+	HeadFootLineBreaks     *bool    `hcl:"head_foot_line_breaks,optional"`
+	SortBodyAlphabetically *bool    `hcl:"sort_body_alphabetically,optional"`
 }
 
 func (r *ReorderAttributesTransform) Type() string {
@@ -64,10 +64,10 @@ func (r *ReorderAttributesTransform) Apply() error {
 	}
 
 	headSet := toNameSet(r.HeadAttributes)
-	tailSet := toNameSet(r.TailAttributes)
+	footSet := toNameSet(r.FootAttributes)
 	for name := range headSet {
-		if _, conflict := tailSet[name]; conflict {
-			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both head_attributes and tail_attributes", name)
+		if _, conflict := footSet[name]; conflict {
+			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both head_attributes and foot_attributes", name)
 		}
 	}
 
@@ -80,37 +80,37 @@ func (r *ReorderAttributesTransform) Apply() error {
 
 	elements := buildReorderElements(writeAttrs, writeBlocks, block)
 
-	headElems, midElems, tailElems := partitionReorderElements(elements, r.HeadAttributes, r.TailAttributes)
-	sortReorderMiddle(midElems, r.useSortMiddleAlphabetically())
+	headElems, bodyElems, footElems := partitionReorderElements(elements, r.HeadAttributes, r.FootAttributes)
+	sortReorderBody(bodyElems, r.useSortBodyAlphabetically())
 
-	final := make([]reorderElement, 0, len(headElems)+len(midElems)+len(tailElems))
+	final := make([]reorderElement, 0, len(headElems)+len(bodyElems)+len(footElems))
 	final = append(final, headElems...)
-	final = append(final, midElems...)
-	final = append(final, tailElems...)
+	final = append(final, bodyElems...)
+	final = append(final, footElems...)
 
 	body.Clear()
 	body.AppendNewline()
-	emitReorderElements(body, final, len(headElems), len(headElems)+len(midElems), r.useHeadTailLineBreaks())
+	emitReorderElements(body, final, len(headElems), len(headElems)+len(bodyElems), r.useHeadFootLineBreaks())
 	return nil
 }
 
-func (r *ReorderAttributesTransform) useHeadTailLineBreaks() bool {
-	if r.HeadTailLineBreaks == nil {
+func (r *ReorderAttributesTransform) useHeadFootLineBreaks() bool {
+	if r.HeadFootLineBreaks == nil {
 		return true
 	}
-	return *r.HeadTailLineBreaks
+	return *r.HeadFootLineBreaks
 }
 
-func (r *ReorderAttributesTransform) useSortMiddleAlphabetically() bool {
-	if r.SortMiddleAlphabetically == nil {
+func (r *ReorderAttributesTransform) useSortBodyAlphabetically() bool {
+	if r.SortBodyAlphabetically == nil {
 		return true
 	}
-	return *r.SortMiddleAlphabetically
+	return *r.SortBodyAlphabetically
 }
 
 // reorderElement represents one orderable item in a block body — either an
 // attribute or a nested block. Source position is captured when known so the
-// "preserve source order" middle mode can sort attributes and nested blocks by
+// "preserve source order" body mode can sort attributes and nested blocks by
 // the line/column they originally appeared on.
 type reorderElement struct {
 	name      string
@@ -127,7 +127,7 @@ type reorderElement struct {
 // resolved from the matching read-side `*hclsyntax.Body` when available.
 // Elements added by a previous transform (no source-side counterpart) are
 // flagged `hasSource = false` and sorted alphabetically among themselves in
-// either middle mode.
+// either body mode.
 func buildReorderElements(writeAttrs map[string]*hclwrite.Attribute, writeBlocks []*hclwrite.Block, block *terraform.RootBlock) []reorderElement {
 	elements := make([]reorderElement, 0, len(writeAttrs)+len(writeBlocks))
 
@@ -162,40 +162,40 @@ func buildReorderElements(writeAttrs map[string]*hclwrite.Attribute, writeBlocks
 	return elements
 }
 
-// partitionReorderElements splits `elements` into head, middle, and tail
-// slices according to `head` and `tail` name lists. Multiple elements that
+// partitionReorderElements splits `elements` into head, body, and foot
+// slices according to `head` and `foot` name lists. Multiple elements that
 // share a name (e.g. two `nested {}` blocks of the same type) are grouped
-// together at the head or tail position, preserving their write-side order
+// together at the head or foot position, preserving their write-side order
 // within the group.
-func partitionReorderElements(elements []reorderElement, head, tail []string) (headElems, midElems, tailElems []reorderElement) {
+func partitionReorderElements(elements []reorderElement, head, foot []string) (headElems, bodyElems, footElems []reorderElement) {
 	headSet := toNameSet(head)
-	tailSet := toNameSet(tail)
+	footSet := toNameSet(foot)
 	byName := make(map[string][]reorderElement)
 	for _, el := range elements {
 		if _, ok := headSet[el.name]; ok {
 			byName[el.name] = append(byName[el.name], el)
 			continue
 		}
-		if _, ok := tailSet[el.name]; ok {
+		if _, ok := footSet[el.name]; ok {
 			byName[el.name] = append(byName[el.name], el)
 			continue
 		}
-		midElems = append(midElems, el)
+		bodyElems = append(bodyElems, el)
 	}
 	for _, name := range head {
 		headElems = append(headElems, byName[name]...)
 	}
-	for _, name := range tail {
-		tailElems = append(tailElems, byName[name]...)
+	for _, name := range foot {
+		footElems = append(footElems, byName[name]...)
 	}
 	return
 }
 
-// sortReorderMiddle stably sorts the middle slice in-place. When
-// `alphabetical` is true the order is `name` ascending. When false the order
-// is the original source position (line then column), with no-source elements
+// sortReorderBody stably sorts the body slice in-place. When `alphabetical`
+// is true the order is `name` ascending. When false the order is the
+// original source position (line then column), with no-source elements
 // (added by other transforms) appended afterwards in alphabetical order.
-func sortReorderMiddle(elems []reorderElement, alphabetical bool) {
+func sortReorderBody(elems []reorderElement, alphabetical bool) {
 	if alphabetical {
 		sort.SliceStable(elems, func(i, j int) bool {
 			return elems[i].name < elems[j].name
@@ -224,9 +224,9 @@ func sortReorderMiddle(elems []reorderElement, alphabetical bool) {
 // between sections and before nested blocks per the documented rules.
 //
 //   - `headEnd` is the index of the first non-head element.
-//   - `tailStart` is the index of the first tail element.
-//   - `headTailLineBreaks` controls whether blank lines are emitted at the
-//     head→middle and middle→tail section boundaries.
+//   - `footStart` is the index of the first foot element.
+//   - `headFootLineBreaks` controls whether blank lines are emitted at the
+//     head→body and body→foot section boundaries.
 //
 // A blank line is emitted before a nested block to match typical Terraform
 // formatting, with one exception: when the previous element is a nested
@@ -236,17 +236,17 @@ func sortReorderMiddle(elems []reorderElement, alphabetical bool) {
 // line, even when it falls between same-kind siblings, because the user
 // asked for that separator explicitly.
 //
-// When the head→middle and middle→tail boundaries collapse to the same
-// index (empty middle) only one blank line is emitted, because `needBlank`
-// is a single boolean per iteration.
-func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd, tailStart int, headTailLineBreaks bool) {
+// When the head→body and body→foot boundaries collapse to the same index
+// (empty body) only one blank line is emitted, because `needBlank` is a
+// single boolean per iteration.
+func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd, footStart int, headFootLineBreaks bool) {
 	for i, el := range elements {
 		if i > 0 {
 			needBlank := false
-			if headTailLineBreaks && i == headEnd && headEnd > 0 && headEnd < len(elements) {
+			if headFootLineBreaks && i == headEnd && headEnd > 0 && headEnd < len(elements) {
 				needBlank = true
 			}
-			if headTailLineBreaks && i == tailStart && tailStart > 0 && tailStart < len(elements) {
+			if headFootLineBreaks && i == footStart && footStart > 0 && footStart < len(elements) {
 				needBlank = true
 			}
 			if el.isNested {

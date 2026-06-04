@@ -49,12 +49,12 @@ variable "example" {
 `,
 		},
 		{
-			desc: "head_and_tail_reorder",
+			desc: "head_and_foot_reorder",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "module.example"
   head_attributes      = ["source", "version"]
-  tail_attributes      = ["depends_on"]
+  foot_attributes      = ["depends_on"]
 }
 `,
 			tfConfig: `
@@ -98,12 +98,12 @@ variable "example" {
 `,
 		},
 		{
-			desc: "head_tail_overlap_returns_error",
+			desc: "head_foot_overlap_returns_error",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "variable.example"
   head_attributes      = ["type"]
-  tail_attributes      = ["type"]
+  foot_attributes      = ["type"]
 }
 `,
 			tfConfig: `
@@ -113,15 +113,15 @@ variable "example" {
 `,
 			expected:       ``,
 			wantErr:        true,
-			errorSubstring: "cannot be in both head_attributes and tail_attributes",
+			errorSubstring: "cannot be in both head_attributes and foot_attributes",
 		},
 		{
-			desc: "nested_block_sorts_into_middle_alphabetically_with_blank_line",
+			desc: "nested_block_sorts_into_body_alphabetically_with_blank_line",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "resource.fake_resource.this"
   head_attributes      = ["count", "for_each"]
-  tail_attributes      = ["depends_on"]
+  foot_attributes      = ["depends_on"]
 }
 `,
 			tfConfig: `
@@ -189,13 +189,13 @@ variable "other" {
 			errorSubstring: "cannot find block",
 		},
 		{
-			desc: "head_tail_line_breaks_false_suppresses_section_blanks",
+			desc: "head_foot_line_breaks_false_suppresses_section_blanks",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address     = "module.example"
   head_attributes          = ["source", "version"]
-  tail_attributes          = ["depends_on"]
-  head_tail_line_breaks    = false
+  foot_attributes          = ["depends_on"]
+  head_foot_line_breaks    = false
 }
 `,
 			tfConfig: `
@@ -246,11 +246,11 @@ resource "fake_resource" this {
 `,
 		},
 		{
-			desc: "nested_block_listed_in_tail_renders_last",
+			desc: "nested_block_listed_in_foot_renders_last",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "resource.fake_resource.this"
-  tail_attributes      = ["lifecycle"]
+  foot_attributes      = ["lifecycle"]
 }
 `,
 			tfConfig: `
@@ -345,13 +345,13 @@ resource "fake_resource" this {
 `,
 		},
 		{
-			desc: "sort_middle_alphabetically_false_preserves_source_order",
+			desc: "sort_body_alphabetically_false_preserves_source_order",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address       = "resource.fake_resource.this"
   head_attributes            = ["count"]
-  tail_attributes            = ["depends_on"]
-  sort_middle_alphabetically = false
+  foot_attributes            = ["depends_on"]
+  sort_body_alphabetically = false
 }
 `,
 			tfConfig: `
@@ -381,11 +381,11 @@ resource "fake_resource" this {
 `,
 		},
 		{
-			desc: "sort_middle_alphabetically_false_still_inserts_nested_block_blank",
+			desc: "sort_body_alphabetically_false_still_inserts_nested_block_blank",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address       = "resource.fake_resource.this"
-  sort_middle_alphabetically = false
+  sort_body_alphabetically = false
 }
 `,
 			tfConfig: `
@@ -409,7 +409,7 @@ resource "fake_resource" this {
 `,
 		},
 		{
-			desc: "middle_only_no_head_no_tail_sorts_alphabetically_no_section_blanks",
+			desc: "body_only_no_head_no_foot_sorts_alphabetically_no_section_blanks",
 			mptf: `
 transform "reorder_attributes" this {
   target_block_address = "variable.example"
@@ -607,7 +607,7 @@ resource "fake_resource" this {
 transform "reorder_attributes" this {
   target_block_address       = "variable.example"
   head_attributes            = ["type"]
-  sort_middle_alphabetically = false
+  sort_body_alphabetically = false
 }
 `,
 			tfConfig: `
@@ -647,7 +647,7 @@ variable "example" {
 transform "reorder_attributes" this {
   target_block_address = "variable.example"
   head_attributes      = ["type", "validation"]
-  tail_attributes      = ["depends_on"]
+  foot_attributes      = ["depends_on"]
 }
 `,
 			tfConfig: `
