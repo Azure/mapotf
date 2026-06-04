@@ -184,6 +184,8 @@ github.com/hashicorp/packer-plugin-sdk v0.6.1 h1:9lpdiwwqRPVk80bX+XJul5/RrxHMXOt
 github.com/hashicorp/packer-plugin-sdk v0.6.1/go.mod h1:B6i8yIPzzFWrZW0hHdH5TLFGYlJEdgRNJnP5eXNxJU4=
 github.com/hashicorp/serf v0.10.1 h1:Z1H2J60yRKvfDYAOZLd2MU0ND4AH/WDz7xYHDWQsIPY=
 github.com/hashicorp/serf v0.10.1/go.mod h1:yL2t6BqATOLGc5HF7qbFkTfXoPIY0WZdWHfEvMqbG+4=
+github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220 h1:v0h6j7IMgA24b8aWG5+d6WStIP9G8e/p0DKK3Bmk7YQ=
+github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220/go.mod h1:Gz/z9Hbn+4KSp8A2FBtNszfLSdT2Tn/uAKGuVqqWmDI=
 github.com/hashicorp/terraform-exec v0.25.2 h1:fFLAVEtAjKdGfawGUXDnKooCnqJi+TuohT3W99AGbhk=
 github.com/hashicorp/terraform-exec v0.25.2/go.mod h1:uaQV2oqVLqM4cixJryk6qIWS1qji3GtuwPG5pjGXYfc=
 github.com/hashicorp/terraform-json v0.27.2 h1:BwGuzM6iUPqf9JYM/Z4AF1OJ5VVJEEzoKST/tRDBJKU=

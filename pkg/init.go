@@ -38,4 +38,5 @@ func registerData() {
 	golden.RegisterBlock(new(DataLocal))
 	golden.RegisterBlock(new(DataModule))
 	golden.RegisterBlock(new(DataMoved))
+	golden.RegisterBlock(new(ModuleSourceData))
 }
