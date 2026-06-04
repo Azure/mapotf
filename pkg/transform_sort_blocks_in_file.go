@@ -25,7 +25,7 @@ type SortBlocksInFileTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	FileName     string   `hcl:"file_name" validate:"endswith=.tf"`
-	DesiredOrder []string `hcl:"desired_order"`
+	DesiredOrder []string `hcl:"desired_order" validate:"unique"`
 }
 
 func (s *SortBlocksInFileTransform) Type() string {

@@ -209,7 +209,7 @@ variable "alpha" {
 			},
 			expectedFiles:  nil,
 			wantErr:        true,
-			errorSubstring: "duplicate block address",
+			errorSubstring: "unique",
 		},
 	}
 
@@ -229,6 +229,12 @@ variable "alpha" {
 			}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
 			require.NoError(t, err)
 			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+			if c.wantErr && err != nil {
+				if c.errorSubstring != "" {
+					assert.Contains(t, err.Error(), c.errorSubstring)
+				}
+				return
+			}
 			require.NoError(t, err)
 
 			err = plan.Apply()
