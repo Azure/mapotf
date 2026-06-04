@@ -38,7 +38,7 @@ This makes schema-driven ordering safe: an attribute the schema doesn't yet know
 
 Nested blocks (for example `lifecycle`, `network_interface`, or `dynamic "subnet"`) are treated exactly like attributes — list them in `head_attributes` / `body_attributes` / `foot_attributes` by their block type, or, for `dynamic` blocks, by their label (e.g. `subnet` for `dynamic "subnet" {}`).
 
-A nested block in the output always has a blank line in front of it, even when no head/foot section boundary applies, so they read naturally in Terraform style.
+A nested block in the output has a blank line in front of it when it is preceded by an attribute or a different kind of nested block, so they read naturally in Terraform style. Adjacent nested blocks of the same type (and, for `dynamic`, the same label) — for example two consecutive `validation { }` blocks under a `variable` — are kept adjacent with no blank line between them.
 
 ### Edge cases
 
@@ -155,6 +155,6 @@ The body section emits provider-required attributes first (alphabetical within t
 ## Detailed Behavior
 
 - The transform runs against the parsed HCL writer view of the block, so comments and formatting on individual attributes are preserved.
-- Nested blocks always have a blank line in front of them in the output (a section-boundary blank line counts — no extra blank line is added when one is already being emitted).
+- Nested blocks have a blank line in front of them when they are preceded by an attribute or a nested block of a different type; adjacent nested blocks of the same type (and, for `dynamic`, the same label) stay adjacent without a separating blank line. A section-boundary blank line counts — no extra blank line is added when one is already being emitted.
 - Nested blocks of the same type that appear multiple times (e.g. two `network_interface` blocks) keep their write-side order when grouped together by name.
 
