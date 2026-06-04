@@ -191,7 +191,7 @@ resource "fake_resource" {
 			tfFile, err := afero.ReadFile(fs, "/main.tf")
 			require.NoError(t, err)
 			actual := string(tfFile)
-			assert.Equal(t, c.expectedHCL, actual)
+			assert.Equal(t, normalizeForCompare(c.expectedHCL), normalizeForCompare(actual))
 		})
 	}
 }

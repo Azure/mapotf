@@ -65,7 +65,8 @@ func TestModule_SaveToDisk(t *testing.T) {
 	require.NoError(t, err)
 	expectedContent := `resource "fake_resource" "this" {
   new_attribute = "new_value"
-}`
+}
+`
 	assert.Equal(t, expectedContent, string(modifiedContent))
 }
 
@@ -205,7 +206,6 @@ func TestModule_AddBlock(t *testing.T) {
 	expectedContent := `resource "azurerm_resource_group" "example" {
   name = "test-rg"
 }
-
 `
 	assert.Equal(t, expectedContent, string(content))
 }
@@ -239,7 +239,8 @@ resource "azurerm_resource_group" "second" {
 			blockToRemove: []string{"azurerm_resource_group", "first", "first-rg"},
 			expected: `resource "azurerm_resource_group" "second" {
   name = "second-rg"
-}`,
+}
+`,
 		},
 		{
 			name:     "RemoveMiddleBlock",
@@ -249,7 +250,8 @@ resource "azurerm_resource_group" "middle" {}
 resource "azurerm_resource_group" "last" {}`,
 			blockToRemove: []string{"azurerm_resource_group", "middle", "middle-rg"},
 			expected: `resource "azurerm_resource_group" "first" {}
-resource "azurerm_resource_group" "last" {}`,
+resource "azurerm_resource_group" "last" {}
+`,
 		},
 		{
 			name:     "RemoveLastBlock",
@@ -265,7 +267,8 @@ resource "azurerm_resource_group" "last" {}`,
 			fileName:      "non_existent_block.tf",
 			content:       `resource "azurerm_resource_group" "first" {}`,
 			blockToRemove: []string{"azurerm_resource_group", "non_existent", "non-existent-rg"},
-			expected:      `resource "azurerm_resource_group" "first" {}`,
+			expected: `resource "azurerm_resource_group" "first" {}
+`,
 		},
 	}
 

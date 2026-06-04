@@ -556,3 +556,16 @@ func newHclBlocks(t *testing.T, code string) []*golden.HclBlock {
 func formatHcl(inputHcl string) string {
 	return strings.Trim(string(hclwrite.Format([]byte(inputHcl))), "\n")
 }
+
+// normalizeForCompare strips leading and trailing blank lines and forces a
+// single trailing newline (the canonical shape produced by
+// terraform.normalizeFileWhitespace on save). Use this when an `expected`
+// literal includes incidental leading/trailing newlines from Go raw-string
+// formatting.
+func normalizeForCompare(s string) string {
+	s = strings.Trim(s, "\n")
+	if s == "" {
+		return ""
+	}
+	return s + "\n"
+}

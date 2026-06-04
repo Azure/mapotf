@@ -435,7 +435,7 @@ resource "azurerm_kubernetes_cluster" "example" {
 			tfFile, err := afero.ReadFile(fs, "/main.tf")
 			require.NoError(t, err)
 			actual := string(tfFile)
-			assert.Equal(t, c.expectedHCL, actual)
+			assert.Equal(t, normalizeForCompare(c.expectedHCL), normalizeForCompare(actual))
 		})
 	}
 }
@@ -962,7 +962,7 @@ resource "fake_resource" this {
 			tfFile, err := afero.ReadFile(fs, "/main.tf")
 			require.NoError(t, err)
 			actual := string(tfFile)
-			assert.Equal(t, c.expectedHCL, actual)
+			assert.Equal(t, normalizeForCompare(c.expectedHCL), normalizeForCompare(actual))
 		})
 	}
 }

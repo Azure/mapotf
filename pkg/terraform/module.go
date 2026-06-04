@@ -152,7 +152,7 @@ func (m *Module) SaveToDisk() error {
 			}
 		}
 		content := wf.Bytes()
-		err = afero.WriteFile(fs.Fs, absPath, hclwrite.Format(content), 0644)
+		err = afero.WriteFile(fs.Fs, absPath, normalizeFileWhitespace(hclwrite.Format(content)), 0644)
 		if err != nil {
 			return err
 		}
