@@ -192,6 +192,25 @@ variable "alpha" {
 			wantErr:        true,
 			errorSubstring: "cannot find block",
 		},
+		{
+			desc: "duplicate_address_returns_error",
+			mptf: `
+transform "sort_blocks_in_file" this {
+  file_name     = "variables.tf"
+  desired_order = ["variable.alpha", "variable.alpha"]
+}
+`,
+			initialFiles: map[string]string{
+				"/variables.tf": `
+variable "alpha" {
+  type = string
+}
+`,
+			},
+			expectedFiles:  nil,
+			wantErr:        true,
+			errorSubstring: "duplicate block address",
+		},
 	}
 
 	for _, c := range cases {
