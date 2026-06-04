@@ -361,7 +361,6 @@ func TestNewBlockTransform_MalformedNewBlockShouldNotBlockSave(t *testing.T) {
 	expected := `variable "test" {
   type =.string
 }
-
 `
 	actual := string(after)
 	assert.Equal(t, expected, actual)

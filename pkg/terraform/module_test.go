@@ -309,3 +309,67 @@ func createResourceBlock(resourceType, name, resourceName string) *hclwrite.Bloc
 	b.Body().SetAttributeValue("name", cty.StringVal(resourceName))
 	return b
 }
+
+// TestModule_AddBlockThenRemoveBlock_Roundtrip asserts that a block added via
+// AddBlock is visible to subsequent RemoveBlock calls. Regression test for the
+// "AddBlock uses unstructured tokens so body.Blocks() can't see the added
+// block" bug — see RemoveBlock implementation walking body.Blocks().
+func TestModule_AddBlockThenRemoveBlock_Roundtrip(t *testing.T) {
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+
+	require.NoError(t, mockFs.MkdirAll("tmp", 0755))
+
+	m := &Module{
+		Dir:        "tmp",
+		AbsDir:     "tmp",
+		writeFiles: make(map[string]*hclwrite.File),
+		lock:       &sync.Mutex{},
+	}
+
+	block := createResourceBlock("azurerm_resource_group", "added", "added-rg")
+	m.AddBlock("new_file.tf", block)
+
+	// RemoveBlock must find the block we just added; pointer-equality pass
+	// or type+labels fallback must see it.
+	m.RemoveBlock(block)
+
+	require.NoError(t, m.SaveToDisk())
+
+	content, err := afero.ReadFile(mockFs, "tmp/new_file.tf")
+	require.NoError(t, err)
+	assert.Equal(t, "", string(content),
+		"after AddBlock+RemoveBlock the file should be empty; if not, AddBlock isn't inserting the block in a form that body.Blocks() can find")
+}
+
+// TestModule_AddBlockThenRemoveBlock_ByTypeAndLabels covers the type+labels
+// fallback path in RemoveBlock: a NEW *hclwrite.Block (different pointer) with
+// matching type and labels should still be removed.
+func TestModule_AddBlockThenRemoveBlock_ByTypeAndLabels(t *testing.T) {
+	mockFs := afero.NewMemMapFs()
+	stub := gostub.Stub(&filesystem.Fs, mockFs)
+	defer stub.Reset()
+
+	require.NoError(t, mockFs.MkdirAll("tmp", 0755))
+
+	m := &Module{
+		Dir:        "tmp",
+		AbsDir:     "tmp",
+		writeFiles: make(map[string]*hclwrite.File),
+		lock:       &sync.Mutex{},
+	}
+
+	added := createResourceBlock("azurerm_resource_group", "added", "added-rg")
+	m.AddBlock("new_file.tf", added)
+
+	// Remove by a fresh block with the same type+labels (pointer differs).
+	matcher := hclwrite.NewBlock("resource", []string{"azurerm_resource_group", "added"})
+	m.RemoveBlock(matcher)
+
+	require.NoError(t, m.SaveToDisk())
+
+	content, err := afero.ReadFile(mockFs, "tmp/new_file.tf")
+	require.NoError(t, err)
+	assert.Equal(t, "", string(content))
+}
