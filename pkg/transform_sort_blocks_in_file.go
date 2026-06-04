@@ -21,11 +21,16 @@ var _ Transform = &SortBlocksInFileTransform{}
 //   - An address that does not resolve to a known block is a hard error
 //     (silent skip would mask drift, since `desired_order` is usually
 //     computed from a data source).
+//   - An empty `desired_order` is a no-op. This makes it safe to drive the
+//     list from a data source (e.g. `[for v in data.variable.all.result :
+//     "variable.${v.name}"]`) in module contexts where the data source
+//     resolves to an empty collection — for example `examples/*` directories
+//     that have no `variables.tf`.
 type SortBlocksInFileTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	FileName     string   `hcl:"file_name" validate:"endswith=.tf"`
-	DesiredOrder []string `hcl:"desired_order" validate:"required,min=1,unique,dive,min=1"`
+	DesiredOrder []string `hcl:"desired_order" validate:"unique,dive,min=1"`
 }
 
 func (s *SortBlocksInFileTransform) Type() string {
@@ -34,7 +39,7 @@ func (s *SortBlocksInFileTransform) Type() string {
 
 func (s *SortBlocksInFileTransform) Apply() error {
 	if len(s.DesiredOrder) == 0 {
-		return fmt.Errorf("sort_blocks_in_file: desired_order must not be empty")
+		return nil
 	}
 	seen := make(map[string]struct{}, len(s.DesiredOrder))
 	for _, addr := range s.DesiredOrder {
