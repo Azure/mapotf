@@ -22,9 +22,11 @@ var _ Transform = &ReorderAttributesTransform{}
 //     block they emit.
 //   - Elements named in `head_attributes` come first, in the listed order.
 //   - Elements named in `foot_attributes` come last, in the listed order.
-//   - Every other element is the "body". By default the body is sorted
-//     alphabetically by name; set `sort_body_alphabetically = false` to
-//     preserve the original source order instead.
+//   - Elements named in `body_attributes` come first within the body section,
+//     in the listed order. Every other element of the body section is then
+//     appended; by default that remainder is sorted alphabetically by name.
+//     Set `sort_body_alphabetically = false` to preserve original source order
+//     for the unlisted body remainder instead.
 //   - When `head_foot_line_breaks` is true (default) a blank line is inserted
 //     between the head section and the body, and between the body and the
 //     foot section. Set to `false` to suppress these blank lines.
@@ -35,10 +37,10 @@ var _ Transform = &ReorderAttributesTransform{}
 //     grouped without a blank line between them, matching typical Terraform
 //     formatting. If a section boundary (head/foot) coincides with the
 //     adjacency the section blank line still wins.
-//   - Names in `head_attributes` / `foot_attributes` that are not present on
-//     the block are silently skipped.
-//   - The same name in both `head_attributes` and `foot_attributes` is a
-//     configuration error.
+//   - Names in `head_attributes` / `body_attributes` / `foot_attributes` that
+//     are not present on the block are silently skipped.
+//   - The same name appearing in more than one of `head_attributes`,
+//     `body_attributes`, or `foot_attributes` is a configuration error.
 //
 // This transform never adds, removes, or mutates attribute values — only the
 // layout changes.
@@ -47,6 +49,7 @@ type ReorderAttributesTransform struct {
 	*BaseTransform
 	TargetBlockAddress     string   `hcl:"target_block_address"`
 	HeadAttributes         []string `hcl:"head_attributes,optional"`
+	BodyAttributes         []string `hcl:"body_attributes,optional"`
 	FootAttributes         []string `hcl:"foot_attributes,optional"`
 	HeadFootLineBreaks     *bool    `hcl:"head_foot_line_breaks,optional"`
 	SortBodyAlphabetically *bool    `hcl:"sort_body_alphabetically,optional"`
@@ -63,12 +66,8 @@ func (r *ReorderAttributesTransform) Apply() error {
 		return fmt.Errorf("cannot find block: %s", r.TargetBlockAddress)
 	}
 
-	headSet := toNameSet(r.HeadAttributes)
-	footSet := toNameSet(r.FootAttributes)
-	for name := range headSet {
-		if _, conflict := footSet[name]; conflict {
-			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both head_attributes and foot_attributes", name)
-		}
+	if err := validateReorderSectionOverlap(r.HeadAttributes, r.BodyAttributes, r.FootAttributes); err != nil {
+		return err
 	}
 
 	body := block.WriteBlock.Body()
@@ -80,8 +79,9 @@ func (r *ReorderAttributesTransform) Apply() error {
 
 	elements := buildReorderElements(writeAttrs, writeBlocks, block)
 
-	headElems, bodyElems, footElems := partitionReorderElements(elements, r.HeadAttributes, r.FootAttributes)
-	sortReorderBody(bodyElems, r.useSortBodyAlphabetically())
+	headElems, listedBodyElems, unlistedBodyElems, footElems := partitionReorderElements(elements, r.HeadAttributes, r.BodyAttributes, r.FootAttributes)
+	sortReorderBody(unlistedBodyElems, r.useSortBodyAlphabetically())
+	bodyElems := append(listedBodyElems, unlistedBodyElems...)
 
 	final := make([]reorderElement, 0, len(headElems)+len(bodyElems)+len(footElems))
 	final = append(final, headElems...)
@@ -162,13 +162,16 @@ func buildReorderElements(writeAttrs map[string]*hclwrite.Attribute, writeBlocks
 	return elements
 }
 
-// partitionReorderElements splits `elements` into head, body, and foot
-// slices according to `head` and `foot` name lists. Multiple elements that
-// share a name (e.g. two `nested {}` blocks of the same type) are grouped
-// together at the head or foot position, preserving their write-side order
-// within the group.
-func partitionReorderElements(elements []reorderElement, head, foot []string) (headElems, bodyElems, footElems []reorderElement) {
+// partitionReorderElements splits `elements` into head, listed-body,
+// unlisted-body, and foot slices according to `head`, `body`, and `foot`
+// name lists. Multiple elements that share a name (e.g. two `nested {}`
+// blocks of the same type) are grouped together at the head, listed-body, or
+// foot position, preserving their write-side order within the group.
+// Elements whose names are not mentioned in any of the three lists land in
+// `unlistedBodyElems` and are sorted later by `sortReorderBody`.
+func partitionReorderElements(elements []reorderElement, head, body, foot []string) (headElems, listedBodyElems, unlistedBodyElems, footElems []reorderElement) {
 	headSet := toNameSet(head)
+	bodySet := toNameSet(body)
 	footSet := toNameSet(foot)
 	byName := make(map[string][]reorderElement)
 	for _, el := range elements {
@@ -180,15 +183,45 @@ func partitionReorderElements(elements []reorderElement, head, foot []string) (h
 			byName[el.name] = append(byName[el.name], el)
 			continue
 		}
-		bodyElems = append(bodyElems, el)
+		if _, ok := bodySet[el.name]; ok {
+			byName[el.name] = append(byName[el.name], el)
+			continue
+		}
+		unlistedBodyElems = append(unlistedBodyElems, el)
 	}
 	for _, name := range head {
 		headElems = append(headElems, byName[name]...)
+	}
+	for _, name := range body {
+		listedBodyElems = append(listedBodyElems, byName[name]...)
 	}
 	for _, name := range foot {
 		footElems = append(footElems, byName[name]...)
 	}
 	return
+}
+
+// validateReorderSectionOverlap returns an error if any name appears in more
+// than one of head / body / foot. The error message names both sections so
+// the user can fix the duplicate immediately.
+func validateReorderSectionOverlap(head, body, foot []string) error {
+	headSet := toNameSet(head)
+	bodySet := toNameSet(body)
+	footSet := toNameSet(foot)
+	for name := range headSet {
+		if _, ok := bodySet[name]; ok {
+			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both head_attributes and body_attributes", name)
+		}
+		if _, ok := footSet[name]; ok {
+			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both head_attributes and foot_attributes", name)
+		}
+	}
+	for name := range bodySet {
+		if _, ok := footSet[name]; ok {
+			return fmt.Errorf("reorder_attributes: attribute %q cannot be in both body_attributes and foot_attributes", name)
+		}
+	}
+	return nil
 }
 
 // sortReorderBody stably sorts the body slice in-place. When `alphabetical`

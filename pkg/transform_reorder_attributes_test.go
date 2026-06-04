@@ -684,6 +684,186 @@ variable "example" {
 }
 `,
 		},
+		{
+			desc: "body_attributes_listed_first_unlisted_sorted_alphabetically",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  body_attributes      = ["name", "location"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  tags     = {}
+  location = "westus"
+  name     = "rg"
+  sku      = "Standard"
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  name     = "rg"
+  location = "westus"
+  sku      = "Standard"
+  tags     = {}
+}
+`,
+		},
+		{
+			desc: "body_attributes_with_sort_body_false_keeps_unlisted_in_source_order",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address     = "resource.fake_resource.this"
+  body_attributes          = ["name", "location"]
+  sort_body_alphabetically = false
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  tags     = {}
+  location = "westus"
+  name     = "rg"
+  sku      = "Standard"
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  name     = "rg"
+  location = "westus"
+  tags     = {}
+  sku      = "Standard"
+}
+`,
+		},
+		{
+			desc: "body_attributes_with_head_and_foot_three_section_flow",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  head_attributes      = ["for_each", "count", "provider"]
+  body_attributes      = ["name", "location"]
+  foot_attributes      = ["lifecycle", "depends_on"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  depends_on = [other.thing]
+  tags       = {}
+  location   = "westus"
+  name       = "rg"
+  sku        = "Standard"
+  count      = 1
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  count = 1
+
+  name     = "rg"
+  location = "westus"
+  sku      = "Standard"
+  tags     = {}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+  depends_on = [other.thing]
+}
+`,
+		},
+		{
+			desc: "body_attributes_listed_nested_block_placed_before_unlisted",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  head_attributes      = ["type"]
+  body_attributes      = ["validation"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "x"
+  type        = string
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  default = "v"
+}
+`,
+			expected: `
+variable "example" {
+  type = string
+
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  default     = "v"
+  description = "x"
+}
+`,
+		},
+		{
+			desc: "body_attributes_missing_names_silently_skipped",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  body_attributes      = ["type", "default", "description", "nullable", "sensitive"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "x"
+  type        = string
+}
+`,
+			expected: `
+variable "example" {
+  type        = string
+  description = "x"
+}
+`,
+		},
+		{
+			desc: "body_head_overlap_returns_error",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  head_attributes      = ["type"]
+  body_attributes      = ["type"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  type = string
+}
+`,
+			expected:       ``,
+			wantErr:        true,
+			errorSubstring: "cannot be in both head_attributes and body_attributes",
+		},
+		{
+			desc: "body_foot_overlap_returns_error",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  body_attributes      = ["type"]
+  foot_attributes      = ["type"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  type = string
+}
+`,
+			expected:       ``,
+			wantErr:        true,
+			errorSubstring: "cannot be in both body_attributes and foot_attributes",
+		},
 	}
 
 	for _, c := range cases {
