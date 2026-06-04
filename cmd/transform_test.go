@@ -56,8 +56,7 @@ resource "fake_resource" that {
 	tfFile, err := afero.ReadFile(fs, "/testTerraform/main.tf")
 	require.NoError(t, err)
 	tfFileStr := string(tfFile)
-	expected := `
-resource "fake_resource" this {
+	expected := `resource "fake_resource" this {
   tags = merge({}, {
     block_address = "resource.fake_resource.this"
     file_name     = "main.tf"

@@ -12,8 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const aksResourceTf = `
-resource "azurerm_kubernetes_cluster" "example" {
+const aksResourceTf = `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -34,8 +33,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   }
 }
 `
-const resourceGroupDataSourceTf = `
-data "azurerm_resource_group" "this" {
+const resourceGroupDataSourceTf = `data "azurerm_resource_group" "this" {
   location = "westus"
 }
 `
@@ -83,8 +81,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: aksResourceTf,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   resource_group_name = azurerm_resource_group.example.name
   dns_prefix          = "exampleaks1"
@@ -118,8 +115,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: aksResourceTf,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -177,8 +173,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -215,8 +210,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: vnetResourceTf,
-			expectedHCL: `
-resource "azurerm_virtual_network" "example" {
+			expectedHCL: `resource "azurerm_virtual_network" "example" {
   name                = "example-network"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -252,8 +246,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: resourceGroupDataSourceTf,
-			expectedHCL: `
-data "azurerm_resource_group" "this" {
+			expectedHCL: `data "azurerm_resource_group" "this" {
   region = "westus"
 }
 `,
@@ -278,8 +271,7 @@ data "azurerm_resource_group" "that" {
   location = "eastus"
 }
 `,
-			expectedHCL: `
-data "azurerm_resource_group" "this" {
+			expectedHCL: `data "azurerm_resource_group" "this" {
   region = "westus"
 }
 
@@ -300,8 +292,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: aksResourceTf,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -370,8 +361,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   location = azurerm_resource_group.example.location
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name     = "example-aks1"
   location = azurerm_resource_group.example.location
 }
@@ -389,8 +379,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: aksResourceTf,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   resource_group_name = azurerm_resource_group.example.name
   dns_prefix          = "exampleaks1"
@@ -459,8 +448,7 @@ transform "rename_block_element" this {
 }
 `,
 			tfCfg: vnetResourceTf,
-			expectedHCL: `
-resource "azurerm_virtual_network" "example" {
+			expectedHCL: `resource "azurerm_virtual_network" "example" {
   name                = "example-network"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -520,8 +508,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -585,8 +572,7 @@ resource "azurerm_virtual_network" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_virtual_network" "example" {
+			expectedHCL: `resource "azurerm_virtual_network" "example" {
   name                = "example-network"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -646,8 +632,7 @@ resource "azurerm_virtual_network" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_virtual_network" "example" {
+			expectedHCL: `resource "azurerm_virtual_network" "example" {
   name                = "example-network"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -704,8 +689,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -765,8 +749,7 @@ resource "azurerm_virtual_network" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_virtual_network" "example" {
+			expectedHCL: `resource "azurerm_virtual_network" "example" {
   name                = "example-network"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -830,8 +813,7 @@ resource "azurerm_kubernetes_cluster" "example" {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
@@ -904,8 +886,7 @@ resource "fake_resource" this {
   }
 }
 `,
-			expectedHCL: `
-resource "azurerm_kubernetes_cluster" "example" {
+			expectedHCL: `resource "azurerm_kubernetes_cluster" "example" {
   name                = "example-aks1"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name

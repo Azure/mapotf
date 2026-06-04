@@ -179,7 +179,6 @@ func TestNewBlockTransform_NewBlockWithForEach(t *testing.T) {
 	expected := `resource "fake_resource" "foo" {
   for_each = var.for_each
 }
-
 `
 	actual := string(after)
 	assert.Equal(t, expected, actual)

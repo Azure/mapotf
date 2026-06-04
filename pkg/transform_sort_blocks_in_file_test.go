@@ -277,6 +277,135 @@ variable "alpha" {
 	}
 }
 
+// TestSortBlocksInFile_NoStrayWhitespace pins the file-boundary whitespace
+// behaviour: after sorting blocks within a file, the file on disk must not
+// have leading blank lines or more than one trailing blank line, and stray
+// blank lines left over from removed/re-added blocks must be collapsed. We
+// compare raw bytes (no `formatHcl` trim) because the bug we are guarding
+// against is precisely about file-boundary blanks.
+func TestSortBlocksInFile_NoStrayWhitespace(t *testing.T) {
+	mptf := `
+transform "sort_blocks_in_file" this {
+  file_name     = "variables.tf"
+  desired_order = ["variable.alpha", "variable.bravo", "variable.charlie"]
+}
+`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/variables.tf": `variable "charlie" {
+  type        = string
+  description = "C variable"
+}
+
+variable "alpha" {
+  type        = string
+  description = "A variable"
+}
+
+variable "bravo" {
+  type        = string
+  description = "B variable"
+}
+`,
+	}))
+	defer stub.Reset()
+
+	readFile, diag := hclsyntax.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	require.NoError(t, plan.Apply())
+
+	actual, err := afero.ReadFile(filesystem.Fs, "/variables.tf")
+	require.NoError(t, err)
+	expected := `variable "alpha" {
+  type        = string
+  description = "A variable"
+}
+
+variable "bravo" {
+  type        = string
+  description = "B variable"
+}
+
+variable "charlie" {
+  type        = string
+  description = "C variable"
+}
+`
+	assert.Equal(t, expected, string(actual))
+}
+
+// TestSortBlocksInFile_PullsFromOtherFileNoStrayWhitespace mirrors the AVM
+// pre-commit scenario where some `variable` blocks live in `main.tf` and need
+// to be pulled into `variables.tf`. The file the blocks come from must not be
+// left with stray blank lines, and the destination file must not have leading
+// blanks.
+func TestSortBlocksInFile_PullsFromOtherFileNoStrayWhitespace(t *testing.T) {
+	mptf := `
+transform "sort_blocks_in_file" this {
+  file_name     = "variables.tf"
+  desired_order = ["variable.alpha", "variable.bravo"]
+}
+`
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `variable "alpha" {
+  type = string
+}
+
+resource "fake_resource" "keep" {
+  attr = "keep"
+}
+
+variable "bravo" {
+  type = string
+}
+`,
+	}))
+	defer stub.Reset()
+
+	readFile, diag := hclsyntax.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	require.NoError(t, plan.Apply())
+
+	mainActual, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+	expectedMain := `resource "fake_resource" "keep" {
+  attr = "keep"
+}
+`
+	assert.Equal(t, expectedMain, string(mainActual))
+
+	varsActual, err := afero.ReadFile(filesystem.Fs, "/variables.tf")
+	require.NoError(t, err)
+	expectedVars := `variable "alpha" {
+  type = string
+}
+
+variable "bravo" {
+  type = string
+}
+`
+	assert.Equal(t, expectedVars, string(varsActual))
+}
+
 func TestSortBlocksInFile_EmptyDesiredOrderIsError(t *testing.T) {
 	mptf := `
 transform "sort_blocks_in_file" this {
