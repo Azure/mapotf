@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+
 	"github.com/Azure/golden"
 	"github.com/hashicorp/go-multierror"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -20,9 +22,14 @@ type ProviderSchemaData struct {
 	*BaseData
 	*golden.BaseBlock
 
-	Source    string    `hcl:"provider_source"`
-	Version   string    `hcl:"provider_version"`
-	Resources cty.Value `attribute:"resources"`
+	Source                        string    `hcl:"provider_source"`
+	Version                       string    `hcl:"provider_version"`
+	Resources                     cty.Value `attribute:"resources"`
+	DataSources                   cty.Value `attribute:"data_sources"`
+	ResourcesRequiredAttributes   cty.Value `attribute:"resources_required_attributes"`
+	ResourcesOptionalAttributes   cty.Value `attribute:"resources_optional_attributes"`
+	DataSourcesRequiredAttributes cty.Value `attribute:"data_sources_required_attributes"`
+	DataSourcesOptionalAttributes cty.Value `attribute:"data_sources_optional_attributes"`
 }
 
 func (r *ProviderSchemaData) Type() string {
@@ -35,7 +42,51 @@ func (r *ProviderSchemaData) ExecuteDuringPlan() error {
 		return fmt.Errorf("cannot read `terraform prviders schema` for source %s with version %s: %+v", r.Source, r.Version, err)
 	}
 	r.Resources, err = r.Convert(schemas.ResourceSchemas)
-	return err
+	if err != nil {
+		return err
+	}
+	r.DataSources, err = r.Convert(schemas.DataSourceSchemas)
+	if err != nil {
+		return err
+	}
+	r.ResourcesRequiredAttributes = sortedAttributeNamesByType(schemas.ResourceSchemas, func(a *tfjson.SchemaAttribute) bool { return a.Required })
+	r.ResourcesOptionalAttributes = sortedAttributeNamesByType(schemas.ResourceSchemas, func(a *tfjson.SchemaAttribute) bool { return a.Optional })
+	r.DataSourcesRequiredAttributes = sortedAttributeNamesByType(schemas.DataSourceSchemas, func(a *tfjson.SchemaAttribute) bool { return a.Required })
+	r.DataSourcesOptionalAttributes = sortedAttributeNamesByType(schemas.DataSourceSchemas, func(a *tfjson.SchemaAttribute) bool { return a.Optional })
+	return nil
+}
+
+func sortedAttributeNamesByType(schemas map[string]*tfjson.Schema, keep func(*tfjson.SchemaAttribute) bool) cty.Value {
+	out := make(map[string]cty.Value, len(schemas))
+	for typeName, schema := range schemas {
+		if schema == nil || schema.Block == nil {
+			out[typeName] = cty.ListValEmpty(cty.String)
+			continue
+		}
+		var names []string
+		for attrName, attr := range schema.Block.Attributes {
+			if attr == nil {
+				continue
+			}
+			if keep(attr) {
+				names = append(names, attrName)
+			}
+		}
+		sort.Strings(names)
+		if len(names) == 0 {
+			out[typeName] = cty.ListValEmpty(cty.String)
+			continue
+		}
+		vals := make([]cty.Value, len(names))
+		for i, n := range names {
+			vals[i] = cty.StringVal(n)
+		}
+		out[typeName] = cty.ListVal(vals)
+	}
+	if len(out) == 0 {
+		return cty.EmptyObjectVal
+	}
+	return cty.ObjectVal(out)
 }
 
 func (r *ProviderSchemaData) Convert(schemas map[string]*tfjson.Schema) (cty.Value, error) {
