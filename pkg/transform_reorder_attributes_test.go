@@ -430,6 +430,260 @@ variable "example" {
 }
 `,
 		},
+		{
+			desc: "adjacent_same_name_nested_blocks_stay_adjacent",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  head_attributes      = ["type", "description"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example."
+  type        = string
+  validation {
+    condition     = length(var.example) > 0
+    error_message = "Must not be empty."
+  }
+  validation {
+    condition     = length(var.example) < 10
+    error_message = "Must be short."
+  }
+}
+`,
+			expected: `
+variable "example" {
+  type        = string
+  description = "An example."
+
+  validation {
+    condition     = length(var.example) > 0
+    error_message = "Must not be empty."
+  }
+  validation {
+    condition     = length(var.example) < 10
+    error_message = "Must be short."
+  }
+}
+`,
+		},
+		{
+			desc: "three_adjacent_same_name_nested_blocks_all_stay_adjacent",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  head_attributes      = ["type"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  type = string
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+  validation {
+    condition     = true
+    error_message = "third"
+  }
+}
+`,
+			expected: `
+variable "example" {
+  type = string
+
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+  validation {
+    condition     = true
+    error_message = "third"
+  }
+}
+`,
+		},
+		{
+			desc: "adjacent_same_label_dynamic_blocks_stay_adjacent",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  head_attributes      = ["count"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  count = 1
+  dynamic "subnet" {
+    for_each = var.subnets_a
+    content {
+      name = subnet.value
+    }
+  }
+  dynamic "subnet" {
+    for_each = var.subnets_b
+    content {
+      name = subnet.value
+    }
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  count = 1
+
+  dynamic "subnet" {
+    for_each = var.subnets_a
+    content {
+      name = subnet.value
+    }
+  }
+  dynamic "subnet" {
+    for_each = var.subnets_b
+    content {
+      name = subnet.value
+    }
+  }
+}
+`,
+		},
+		{
+			desc: "different_label_dynamic_blocks_still_get_blank_between",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  head_attributes      = ["count"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  count = 1
+  dynamic "subnet" {
+    for_each = var.subnets
+    content {
+      name = subnet.value
+    }
+  }
+  dynamic "route" {
+    for_each = var.routes
+    content {
+      cidr = route.value
+    }
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  count = 1
+
+  dynamic "route" {
+    for_each = var.routes
+    content {
+      cidr = route.value
+    }
+  }
+
+  dynamic "subnet" {
+    for_each = var.subnets
+    content {
+      name = subnet.value
+    }
+  }
+}
+`,
+		},
+		{
+			desc: "same_name_nested_with_attr_between_does_not_group",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address       = "variable.example"
+  head_attributes            = ["type"]
+  sort_middle_alphabetically = false
+}
+`,
+			tfConfig: `
+variable "example" {
+  type = string
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  some_attr = "x"
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+}
+`,
+			expected: `
+variable "example" {
+  type = string
+
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  some_attr = "x"
+
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+}
+`,
+		},
+		{
+			desc: "section_boundary_at_same_name_nested_still_inserts_blank",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "variable.example"
+  head_attributes      = ["type", "validation"]
+  tail_attributes      = ["depends_on"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example."
+  type        = string
+  depends_on  = ["other"]
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+}
+`,
+			expected: `
+variable "example" {
+  type = string
+
+  validation {
+    condition     = true
+    error_message = "first"
+  }
+  validation {
+    condition     = true
+    error_message = "second"
+  }
+
+  description = "An example."
+
+  depends_on = ["other"]
+}
+`,
+		},
 	}
 
 	for _, c := range cases {
