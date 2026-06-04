@@ -138,6 +138,42 @@ variable "alpha" {
 			},
 		},
 		{
+			desc: "unlisted_moved_blocks_left_in_place",
+			mptf: `
+transform "sort_blocks_in_file" this {
+  file_name     = "moved.tf"
+  desired_order = ["moved.1"]
+}
+`,
+			initialFiles: map[string]string{
+				"/moved.tf": `
+moved {
+  from = aws_instance.a
+  to   = aws_instance.aa
+}
+
+moved {
+  from = aws_instance.b
+  to   = aws_instance.bb
+}
+`,
+			},
+			expectedFiles: map[string]string{
+				"/moved.tf": `
+moved {
+  from = aws_instance.a
+  to   = aws_instance.aa
+}
+
+moved {
+  from = aws_instance.b
+  to   = aws_instance.bb
+}
+
+`,
+			},
+		},
+		{
 			desc: "missing_address_returns_error",
 			mptf: `
 transform "sort_blocks_in_file" this {
