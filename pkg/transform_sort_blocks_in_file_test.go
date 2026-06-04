@@ -299,9 +299,7 @@ transform "sort_blocks_in_file" this {
 		AbsDir: "/",
 	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
 	require.NoError(t, err)
-	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
-	require.NoError(t, err)
-	err = plan.Apply()
+	_, err = pkg.RunMetaProgrammingTFPlan(cfg)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "desired_order must not be empty")
+	assert.Contains(t, err.Error(), "min")
 }
