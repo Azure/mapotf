@@ -12,7 +12,17 @@ Another scenario is, there are some common design patterns, such as creating pri
 
 ## How to install?
 
-`go install github.com/Azure/mapotf@latest`
+### Pre-built binaries
+
+Download the latest archive for your platform from the [releases page](https://github.com/Azure/mapotf/releases) and extract `mapotf` (or `mapotf.exe` on Windows) onto your `PATH`. Archives are published for Linux, macOS and Windows on both `amd64` and `arm64`. Each release also ships a `checksums.txt` you can verify against.
+
+### From source
+
+```sh
+go install github.com/Azure/mapotf@latest
+```
+
+You can check the installed version with `mapotf --version`.
 
 ## An example
 

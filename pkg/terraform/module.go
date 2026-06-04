@@ -2,6 +2,8 @@ package terraform
 
 import (
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -29,6 +31,7 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	},
 	"variable": func(m *Module) *[]*RootBlock { return &m.Variables },
 	"output":   func(m *Module) *[]*RootBlock { return &m.Outputs },
+	"moved":    func(m *Module) *[]*RootBlock { return &m.MovedBlocks },
 }
 
 type Module struct {
@@ -43,6 +46,7 @@ type Module struct {
 	Variables       []*RootBlock
 	Outputs         []*RootBlock
 	Locals          []*RootBlock
+	MovedBlocks     []*RootBlock
 	Key             string
 	Source          string
 	Version         string
@@ -101,6 +105,9 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 		Version:    mr.Version,
 		GitHash:    mr.GitHash,
 	}
+	// Stable iteration order makes the synthetic addresses we assign below
+	// (moved blocks) deterministic across runs.
+	sort.Slice(files, func(i, j int) bool { return files[i].Name() < files[j].Name() })
 	for _, f := range files {
 		if f.IsDir() {
 			continue
@@ -116,6 +123,14 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 		if err = m.loadConfig(string(content), f.Name()); err != nil {
 			return nil, err
 		}
+	}
+	// Moved blocks carry no native labels. Assign declaration-order synthetic
+	// labels so they have unique addresses ("moved.0", "moved.1", ...) and can
+	// be looked up via cfg.RootBlock(address).
+	for i, b := range m.MovedBlocks {
+		label := strconv.Itoa(i)
+		b.Labels = []string{label}
+		b.Address = "moved." + label
 	}
 	return m, nil
 }
@@ -168,14 +183,22 @@ func (m *Module) RemoveBlock(block *hclwrite.Block) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
+	for _, file := range m.writeFiles {
+		body := file.Body()
+		for _, b := range body.Blocks() {
+			if b == block {
+				body.RemoveBlock(b)
+				return
+			}
+		}
+	}
+
 	targetType := block.Type()
 	targetLabels := block.Labels()
 
-	// Look through all files to find the block
 	for _, file := range m.writeFiles {
 		body := file.Body()
-		blocks := body.Blocks()
-		for _, b := range blocks {
+		for _, b := range body.Blocks() {
 			bType := b.Type()
 			if bType == targetType && labelsEqual(b.Labels(), targetLabels) {
 				body.RemoveBlock(b)
@@ -227,6 +250,7 @@ func (m *Module) Blocks() []*RootBlock {
 	linq.From(m.TerraformBlocks).Concat(linq.From(m.Locals)).
 		Concat(linq.From(m.Outputs)).Concat(linq.From(m.Variables)).
 		Concat(linq.From(m.DataBlocks)).Concat(linq.From(m.ResourceBlocks)).
-		Concat(linq.From(m.ModuleBlocks)).ToSlice(&blocks)
+		Concat(linq.From(m.ModuleBlocks)).Concat(linq.From(m.MovedBlocks)).
+		ToSlice(&blocks)
 	return blocks
 }

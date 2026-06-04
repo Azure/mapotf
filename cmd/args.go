@@ -26,10 +26,12 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		"--mptf-var":      {},
 		"--mptf-var-file": {},
 		"--help":          {},
+		"--version":       {},
 	}
 	mptfShortHands := map[string]struct{}{
 		"-r": {},
 		"-h": {},
+		"-v": {},
 	}
 	for i := 0; i < len(inputArgs); i++ {
 		arg := inputArgs[i]

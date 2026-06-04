@@ -23,6 +23,8 @@ func registerTransform() {
 	golden.RegisterBlock(new(AppendBlockBodyTransform))
 	golden.RegisterBlock(new(EnsureLocalTransform))
 	golden.RegisterBlock(new(MoveBlockTransform))
+	golden.RegisterBlock(new(ReorderAttributesTransform))
+	golden.RegisterBlock(new(SortBlocksInFileTransform))
 }
 
 func registerData() {
@@ -33,4 +35,6 @@ func registerData() {
 	golden.RegisterBlock(new(DataVariable))
 	golden.RegisterBlock(new(DataOutput))
 	golden.RegisterBlock(new(DataLocal))
+	golden.RegisterBlock(new(DataModule))
+	golden.RegisterBlock(new(DataMoved))
 }

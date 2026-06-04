@@ -9,16 +9,22 @@ import (
 	"os/exec"
 )
 
+// Build metadata set via -ldflags at release time by goreleaser.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:     "mapotf",
+	Version: fmt.Sprintf("%s (commit %s, built %s)", version, commit, date),
+	Short:   "Meta-programming for Terraform / OpenTofu",
+	Long: `mapotf applies declarative HCL transforms to a target Terraform or OpenTofu
+module: adding telemetry, normalising provider versions, sorting blocks and
+attributes, and other repeatable rewrites used by AVM and similar governance
+pipelines.`,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},

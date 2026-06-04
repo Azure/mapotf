@@ -13,7 +13,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-exec v0.25.2
 	github.com/hashicorp/terraform-json v0.27.2
-	github.com/lonegunmanb/avmfix v0.7.1-0.20250715004112-79836ebeb8de
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
@@ -69,7 +68,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-sdk v0.6.1 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/hashicorp/terraform-config-inspect v0.0.0-20250401063509-d2d12f9a63bb // indirect
 	github.com/hashicorp/vault/api v1.14.0 // indirect
 	github.com/heimdalr/dag v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -81,23 +79,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lonegunmanb/go-defaults v1.4.0 // indirect
-	github.com/lonegunmanb/terraform-alicloud-schema v1.253.0 // indirect
-	github.com/lonegunmanb/terraform-aws-schema/v6 v6.3.0 // indirect
-	github.com/lonegunmanb/terraform-awscc-schema v1.49.0 // indirect
-	github.com/lonegunmanb/terraform-azapi-schema/v2 v2.5.0 // indirect
-	github.com/lonegunmanb/terraform-azuread-schema/v3 v3.2.0 // indirect
-	github.com/lonegunmanb/terraform-azurerm-schema/v4 v4.36.0 // indirect
-	github.com/lonegunmanb/terraform-bytebase-schema v0.0.9 // indirect
-	github.com/lonegunmanb/terraform-google-schema/v6 v6.43.0 // indirect
-	github.com/lonegunmanb/terraform-helm-schema/v3 v3.0.2 // indirect
-	github.com/lonegunmanb/terraform-kubernetes-schema/v2 v2.37.0 // indirect
-	github.com/lonegunmanb/terraform-local-schema/v2 v2.5.3 // indirect
-	github.com/lonegunmanb/terraform-modtm-schema v0.3.5 // indirect
-	github.com/lonegunmanb/terraform-null-schema/v3 v3.2.4 // indirect
-	github.com/lonegunmanb/terraform-random-schema/v3 v3.7.2 // indirect
-	github.com/lonegunmanb/terraform-template-schema/v2 v2.2.0 // indirect
-	github.com/lonegunmanb/terraform-time-schema v0.13.0 // indirect
-	github.com/lonegunmanb/terraform-tls-schema/v4 v4.1.0-ephemeral // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
