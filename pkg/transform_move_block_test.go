@@ -91,6 +91,7 @@ resource "other_resource" "keep" {
 resource "existing_resource" "foo" {
   name = "foo"
 }
+
 resource "fake_resource" "this" {
   attr = "value"
 }

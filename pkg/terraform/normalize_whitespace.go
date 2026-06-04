@@ -12,14 +12,20 @@ import (
 // normalizeFileWhitespace strips stray blank lines that transforms like
 // `sort_blocks_in_file` and `move_block` can leave behind when they remove a
 // block from a file (hclwrite preserves the surrounding newline tokens) and
-// re-append it elsewhere.
+// re-append it elsewhere. It also enforces a consistent inter-block layout so
+// the same file always serialises the same way regardless of how transforms
+// happened to mutate it.
 //
 // Rules, all applied only at depth 0 (outside any block body) and outside
 // heredoc content:
 //
-//   - leading blank lines are stripped (file starts on a non-empty line);
-//   - runs of three or more consecutive newline tokens are collapsed to two
-//     (i.e. at most one blank line between top-level constructs);
+//   - leading blank lines are stripped (the file starts on a non-empty line);
+//   - after a `}` that closes a root-level block, the next non-newline token
+//     in the file is preceded by exactly two newlines (i.e. exactly one
+//     blank line between root-level constructs);
+//   - elsewhere at depth 0, runs of three or more consecutive newlines are
+//     collapsed to two (so an existing blank line is preserved, but multiple
+//     are not), and shorter runs are left as-is;
 //   - the file always ends with exactly one trailing newline (zero trailing
 //     blank lines), unless the file is empty.
 //
@@ -52,22 +58,27 @@ func normalizeFileWhitespace(src []byte) []byte {
 //     TokenNewline appears between them).
 func renderNormalizedTokens(tokens hclwrite.Tokens) []byte {
 	var (
-		out             bytes.Buffer
-		depth           int
-		inHeredoc       bool
-		pendingNewlines int
-		emittedAny      bool
+		out               bytes.Buffer
+		depth             int
+		inHeredoc         bool
+		pendingNewlines   int
+		emittedAny        bool
+		lastWasRootCBrace bool
 	)
+
+	emitNewlines := func(n int) {
+		for i := 0; i < n; i++ {
+			out.WriteByte('\n')
+		}
+		pendingNewlines = 0
+	}
 
 	flushPending := func(maxNewlines int) {
 		n := pendingNewlines
 		if maxNewlines >= 0 && n > maxNewlines {
 			n = maxNewlines
 		}
-		for i := 0; i < n; i++ {
-			out.WriteByte('\n')
-		}
-		pendingNewlines = 0
+		emitNewlines(n)
 	}
 
 	writeRaw := func(tok *hclwrite.Token) {
@@ -77,27 +88,40 @@ func renderNormalizedTokens(tokens hclwrite.Tokens) []byte {
 		out.Write(tok.Bytes)
 	}
 
+	flushBeforeContent := func() {
+		if pendingNewlines == 0 {
+			return
+		}
+		if !emittedAny {
+			pendingNewlines = 0
+			return
+		}
+		if depth == 0 {
+			if lastWasRootCBrace {
+				emitNewlines(2)
+			} else {
+				flushPending(2)
+			}
+			return
+		}
+		flushPending(-1)
+	}
+
 	for _, tok := range tokens {
 		switch tok.Type {
 		case hclsyntax.TokenEOF:
 			pendingNewlines = 0
 			continue
 		case hclsyntax.TokenOHeredoc:
-			if pendingNewlines > 0 {
-				if !emittedAny {
-					pendingNewlines = 0
-				} else if depth == 0 {
-					flushPending(2)
-				} else {
-					flushPending(-1)
-				}
-			}
+			flushBeforeContent()
 			emittedAny = true
+			lastWasRootCBrace = false
 			inHeredoc = true
 			writeRaw(tok)
 		case hclsyntax.TokenCHeredoc:
 			inHeredoc = false
 			writeRaw(tok)
+			lastWasRootCBrace = false
 		case hclsyntax.TokenNewline:
 			if inHeredoc {
 				writeRaw(tok)
@@ -109,24 +133,20 @@ func renderNormalizedTokens(tokens hclwrite.Tokens) []byte {
 				writeRaw(tok)
 				continue
 			}
-			if pendingNewlines > 0 {
-				if !emittedAny {
-					pendingNewlines = 0
-				} else if depth == 0 {
-					flushPending(2)
-				} else {
-					flushPending(-1)
-				}
-			}
+			flushBeforeContent()
 			emittedAny = true
 			writeRaw(tok)
 			switch tok.Type {
 			case hclsyntax.TokenOBrace:
 				depth++
+				lastWasRootCBrace = false
 			case hclsyntax.TokenCBrace:
 				if depth > 0 {
 					depth--
 				}
+				lastWasRootCBrace = depth == 0
+			default:
+				lastWasRootCBrace = false
 			}
 		}
 	}

@@ -250,6 +250,7 @@ resource "azurerm_resource_group" "middle" {}
 resource "azurerm_resource_group" "last" {}`,
 			blockToRemove: []string{"azurerm_resource_group", "middle", "middle-rg"},
 			expected: `resource "azurerm_resource_group" "first" {}
+
 resource "azurerm_resource_group" "last" {}
 `,
 		},
