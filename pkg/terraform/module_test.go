@@ -21,9 +21,11 @@ func TestLoadModuleShouldLoadAllTerraformFiles(t *testing.T) {
 	defer stub.Reset()
 	_ = afero.WriteFile(mockFs, "/main.tf", []byte(`resource "fake_resource" this {}
 data "fake_data" this {}
+ephemeral "fake_ephemeral" this {}
 `), 0644)
 	_ = afero.WriteFile(mockFs, "/main2.tf", []byte(`resource "fake_resource" that {}
 data "fake_data" that {}
+ephemeral "fake_ephemeral" that {}
 `), 0644)
 	sut, err := LoadModule(ModuleRef{
 		Dir:    ".",
@@ -32,6 +34,7 @@ data "fake_data" that {}
 	require.NoError(t, err)
 	assert.Len(t, sut.ResourceBlocks, 2)
 	assert.Len(t, sut.DataBlocks, 2)
+	assert.Len(t, sut.EphemeralBlocks, 2)
 }
 
 func TestModule_SaveToDisk(t *testing.T) {
