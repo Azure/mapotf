@@ -183,14 +183,22 @@ func (m *Module) RemoveBlock(block *hclwrite.Block) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
+	for _, file := range m.writeFiles {
+		body := file.Body()
+		for _, b := range body.Blocks() {
+			if b == block {
+				body.RemoveBlock(b)
+				return
+			}
+		}
+	}
+
 	targetType := block.Type()
 	targetLabels := block.Labels()
 
-	// Look through all files to find the block
 	for _, file := range m.writeFiles {
 		body := file.Body()
-		blocks := body.Blocks()
-		for _, b := range blocks {
+		for _, b := range body.Blocks() {
 			bType := b.Type()
 			if bType == targetType && labelsEqual(b.Labels(), targetLabels) {
 				body.RemoveBlock(b)

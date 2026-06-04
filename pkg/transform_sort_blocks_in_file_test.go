@@ -138,6 +138,42 @@ variable "alpha" {
 			},
 		},
 		{
+			desc: "unlisted_moved_blocks_left_in_place",
+			mptf: `
+transform "sort_blocks_in_file" this {
+  file_name     = "moved.tf"
+  desired_order = ["moved.1"]
+}
+`,
+			initialFiles: map[string]string{
+				"/moved.tf": `
+moved {
+  from = aws_instance.a
+  to   = aws_instance.aa
+}
+
+moved {
+  from = aws_instance.b
+  to   = aws_instance.bb
+}
+`,
+			},
+			expectedFiles: map[string]string{
+				"/moved.tf": `
+moved {
+  from = aws_instance.a
+  to   = aws_instance.aa
+}
+
+moved {
+  from = aws_instance.b
+  to   = aws_instance.bb
+}
+
+`,
+			},
+		},
+		{
 			desc: "missing_address_returns_error",
 			mptf: `
 transform "sort_blocks_in_file" this {
@@ -155,6 +191,44 @@ variable "alpha" {
 			expectedFiles:  nil,
 			wantErr:        true,
 			errorSubstring: "cannot find block",
+		},
+		{
+			desc: "duplicate_address_returns_error",
+			mptf: `
+transform "sort_blocks_in_file" this {
+  file_name     = "variables.tf"
+  desired_order = ["variable.alpha", "variable.alpha"]
+}
+`,
+			initialFiles: map[string]string{
+				"/variables.tf": `
+variable "alpha" {
+  type = string
+}
+`,
+			},
+			expectedFiles:  nil,
+			wantErr:        true,
+			errorSubstring: "unique",
+		},
+		{
+			desc: "empty_address_returns_error",
+			mptf: `
+transform "sort_blocks_in_file" this {
+  file_name     = "variables.tf"
+  desired_order = [""]
+}
+`,
+			initialFiles: map[string]string{
+				"/variables.tf": `
+variable "alpha" {
+  type = string
+}
+`,
+			},
+			expectedFiles:  nil,
+			wantErr:        true,
+			errorSubstring: "min",
 		},
 	}
 
@@ -174,6 +248,12 @@ variable "alpha" {
 			}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
 			require.NoError(t, err)
 			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+			if c.wantErr && err != nil {
+				if c.errorSubstring != "" {
+					assert.Contains(t, err.Error(), c.errorSubstring)
+				}
+				return
+			}
 			require.NoError(t, err)
 
 			err = plan.Apply()
@@ -219,9 +299,7 @@ transform "sort_blocks_in_file" this {
 		AbsDir: "/",
 	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
 	require.NoError(t, err)
-	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
-	require.NoError(t, err)
-	err = plan.Apply()
+	_, err = pkg.RunMetaProgrammingTFPlan(cfg)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "desired_order must not be empty")
+	assert.Contains(t, err.Error(), "min")
 }

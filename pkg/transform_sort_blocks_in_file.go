@@ -25,7 +25,7 @@ type SortBlocksInFileTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	FileName     string   `hcl:"file_name" validate:"endswith=.tf"`
-	DesiredOrder []string `hcl:"desired_order"`
+	DesiredOrder []string `hcl:"desired_order" validate:"required,min=1,unique,dive,min=1"`
 }
 
 func (s *SortBlocksInFileTransform) Type() string {
@@ -35,6 +35,13 @@ func (s *SortBlocksInFileTransform) Type() string {
 func (s *SortBlocksInFileTransform) Apply() error {
 	if len(s.DesiredOrder) == 0 {
 		return fmt.Errorf("sort_blocks_in_file: desired_order must not be empty")
+	}
+	seen := make(map[string]struct{}, len(s.DesiredOrder))
+	for _, addr := range s.DesiredOrder {
+		if _, ok := seen[addr]; ok {
+			return fmt.Errorf("sort_blocks_in_file: duplicate block address %q in desired_order", addr)
+		}
+		seen[addr] = struct{}{}
 	}
 
 	cfg := s.Config().(*MetaProgrammingTFConfig)
