@@ -28,9 +28,13 @@ var _ Transform = &ReorderAttributesTransform{}
 //   - When `head_tail_line_breaks` is true (default) a blank line is inserted
 //     between the head section and the middle, and between the middle and the
 //     tail section. Set to `false` to suppress these blank lines.
-//   - Every nested block in the output is preceded by a blank line — if a
-//     blank line is already there (because of the head/tail rule above) no
-//     extra blank line is inserted.
+//   - Every nested block in the output is preceded by a blank line, except
+//     when the previous element is a nested block sharing the same orderable
+//     name. Adjacent same-kind siblings (e.g. two `validation {}` blocks of
+//     a variable, two `dynamic "subnet" {}` blocks of a resource) stay
+//     grouped without a blank line between them, matching typical Terraform
+//     formatting. If a section boundary (head/tail) coincides with the
+//     adjacency the section blank line still wins.
 //   - Names in `head_attributes` / `tail_attributes` that are not present on
 //     the block are silently skipped.
 //   - The same name in both `head_attributes` and `tail_attributes` is a
@@ -224,11 +228,17 @@ func sortReorderMiddle(elems []reorderElement, alphabetical bool) {
 //   - `headTailLineBreaks` controls whether blank lines are emitted at the
 //     head→middle and middle→tail section boundaries.
 //
-// A blank line is always emitted before a nested block (so user-facing
-// readability matches typical Terraform style). When the head→middle and
-// middle→tail boundaries collapse to the same index (empty middle) only one
-// blank line is emitted, because `needBlank` is a single boolean per
-// iteration.
+// A blank line is emitted before a nested block to match typical Terraform
+// formatting, with one exception: when the previous element is a nested
+// block sharing the same orderable name (e.g. two `validation {}` siblings,
+// two `dynamic "subnet" {}` siblings), no blank line is inserted so the
+// group stays visually adjacent. A section boundary still forces a blank
+// line, even when it falls between same-kind siblings, because the user
+// asked for that separator explicitly.
+//
+// When the head→middle and middle→tail boundaries collapse to the same
+// index (empty middle) only one blank line is emitted, because `needBlank`
+// is a single boolean per iteration.
 func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd, tailStart int, headTailLineBreaks bool) {
 	for i, el := range elements {
 		if i > 0 {
@@ -240,7 +250,11 @@ func emitReorderElements(body *hclwrite.Body, elements []reorderElement, headEnd
 				needBlank = true
 			}
 			if el.isNested {
-				needBlank = true
+				prev := elements[i-1]
+				sameKindAdjacent := prev.isNested && prev.name == el.name
+				if !sameKindAdjacent {
+					needBlank = true
+				}
 			}
 			if needBlank {
 				body.AppendNewline()

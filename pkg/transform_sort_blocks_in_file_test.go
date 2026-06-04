@@ -406,15 +406,16 @@ variable "bravo" {
 	assert.Equal(t, expectedVars, string(varsActual))
 }
 
-func TestSortBlocksInFile_EmptyDesiredOrderIsError(t *testing.T) {
+func TestSortBlocksInFile_EmptyDesiredOrderIsNoOp(t *testing.T) {
 	mptf := `
 transform "sort_blocks_in_file" this {
   file_name     = "variables.tf"
   desired_order = []
 }
 `
+	originalVars := "variable \"x\" {\n  type = string\n}\n"
 	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
-		"/variables.tf": `variable "x" { type = string }`,
+		"/variables.tf": originalVars,
 	}))
 	defer stub.Reset()
 
@@ -428,7 +429,11 @@ transform "sort_blocks_in_file" this {
 		AbsDir: "/",
 	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
 	require.NoError(t, err)
-	_, err = pkg.RunMetaProgrammingTFPlan(cfg)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "min")
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+	err = plan.Apply()
+	require.NoError(t, err)
+	after, err := afero.ReadFile(filesystem.Fs, "/variables.tf")
+	require.NoError(t, err)
+	assert.Equal(t, originalVars, string(after))
 }
