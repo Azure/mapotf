@@ -6,26 +6,32 @@ import (
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
 	"github.com/Azure/mapotf/pkg/backup"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/spf13/cobra"
 	"os"
 )
 
 func NewTransformCmd() *cobra.Command {
 	recursive := false
+	keepAdjacentBlocks := false
 
 	transformCmd := &cobra.Command{
 		Use:   "transform",
-		Short: "Apply the transforms, mapotf transform [-r] --tf-dir [] --mptf-dir  [path to config files], support mutilple mptf dirs",
+		Short: "Apply the transforms, mapotf transform [-r] [--keep-adjacent-blocks] --tf-dir [] --mptf-dir  [path to config files], support mutilple mptf dirs",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
 			UnknownFlags: true,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			terraform.SetNormalizeOptions(terraform.NormalizeOptions{
+				KeepAdjacentSameKindUnlabeledBlocks: keepAdjacentBlocks,
+			})
 			_, err := transform(recursive, cmd.Context())
 			return err
 		},
 	}
 
 	transformCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Apply transforms to all modules or not, default to the root module only.")
+	transformCmd.Flags().BoolVar(&keepAdjacentBlocks, "keep-adjacent-blocks", false, "Keep adjacent unlabeled same-kind root blocks (e.g. two `locals {}` or two `moved {}` blocks) on directly consecutive lines with no blank line between them. Labeled blocks such as `variable \"x\" {}` or `resource \"t\" \"n\" {}` are unaffected and always get a blank line between siblings. Off by default: every pair of root blocks is separated by exactly one blank line.")
 	return transformCmd
 }
 
