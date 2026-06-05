@@ -13,6 +13,8 @@ import (
 	"github.com/zclconf/go-cty/cty/function/stdlib"
 	"math/big"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -1051,4 +1053,211 @@ func mustDecode(t *testing.T, s string) cty.Value {
 	v, err := stdlib.JSONDecode(cty.StringVal(s))
 	require.NoError(t, err)
 	return v
+}
+
+// TestDataProviderSchema_SortedAttributeLists exercises the four pre-sorted
+// attribute-name lists added in v0.1.4 (resources_required_attributes,
+// resources_optional_attributes, data_sources_required_attributes,
+// data_sources_optional_attributes) plus the new data_sources attribute. The
+// synthetic schema deliberately covers the four tfjson partitions so the
+// `Required` / `Optional` filter behaviour is locked in:
+//
+//   - Required: true                       → in *_required, not in *_optional
+//   - Optional: true                       → in *_optional, not in *_required
+//   - Optional: true, Computed: true       → in *_optional (user-writable)
+//   - Computed: true (alone)               → in neither (pure computed)
+//
+// Each list element is fanned out into one update_in_place transform via
+// for_each, where the for_each key is the original list index (zero-padded so
+// alphabetical key sort preserves the original order) and the asstring body
+// records the attribute name. The test then walks `cfg.GetVertices()` to read
+// the patch block for each generated transform and assert the recovered names
+// match the expected alphabetical ordering.
+func TestDataProviderSchema_SortedAttributeLists(t *testing.T) {
+	syntheticSchema := `{
+      "provider": {
+        "version": 0,
+        "block": {"description_kind": "plain"}
+      },
+      "resource_schemas": {
+        "azurerm_resource_group": {
+          "version": 0,
+          "block": {
+            "attributes": {
+              "name":              {"type": "string", "required": true},
+              "location":          {"type": "string", "required": true},
+              "managed_by":        {"type": "string", "optional": true},
+              "tags":              {"type": ["map", "string"], "optional": true},
+              "id":                {"type": "string", "optional": true, "computed": true},
+              "etag":              {"type": "string", "computed": true}
+            },
+            "description_kind": "plain"
+          }
+        },
+        "azurerm_kv_certificate": {
+          "version": 0,
+          "block": {
+            "attributes": {
+              "key_vault_id":      {"type": "string", "required": true},
+              "name":              {"type": "string", "required": true},
+              "tags":              {"type": ["map", "string"], "optional": true},
+              "version":           {"type": "string", "computed": true}
+            },
+            "description_kind": "plain"
+          }
+        }
+      },
+      "data_source_schemas": {
+        "azurerm_resource_group": {
+          "version": 0,
+          "block": {
+            "attributes": {
+              "name":              {"type": "string", "required": true},
+              "location":          {"type": "string", "computed": true},
+              "tags":              {"type": ["map", "string"], "computed": true},
+              "id":                {"type": "string", "optional": true, "computed": true}
+            },
+            "description_kind": "plain"
+          }
+        }
+      }
+    }
+`
+	stub := gostub.Stub(&pkg.SchemaRetrieverFactory, func(ctx context.Context) pkg.TerraformProviderSchemaRetriever {
+		return mockProviderSchemaRetriever{t: t, jsonSchema: syntheticSchema}
+	}).Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `resource "azurerm_resource_group" this {
+}
+`,
+	}))
+	defer stub.Reset()
+
+	hclBlocks := newHclBlocks(t, `
+data "provider_schema" this {
+  provider_source  = "Azure/fake"
+  provider_version = ">= 0.1.0"
+}
+
+transform "update_in_place" rg_required {
+  for_each             = { for i, n in data.provider_schema.this.resources_required_attributes["azurerm_resource_group"] : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+
+transform "update_in_place" rg_optional {
+  for_each             = { for i, n in data.provider_schema.this.resources_optional_attributes["azurerm_resource_group"] : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+
+transform "update_in_place" kv_required {
+  for_each             = { for i, n in data.provider_schema.this.resources_required_attributes["azurerm_kv_certificate"] : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+
+transform "update_in_place" ds_rg_required {
+  for_each             = { for i, n in data.provider_schema.this.data_sources_required_attributes["azurerm_resource_group"] : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+
+transform "update_in_place" ds_rg_optional {
+  for_each             = { for i, n in data.provider_schema.this.data_sources_optional_attributes["azurerm_resource_group"] : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+
+transform "update_in_place" data_sources_marker {
+  for_each             = { for i, n in sort(keys(data.provider_schema.this.data_sources)) : format("%04d", i) => n }
+  target_block_address = "resource.azurerm_resource_group.this"
+  asstring {
+    description = each.value
+  }
+}
+`)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+	require.NoError(t, cfg.Init(hclBlocks))
+	require.NoError(t, cfg.RunPrePlan())
+	require.NoError(t, cfg.RunPlan())
+
+	got := collectForEachStrings(t, cfg, "update_in_place", []string{
+		"rg_required",
+		"rg_optional",
+		"kv_required",
+		"ds_rg_required",
+		"ds_rg_optional",
+		"data_sources_marker",
+	}, "description")
+
+	// azurerm_resource_group: required = [location, name] (alphabetical).
+	assert.Equal(t, []string{"location", "name"}, got["rg_required"])
+	// azurerm_resource_group: optional = [id, managed_by, tags]; id is
+	// optional+computed (still user-writable), etag is pure-computed (excluded).
+	assert.Equal(t, []string{"id", "managed_by", "tags"}, got["rg_optional"])
+	// azurerm_kv_certificate: required = [key_vault_id, name]; version is
+	// pure-computed (excluded from both buckets).
+	assert.Equal(t, []string{"key_vault_id", "name"}, got["kv_required"])
+	// data source azurerm_resource_group: required = [name].
+	assert.Equal(t, []string{"name"}, got["ds_rg_required"])
+	// data source azurerm_resource_group: optional = [id] (id is
+	// optional+computed; location and tags are pure-computed).
+	assert.Equal(t, []string{"id"}, got["ds_rg_optional"])
+	// `data_sources` exposes every data source type from the schema.
+	assert.Equal(t, []string{"azurerm_resource_group"}, got["data_sources_marker"])
+}
+
+// collectForEachStrings walks the for_each transform vertices produced by
+// `transform.<transformType>.<baseName>[<key>]` and, for each baseName, returns
+// the ordered slice of values pulled from the named asstring attribute on each
+// generated patch block. Order is by for_each key (zero-padded indexes sort
+// lexicographically into original list order).
+func collectForEachStrings(t *testing.T, cfg *pkg.MetaProgrammingTFConfig, transformType string, baseNames []string, attrName string) map[string][]string {
+	t.Helper()
+	vertices := cfg.GetVertices()
+	out := make(map[string][]string, len(baseNames))
+	for _, base := range baseNames {
+		prefix := "transform." + transformType + "." + base + "["
+		keys := make([]string, 0)
+		entries := make(map[string]string)
+		for vk, vb := range vertices {
+			if !strings.HasPrefix(vk, prefix) || !strings.HasSuffix(vk, "]") {
+				continue
+			}
+			forEachKey := strings.TrimSuffix(strings.TrimPrefix(vk, prefix), "]")
+			upd, ok := vb.(*pkg.UpdateInPlaceTransform)
+			require.Truef(t, ok, "vertex %q is not an UpdateInPlaceTransform", vk)
+			attr := upd.UpdateBlock().Body().GetAttribute(attrName)
+			require.NotNilf(t, attr, "vertex %q has no %q attribute on its patch block", vk, attrName)
+			rawTokens := attr.Expr().BuildTokens(nil).Bytes()
+			value := strings.TrimSpace(string(rawTokens))
+			// Strip enclosing quotes from the asstring-rendered literal.
+			if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
+				value = value[1 : len(value)-1]
+			}
+			keys = append(keys, forEachKey)
+			entries[forEachKey] = value
+		}
+		sort.Strings(keys)
+		ordered := make([]string, len(keys))
+		for i, k := range keys {
+			ordered[i] = entries[k]
+		}
+		out[base] = ordered
+	}
+	return out
 }

@@ -15,8 +15,10 @@
 ## `data` blocks
 
 * [`data`](d/data.md)
+* [`ephemeral`](d/ephemeral.md)
 * [`local`](d/local.md)
 * [`module`](d/module.md)
+* [`module_source`](d/module_source.md)
 * [`moved`](d/moved.md)
 * [`output`](d/output.md)
 * [`provider_schema`](d/provider_schema.md)

@@ -31,7 +31,10 @@ func (m *MoveBlockTransform) Apply() error {
 	if block.Range().Filename == m.FileName {
 		return nil
 	}
-	cfg.AddBlock(m.FileName, writeBlock)
+	// RemoveBlock must precede AddBlock: the new structured AppendBlock used
+	// by AddBlock requires the block not already be owned by another body.
+	// (Same pattern as sort_blocks_in_file.)
 	cfg.module.RemoveBlock(writeBlock)
+	cfg.AddBlock(m.FileName, writeBlock)
 	return nil
 }

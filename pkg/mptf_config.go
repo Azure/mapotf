@@ -22,16 +22,17 @@ var _ golden.Config = &MetaProgrammingTFConfig{}
 
 type MetaProgrammingTFConfig struct {
 	*golden.BaseConfig
-	resourceBlocks map[string]*terraform.RootBlock
-	dataBlocks     map[string]*terraform.RootBlock
-	variableBlocks map[string]*terraform.RootBlock
-	localBlocks    map[string]*terraform.RootBlock
-	outputBlocks   map[string]*terraform.RootBlock
-	moduleBlocks   map[string]*terraform.RootBlock
-	movedBlocks    map[string]*terraform.RootBlock
-	terraformBlock *terraform.RootBlock
-	allRootBlocks  []*terraform.RootBlock
-	module         *terraform.Module
+	resourceBlocks  map[string]*terraform.RootBlock
+	dataBlocks      map[string]*terraform.RootBlock
+	ephemeralBlocks map[string]*terraform.RootBlock
+	variableBlocks  map[string]*terraform.RootBlock
+	localBlocks     map[string]*terraform.RootBlock
+	outputBlocks    map[string]*terraform.RootBlock
+	moduleBlocks    map[string]*terraform.RootBlock
+	movedBlocks     map[string]*terraform.RootBlock
+	terraformBlock  *terraform.RootBlock
+	allRootBlocks   []*terraform.RootBlock
+	module          *terraform.Module
 }
 
 func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
@@ -63,6 +64,7 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 	}
 	c.resourceBlocks = groupByAddress(module.ResourceBlocks)
 	c.dataBlocks = groupByAddress(module.DataBlocks)
+	c.ephemeralBlocks = groupByAddress(module.EphemeralBlocks)
 	c.moduleBlocks = groupByAddress(module.ModuleBlocks)
 	c.variableBlocks = groupByAddress(module.Variables)
 	c.outputBlocks = groupByAddress(module.Outputs)
@@ -86,6 +88,10 @@ func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.RootBlock {
 
 func (c *MetaProgrammingTFConfig) DataBlocks() []*terraform.RootBlock {
 	return c.slice(c.dataBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) EphemeralBlocks() []*terraform.RootBlock {
+	return c.slice(c.ephemeralBlocks)
 }
 
 func (c *MetaProgrammingTFConfig) VariableBlocks() []*terraform.RootBlock {
@@ -118,6 +124,9 @@ func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock
 	}
 	if strings.HasPrefix(address, "data.") {
 		return c.dataBlocks[address]
+	}
+	if strings.HasPrefix(address, "ephemeral.") {
+		return c.ephemeralBlocks[address]
 	}
 	if strings.HasPrefix(address, "variable.") {
 		return c.variableBlocks[address]

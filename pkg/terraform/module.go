@@ -23,6 +23,9 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	"data": func(m *Module) *[]*RootBlock {
 		return &m.DataBlocks
 	},
+	"ephemeral": func(m *Module) *[]*RootBlock {
+		return &m.EphemeralBlocks
+	},
 	"module": func(m *Module) *[]*RootBlock {
 		return &m.ModuleBlocks
 	},
@@ -41,6 +44,7 @@ type Module struct {
 	lock            *sync.Mutex
 	ResourceBlocks  []*RootBlock
 	DataBlocks      []*RootBlock
+	EphemeralBlocks []*RootBlock
 	ModuleBlocks    []*RootBlock
 	TerraformBlocks []*RootBlock
 	Variables       []*RootBlock
@@ -175,8 +179,12 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 	if len(tokens) > 1 && tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
 		writeFile.Body().AppendNewline()
 	}
-	writeFile.Body().AppendUnstructuredTokens(block.BuildTokens(nil))
-	writeFile.Body().AppendNewline()
+	// AppendBlock (rather than AppendUnstructuredTokens(block.BuildTokens(nil)))
+	// inserts the block as a structured element, so subsequent body.Blocks()
+	// walks — including the ones inside RemoveBlock — can find it. Any extra
+	// trailing whitespace is canonicalized by normalizeFileWhitespace in
+	// SaveToDisk.
+	writeFile.Body().AppendBlock(block)
 }
 
 func (m *Module) RemoveBlock(block *hclwrite.Block) {
@@ -249,7 +257,8 @@ func (m *Module) Blocks() []*RootBlock {
 	var blocks []*RootBlock
 	linq.From(m.TerraformBlocks).Concat(linq.From(m.Locals)).
 		Concat(linq.From(m.Outputs)).Concat(linq.From(m.Variables)).
-		Concat(linq.From(m.DataBlocks)).Concat(linq.From(m.ResourceBlocks)).
+		Concat(linq.From(m.DataBlocks)).Concat(linq.From(m.EphemeralBlocks)).
+		Concat(linq.From(m.ResourceBlocks)).
 		Concat(linq.From(m.ModuleBlocks)).Concat(linq.From(m.MovedBlocks)).
 		ToSlice(&blocks)
 	return blocks
