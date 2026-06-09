@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestNewMetaProgrammingTFConfigShouldLoadTerraformBlocks(t *testing.T) {
@@ -129,4 +130,19 @@ func fakeFs(files map[string]string) afero.Fs {
 		_ = afero.WriteFile(fs, n, []byte(content), 0644)
 	}
 	return fs
+}
+
+// assertCtyMapRawEquals compares two maps of cty.Value using cty's RawEquals
+// semantics. testify's assert.Equal does a deep struct compare on cty.Value's
+// internal big.Float, which fails when one side was constructed via
+// cty.NumberIntVal (prec 64) and the other via hcl Expr.Value() (prec 512),
+// even though both represent the same number. RawEquals uses big.Float.Cmp,
+// which ignores precision differences.
+func assertCtyMapRawEquals(t *testing.T, expected, actual map[string]cty.Value) {
+	t.Helper()
+	e := cty.ObjectVal(expected)
+	a := cty.ObjectVal(actual)
+	if !e.RawEquals(a) {
+		t.Errorf("cty maps differ\nexpected: %s\n  actual: %s", e.GoString(), a.GoString())
+	}
 }

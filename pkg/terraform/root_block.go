@@ -161,18 +161,36 @@ func (b *RootBlock) EvalContext() cty.Value {
 	v := map[string]cty.Value{}
 	RootBlockReflectionInformation(v, b)
 	for n, a := range b.Attributes {
-		v[n] = cty.StringVal(a.String())
+		v[n] = evalAttributeValue(a)
 	}
 	if b.Count != nil {
-		v["count"] = cty.StringVal(b.Count.String())
+		v["count"] = evalAttributeValue(b.Count)
 	}
 	if b.ForEach != nil {
-		v["for_each"] = cty.StringVal(b.ForEach.String())
+		v["for_each"] = evalAttributeValue(b.ForEach)
 	}
 	for k, values := range b.NestedBlocks.Values() {
 		v[k] = values
 	}
 	return cty.ObjectVal(v)
+}
+
+// evalAttributeValue tries to decode the attribute's expression as a literal cty
+// value (string, number, bool, list, object, etc.) so callers see typed values
+// for literal HCL like `name = "foo"` or `count = 3`. Expressions that reference
+// variables, locals, functions, or `each.*` fall back to the attribute's raw
+// token text (the historical mapotf behaviour) so existing comparisons against
+// the rendered token bytes still work for expression attributes.
+func evalAttributeValue(a *Attribute) cty.Value {
+	if a == nil {
+		return cty.NullVal(cty.String)
+	}
+	if a.Expr != nil {
+		if val, diag := a.Expr.Value(nil); !diag.HasErrors() {
+			return val
+		}
+	}
+	return cty.StringVal(a.String())
 }
 
 func attributes(rb *hclsyntax.Body, wb *hclwrite.Body) map[string]*Attribute {

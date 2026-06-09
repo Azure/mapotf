@@ -1,6 +1,8 @@
 # Data "output" Block
 
-The `data "output"` block enumerates `output` blocks in the target Terraform configuration. Each result entry is the output block's full evaluation context — its attribute values (stringified) plus an `mptf` metadata sub-object that includes the block's source file and range.
+The `data "output"` block enumerates `output` blocks in the target Terraform configuration. Each result entry is the output block's full evaluation context — its attribute values plus an `mptf` metadata sub-object that includes the block's source file and range.
+
+Literal attribute values (string, number, bool, list, object) are decoded to their typed `cty` form, so HCL like `sensitive = false` exposes `each.value.sensitive` as the bool `false`. Attribute values that reference variables, locals, or resource attributes cannot be evaluated at config-load time and fall back to the literal token text — for example `value = azurerm_resource_group.this.id` exposes `each.value.value` as the string `"azurerm_resource_group.this.id"`.
 
 ## Arguments
 
@@ -42,7 +44,7 @@ output "name" {
 data "output" "all" {}
 
 transform "remove_block_element" "drop_output_sensitive_false" {
-  for_each             = { for n, v in data.output.all.result : n => v if try(v.sensitive, "") == "false" }
+  for_each             = { for n, v in data.output.all.result : n => v if try(v.sensitive, true) == false }
   target_block_address = "output.${each.key}"
   paths                = ["sensitive"]
 }
@@ -69,4 +71,4 @@ This is the canonical AVM pre-commit rule for outputs — every `output` block e
 
 - The result is a map keyed by output name, so for any given module each output appears at most once.
 - The `mptf.range.file_name` field of each entry is useful for filtering blocks by source file (for example "every output currently in `main.tf` should move to `outputs.tf`").
-- All attribute values are returned as their string representation. The `value` attribute, in particular, is returned as its literal HCL expression text — `value = azurerm_resource_group.this.id` shows up as the string `"azurerm_resource_group.this.id"`.
+- All attribute values are decoded to their typed `cty` form whenever the expression is a literal (string, number, bool, list, object). Bool attributes like `sensitive = false` surface as the bool `false`. Expressions that reference variables, locals, resource attributes, or functions cannot be evaluated at config-load time and fall back to the literal token text — `value = azurerm_resource_group.this.id`, for example, surfaces as the string `"azurerm_resource_group.this.id"`.

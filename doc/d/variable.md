@@ -1,6 +1,8 @@
 # Data "variable" Block
 
-The `data "variable"` block enumerates `variable` blocks in the target Terraform configuration. Each result entry is the variable block's full evaluation context — its attribute values (stringified) plus an `mptf` metadata sub-object that includes the block's source file and range.
+The `data "variable"` block enumerates `variable` blocks in the target Terraform configuration. Each result entry is the variable block's full evaluation context — its attribute values plus an `mptf` metadata sub-object that includes the block's source file and range.
+
+Literal attribute values (string, number, bool, list, object) are decoded to their typed `cty` form, so HCL like `default = 5` exposes `each.value.default` as the number `5` and `nullable = true` as the bool `true`. Attribute values that reference variables, locals, functions, or `each.*` cannot be evaluated at config-load time and fall back to the literal token text — for example `default = var.something` exposes `each.value.default` as the string `"var.something"`. The `type` attribute is almost always a bare type expression (`string`, `map(string)`, ...) so it usually surfaces as its token text.
 
 ## Arguments
 
@@ -57,13 +59,13 @@ locals {
 data "variable" "all" {}
 
 transform "remove_block_element" "drop_nullable_true" {
-  for_each             = { for n, v in data.variable.all.result : n => v if try(v.nullable, "") == "true" }
+  for_each             = { for n, v in data.variable.all.result : n => v if try(v.nullable, false) == true }
   target_block_address = "variable.${each.key}"
   paths                = ["nullable"]
 }
 ```
 
-The `try(v.nullable, "")` guard handles variables that don't declare `nullable` at all.
+The `try(v.nullable, false)` guard handles variables that don't declare `nullable` at all by defaulting to `false`, so the filter only fires on `nullable = true`.
 
 ## Example - Look up a single variable
 
@@ -79,4 +81,4 @@ data "variable" "location" {
 
 - The result is a map keyed by variable name, so for any given module each variable appears at most once.
 - The `mptf.range.file_name` field of each entry is useful for filtering blocks by source file (for example "every variable currently in `main.tf` should move to `variables.tf`").
-- All attribute values are returned as their string representation. Numeric defaults like `default = 5` show up as the string `"5"`; type expressions like `type = string` show up as the string `"string"`; complex defaults like `default = { a = 1 }` show up as the literal text of the expression.
+- All attribute values are decoded to their typed `cty` form whenever the expression is a literal (string, number, bool, list, object, heredoc without interpolation). Numeric defaults like `default = 5` surface as the number `5`; bool defaults like `nullable = true` surface as the bool `true`; complex defaults like `default = { a = 1 }` surface as an object you can index (for example `each.value.default.a`). Expressions that reference variables, locals, functions, or iterators cannot be evaluated at config-load time and fall back to the literal token text — for example `default = var.something` surfaces as the string `"var.something"`. The `type` attribute is almost always a bare type expression (`type = string`) and surfaces as its token text (`"string"`).
