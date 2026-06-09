@@ -33,7 +33,7 @@ variable "example_var" {
 			expectedVariableName: "example_var",
 			expectedAttributes: map[string]cty.Value{
 				"type":    cty.StringVal("string"),
-				"default": cty.StringVal(`"value"`),
+				"default": cty.StringVal(`value`),
 			},
 		},
 		{
@@ -53,7 +53,7 @@ variable "example_var" {
 			expectedVariableName: "my_var",
 			expectedAttributes: map[string]cty.Value{
 				"type":    cty.StringVal("string"),
-				"default": cty.StringVal(`"hello"`),
+				"default": cty.StringVal(`hello`),
 			},
 		},
 		{

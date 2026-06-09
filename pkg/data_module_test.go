@@ -31,8 +31,8 @@ module "naming" {
 }`,
 			expectedModuleName: "naming",
 			expectedAttrs: map[string]cty.Value{
-				"source":  cty.StringVal(`"./modules/naming"`),
-				"version": cty.StringVal(`"1.0.0"`),
+				"source":  cty.StringVal(`./modules/naming`),
+				"version": cty.StringVal(`1.0.0`),
 			},
 		},
 		{
@@ -49,7 +49,7 @@ module "second" {
 			moduleName:         "second",
 			expectedModuleName: "second",
 			expectedAttrs: map[string]cty.Value{
-				"source": cty.StringVal(`"./modules/second"`),
+				"source": cty.StringVal(`./modules/second`),
 			},
 		},
 		{
