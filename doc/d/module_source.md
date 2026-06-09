@@ -6,6 +6,7 @@ The `module_source` data source fetches a remote Terraform module by its `source
 
 - `source` (String, Required): The module source, exactly as you would write it in a `module { source = "..." }` block — for example `Azure/naming/azurerm`, `git::https://github.com/Azure/terraform-azurerm-aks.git?ref=v9.0.0`, or `./modules/storage`.
 - `version` (String, Optional): A version constraint, only meaningful for sources that support versioning (e.g. registry sources). Same syntax as the `version` argument of a `module` block — for example `~> 0.4`.
+- `base_dir` (String, Optional): Directory used to resolve a relative `source` (e.g. `./submod`, `../shared`). When omitted, defaults to the absolute path of the Terraform module mapotf is currently transforming — so a `data "module_source" { source = "../../" }` in `mapotf-configs/*.mptf.hcl` resolves to the same parent module Terraform itself would resolve. Ignored for remote sources (registry shortcuts, Git URLs).
 
 ## Attributes
 
@@ -79,8 +80,9 @@ For a multi-source repository, branch on `data.module.all.result[each.key].sourc
 
 ## Under the Hood
 
-Mapotf synthesises a minimal Terraform configuration that calls the requested module in a temporary directory, runs `terraform get` to fetch the module source, then loads the fetched module with `terraform-config-inspect` to read its variable and output declarations.
+Mapotf parses the requested module in one of two ways depending on the source:
 
-`terraform get` fetches the module only — it does **not** download provider plugins. This makes `data "module_source"` faster than `data "provider_schema"` and means it works without provider credentials.
+- **Local sources** (`./`, `../`, absolute paths): resolved against `base_dir` and parsed directly with `terraform-config-inspect`. No `terraform` invocation, no temp folder, no network. This is the path AVM modules' `examples/*` configurations use to point at the parent module under test via `source = "../../"`.
+- **Remote sources** (registry shortcuts, Git URLs, etc.): mapotf synthesises a minimal Terraform configuration that calls the requested module in a temporary directory, runs `terraform get` to fetch the module source, then loads the fetched module with `terraform-config-inspect` to read its variable and output declarations. `terraform get` fetches the module only — it does **not** download provider plugins, so `data "module_source"` is faster than `data "provider_schema"` and works without provider credentials. If `terraform get` reports validation errors (e.g. the synthetic wrapper doesn't satisfy the target module's required inputs) but the module body itself was downloaded successfully, mapotf ignores the validation error and reads the downloaded `.tf` files anyway, because `terraform-config-inspect` only needs the module's declarations, not a fully-validated wrapper.
 
-Each unique `(source, version)` pair is fetched at most once per `mapotf transform` run.
+Each unique `(source, version, base_dir)` triple is fetched at most once per `mapotf transform` run.

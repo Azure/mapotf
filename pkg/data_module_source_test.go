@@ -16,9 +16,18 @@ import (
 type stubModuleSourceFetcher struct {
 	mod *tfconfig.Module
 	err error
+	// capture call args so tests can assert what the data block passed in
+	calls []moduleSourceFetcherCall
 }
 
-func (s *stubModuleSourceFetcher) Get(source, version string) (*tfconfig.Module, error) {
+type moduleSourceFetcherCall struct {
+	source  string
+	version string
+	baseDir string
+}
+
+func (s *stubModuleSourceFetcher) Get(source, version, baseDir string) (*tfconfig.Module, error) {
+	s.calls = append(s.calls, moduleSourceFetcherCall{source: source, version: version, baseDir: baseDir})
 	return s.mod, s.err
 }
 
@@ -147,6 +156,7 @@ func TestDataModuleSource_StringJSONShape(t *testing.T) {
 
 	assert.Equal(t, "Azure/naming/azurerm", got["source"])
 	assert.Equal(t, "~> 0.4", got["version"])
+	assert.Equal(t, "", got["base_dir"])
 	require.Contains(t, got, "variables")
 	require.Contains(t, got, "outputs")
 	require.Contains(t, got, "required_variables")
@@ -203,4 +213,85 @@ func TestDataModuleSource_EmptyModule(t *testing.T) {
 	// downstream `concat(required_variables, optional_variables)` keeps working.
 	assert.True(t, d.RequiredVariables.LengthInt() == 0)
 	assert.True(t, d.OptionalVariables.LengthInt() == 0)
+}
+
+// TestDataModuleSource_BaseDirAutoDefaultsToModuleDir pins the behaviour that
+// makes the common AVM case "just work": when a `.mptf.hcl` config writes
+// `data "module_source" { source = "./submod" }` without spelling out
+// `base_dir`, the data block defaults `base_dir` to the target module's
+// AbsDir so the relative source resolves against the caller's module, not
+// against an internal mapotf temp folder.
+func TestDataModuleSource_BaseDirAutoDefaultsToModuleDir(t *testing.T) {
+	fetcher := &stubModuleSourceFetcher{mod: &tfconfig.Module{
+		Variables: map[string]*tfconfig.Variable{
+			"name": {Name: "name", Required: true},
+		},
+		Outputs: map[string]*tfconfig.Output{},
+	}}
+	stub := gostub.Stub(&pkg.ModuleSourceFetcherFactory, func(ctx context.Context) pkg.TerraformModuleSourceFetcher {
+		return fetcher
+	}).Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `resource "azurerm_resource_group" this {
+}
+`,
+	}))
+	defer stub.Reset()
+
+	hclBlocks := newHclBlocks(t, `
+data "module_source" "local" {
+  source = "./submod"
+}
+`)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+	require.NoError(t, cfg.Init(hclBlocks))
+	require.NoError(t, cfg.RunPrePlan())
+	require.NoError(t, cfg.RunPlan())
+
+	require.Len(t, fetcher.calls, 1, "expected exactly one fetcher invocation")
+	call := fetcher.calls[0]
+	assert.Equal(t, "./submod", call.source)
+	assert.Equal(t, "", call.version)
+	assert.Equal(t, "/", call.baseDir,
+		"base_dir should auto-default to the target module's AbsDir when not explicitly set")
+}
+
+// TestDataModuleSource_BaseDirExplicitOverride pins that an explicit
+// `base_dir = "..."` in the HCL wins over the auto-default. This lets
+// advanced configs target a sibling directory or a synthesised fixture path.
+func TestDataModuleSource_BaseDirExplicitOverride(t *testing.T) {
+	fetcher := &stubModuleSourceFetcher{mod: &tfconfig.Module{
+		Variables: map[string]*tfconfig.Variable{},
+		Outputs:   map[string]*tfconfig.Output{},
+	}}
+	stub := gostub.Stub(&pkg.ModuleSourceFetcherFactory, func(ctx context.Context) pkg.TerraformModuleSourceFetcher {
+		return fetcher
+	}).Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `resource "azurerm_resource_group" this {
+}
+`,
+	}))
+	defer stub.Reset()
+
+	hclBlocks := newHclBlocks(t, `
+data "module_source" "local" {
+  source   = "./submod"
+  base_dir = "/explicit/override"
+}
+`)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    ".",
+		AbsDir: "/",
+	}, nil, nil, nil, context.TODO())
+	require.NoError(t, err)
+	require.NoError(t, cfg.Init(hclBlocks))
+	require.NoError(t, cfg.RunPrePlan())
+	require.NoError(t, cfg.RunPlan())
+
+	require.Len(t, fetcher.calls, 1)
+	assert.Equal(t, "/explicit/override", fetcher.calls[0].baseDir,
+		"explicit base_dir must override the auto-default")
 }
