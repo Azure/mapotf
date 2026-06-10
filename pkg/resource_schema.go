@@ -67,14 +67,33 @@ terraform {
 	if err != nil {
 		return nil, fmt.Errorf("error running providers: %w", err)
 	}
-	src := fmt.Sprintf("registry.terraform.io/%s", providerSource)
-	r, ok := schema.Schemas[src]
-	if !ok {
-		src = providerSource
-		r = schema.Schemas[src]
-	}
+	// Look the provider up by its fully-qualified source name in the schema
+	// JSON. Delegated to a pure helper so the lookup behaviour (case
+	// normalisation, fallback, error on miss) is unit-testable without
+	// requiring the Terraform CLI on PATH.
+	return lookupProviderSchema(schema.Schemas, providerSource, versionConstraint)
+}
 
-	return r, nil
+// lookupProviderSchema resolves a provider schema by source within the map
+// produced by `terraform providers schema -json`. Terraform normalises
+// provider source namespaces to lowercase in that output (registry
+// namespaces are case-insensitive identifiers per the registry protocol),
+// so the lookup lowercases `providerSource` before searching. On miss it
+// returns a real error rather than `(nil, nil)` so config-layer callers
+// surface the failure instead of dereferencing nil downstream.
+func lookupProviderSchema(schemas map[string]*tfjson.ProviderSchema, providerSource, versionConstraint string) (*tfjson.ProviderSchema, error) {
+	lowered := strings.ToLower(providerSource)
+	src := fmt.Sprintf("registry.terraform.io/%s", lowered)
+	if r, ok := schemas[src]; ok && r != nil {
+		return r, nil
+	}
+	// Fall back to a direct lookup on the lowercased source for providers
+	// whose schema key already includes a non-default hostname or is
+	// otherwise not prefixed with `registry.terraform.io/`.
+	if r, ok := schemas[lowered]; ok && r != nil {
+		return r, nil
+	}
+	return nil, fmt.Errorf("provider schema %q not found; ensure `terraform init` succeeds for source %q version %q", src, providerSource, versionConstraint)
 }
 
 func (t TerraformCliProviderSchemaRetriever) getTerraformPath() (string, error) {
