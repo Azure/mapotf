@@ -902,3 +902,180 @@ variable "example" {
 		})
 	}
 }
+
+// TestReorderAttributes_CompositionCollision pins the #102 fix:
+// two or more reorder_attributes transforms targeting the same address must
+// fail loudly if at least one uses sort_body_alphabetically = false, because
+// the source-order sort mode reads parse-side positions that are never
+// updated between Apply() calls — so the second transform silently
+// overwrites the body layout the first one produced.
+func TestReorderAttributes_CompositionCollision(t *testing.T) {
+	cases := []struct {
+		desc            string
+		mptf            string
+		tfConfig        string
+		wantApplyErr    bool
+		errorSubstrings []string
+	}{
+		{
+			desc: "same_address_one_explicit_false_errors_at_apply",
+			mptf: `
+transform "reorder_attributes" "first" {
+  target_block_address = "variable.example"
+  head_attributes      = ["type"]
+}
+transform "reorder_attributes" "second" {
+  target_block_address     = "variable.example"
+  foot_attributes          = ["description"]
+  sort_body_alphabetically = false
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example variable."
+  default     = "value"
+  type        = string
+}
+`,
+			wantApplyErr: true,
+			errorSubstrings: []string{
+				"reorder_attributes",
+				`"variable.example"`,
+				"sort_body_alphabetically",
+				"transform.reorder_attributes.first",
+				"transform.reorder_attributes.second",
+			},
+		},
+		{
+			desc: "same_address_both_explicit_false_errors_at_apply",
+			mptf: `
+transform "reorder_attributes" "first" {
+  target_block_address     = "variable.example"
+  head_attributes          = ["type"]
+  sort_body_alphabetically = false
+}
+transform "reorder_attributes" "second" {
+  target_block_address     = "variable.example"
+  foot_attributes          = ["description"]
+  sort_body_alphabetically = false
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example variable."
+  default     = "value"
+  type        = string
+}
+`,
+			wantApplyErr: true,
+			errorSubstrings: []string{
+				`"variable.example"`,
+				"sort_body_alphabetically",
+				"transform.reorder_attributes.first",
+				"transform.reorder_attributes.second",
+			},
+		},
+		{
+			desc: "same_address_both_default_alphabetical_applies_cleanly",
+			mptf: `
+transform "reorder_attributes" "first" {
+  target_block_address = "variable.example"
+  head_attributes      = ["type"]
+}
+transform "reorder_attributes" "second" {
+  target_block_address = "variable.example"
+  foot_attributes      = ["description"]
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example variable."
+  default     = "value"
+  type        = string
+}
+`,
+			wantApplyErr: false,
+		},
+		{
+			desc: "different_addresses_one_explicit_false_applies_cleanly",
+			mptf: `
+transform "reorder_attributes" "first" {
+  target_block_address     = "variable.example"
+  sort_body_alphabetically = false
+}
+transform "reorder_attributes" "second" {
+  target_block_address = "variable.other"
+}
+`,
+			tfConfig: `
+variable "example" {
+  default = "x"
+  type    = string
+}
+
+variable "other" {
+  default = "y"
+  type    = string
+}
+`,
+			wantApplyErr: false,
+		},
+		{
+			desc: "single_transform_explicit_false_applies_cleanly",
+			mptf: `
+transform "reorder_attributes" "only" {
+  target_block_address     = "variable.example"
+  sort_body_alphabetically = false
+}
+`,
+			tfConfig: `
+variable "example" {
+  description = "An example variable."
+  default     = "value"
+  type        = string
+}
+`,
+			wantApplyErr: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+				"/main.tf": c.tfConfig,
+			}))
+			defer stub.Reset()
+
+			readFile, diag := hclsyntax.ParseConfig([]byte(c.mptf), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+			writeFile, diag := hclwrite.ParseConfig([]byte(c.mptf), "test.hcl", hcl.InitialPos)
+			require.Falsef(t, diag.HasErrors(), diag.Error())
+
+			readBlocks := readFile.Body.(*hclsyntax.Body).Blocks
+			writeBlocks := writeFile.Body().Blocks()
+			require.Equal(t, len(readBlocks), len(writeBlocks), "read/write block count mismatch")
+
+			hclBlocks := make([]*golden.HclBlock, 0, len(readBlocks))
+			for i := range readBlocks {
+				hclBlocks = append(hclBlocks, golden.NewHclBlock(readBlocks[i], writeBlocks[i], nil))
+			}
+
+			cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+				Dir:    "/",
+				AbsDir: "/",
+			}, nil, hclBlocks, nil, context.TODO())
+			require.NoError(t, err)
+			plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+			require.NoError(t, err)
+			err = plan.Apply()
+			if c.wantApplyErr {
+				require.Error(t, err)
+				for _, sub := range c.errorSubstrings {
+					assert.Contains(t, err.Error(), sub)
+				}
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

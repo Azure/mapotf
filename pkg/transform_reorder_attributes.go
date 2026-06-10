@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg/terraform"
@@ -224,7 +225,72 @@ func validateReorderSectionOverlap(head, body, foot []string) error {
 	return nil
 }
 
-// sortReorderBody stably sorts the body slice in-place. When `alphabetical`
+// validateReorderComposition returns an error when two or more
+// reorder_attributes transforms target the same address while at least
+// one of them has `sort_body_alphabetically = false`.
+//
+// The collision is non-composable because `sortReorderBody(false)` orders
+// body elements by source-side line/column positions, and those positions
+// come from the parse-side `*hclsyntax.Body`. The parse-side body is never
+// updated between Apply() calls — only the write-side `*hclwrite.Body` is
+// mutated — so the second transform sorts by the ORIGINAL source layout,
+// silently undoing the body order produced by the first transform.
+//
+// When every transform on the address uses the default
+// `sort_body_alphabetically = true` they are composable (alphabetical
+// sort is idempotent), so the validator only fires when at least one
+// transform in the group uses the source-order mode explicitly.
+//
+// The error message lists every colliding transform with its config
+// file:line citation so the user can find and fix all of them in one
+// pass; the citations are sorted by address for deterministic output.
+func validateReorderComposition(transforms []Transform) error {
+	byAddress := map[string][]*ReorderAttributesTransform{}
+	for _, t := range transforms {
+		r, ok := t.(*ReorderAttributesTransform)
+		if !ok {
+			continue
+		}
+		byAddress[r.TargetBlockAddress] = append(byAddress[r.TargetBlockAddress], r)
+	}
+
+	addresses := make([]string, 0, len(byAddress))
+	for addr := range byAddress {
+		addresses = append(addresses, addr)
+	}
+	sort.Strings(addresses)
+
+	for _, addr := range addresses {
+		group := byAddress[addr]
+		if len(group) < 2 {
+			continue
+		}
+		anyExplicitFalse := false
+		for _, r := range group {
+			if !r.useSortBodyAlphabetically() {
+				anyExplicitFalse = true
+				break
+			}
+		}
+		if !anyExplicitFalse {
+			continue
+		}
+
+		sort.SliceStable(group, func(i, j int) bool {
+			return group[i].Address() < group[j].Address()
+		})
+		citations := make([]string, 0, len(group))
+		for _, r := range group {
+			citations = append(citations, fmt.Sprintf("  - %s at %s (sort_body_alphabetically = %t)",
+				r.Address(), r.HclBlock().Range().String(), r.useSortBodyAlphabetically()))
+		}
+		return fmt.Errorf("reorder_attributes: %d transforms target %q with at least one using sort_body_alphabetically = false; this combination is not composable because non-alphabetical sort reads parse-side source positions that are not updated between Apply() calls; set `sort_body_alphabetically = true` on every colliding transform, merge them into a single transform, or filter the `for_each` set of one to exclude addresses handled by the other; colliding transforms:\n%s",
+			len(group), addr, strings.Join(citations, "\n"))
+	}
+	return nil
+}
+
+// sortReorderBody stably sorts the body slice in-place.When `alphabetical`
 // is true the order is `name` ascending. When false the order is the
 // original source position (line then column), with no-source elements
 // (added by other transforms) appended afterwards in alphabetical order.
