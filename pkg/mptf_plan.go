@@ -51,6 +51,10 @@ func (m *MetaProgrammingTFPlan) Apply() error {
 		return err
 	}
 
+	if err = validateReorderComposition(m.Transforms); err != nil {
+		return err
+	}
+
 	if err = golden.Traverse[Transform](m.c.BaseConfig, func(b Transform) error {
 		if _, ok := addresses[b.Address()]; !ok {
 			return nil

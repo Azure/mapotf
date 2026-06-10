@@ -211,7 +211,7 @@ resource "fake_resource" this {
 	require.Falsef(t, diag.HasErrors(), diag.Error())
 	value, diag := exp.Value(ctx)
 	require.Falsef(t, diag.HasErrors(), diag.Error())
-	assert.Equal(t, `"John"`, value.AsString())
+	assert.Equal(t, `John`, value.AsString())
 }
 
 func TestNestedBlock_RemoveNestedBlock(t *testing.T) {

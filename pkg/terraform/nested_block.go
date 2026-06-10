@@ -90,13 +90,13 @@ func NewNestedBlock(rb *hclsyntax.Block, wb *hclwrite.Block) *NestedBlock {
 func (nb *NestedBlock) EvalContext() cty.Value {
 	v := map[string]cty.Value{}
 	for n, a := range nb.Attributes {
-		v[n] = cty.StringVal(a.String())
+		v[n] = evalAttributeValue(a)
 	}
 	if nb.ForEach != nil {
-		v["for_each"] = cty.StringVal(nb.ForEach.String())
+		v["for_each"] = evalAttributeValue(nb.ForEach)
 	}
 	if nb.Iterator != nil {
-		v["iterator"] = cty.StringVal(nb.Iterator.String())
+		v["iterator"] = evalAttributeValue(nb.Iterator)
 	}
 	for k, nbv := range nb.NestedBlocks.Values() {
 		v[k] = nbv

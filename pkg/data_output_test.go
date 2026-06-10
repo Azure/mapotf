@@ -28,7 +28,7 @@ output "example_output" {
   value = "example_value"
 }`,
 			expectedOutputName: "example_output",
-			expectedValue:      cty.StringVal(`"example_value"`),
+			expectedValue:      cty.StringVal(`example_value`),
 		},
 		{
 			desc: "filter by output name",
@@ -41,7 +41,7 @@ output "example_output" {
 		 value = "value_two"
 		}`,
 			expectedOutputName: "output_two",
-			expectedValue:      cty.StringVal(`"value_two"`),
+			expectedValue:      cty.StringVal(`value_two`),
 		},
 		{
 			desc: "no matching output",

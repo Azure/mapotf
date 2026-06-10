@@ -111,17 +111,17 @@ func TestBlockAddressGetValue(t *testing.T) {
 		{
 			desc:     "root attribute",
 			path:     "name",
-			expected: `"example-aks1"`,
+			expected: `example-aks1`,
 		},
 		{
 			desc:     "nested block's attribute",
 			path:     "default_node_pool.0.name",
-			expected: `"default"`,
+			expected: `default`,
 		},
 		{
 			desc:     "nested block's attribute, bracket syntax",
 			path:     "default_node_pool[0].name",
-			expected: `"default"`,
+			expected: `default`,
 		},
 		{
 			desc:     "dynamic block's for_each",
@@ -144,11 +144,9 @@ func TestBlockAddressGetValue(t *testing.T) {
 			expected: "var.user_assigned_identity_id",
 		},
 		{
-			desc: "tags",
-			path: "tags",
-			expected: `{
-    Environment = "Production"
-  }`,
+			desc:     "object literal attribute is decoded",
+			path:     "tags.Environment",
+			expected: `Production`,
 		},
 	}
 	for _, cc := range cases {
@@ -250,9 +248,9 @@ resource "fake_resource" that {
 		},
 	}
 	v := expressionValue(t, "result.0.top_block.0.second_block.0.id", ctx)
-	assert.Equal(t, "123", v.AsString())
+	assert.True(t, cty.NumberIntVal(123).RawEquals(v), "expected 123, got %s", v.GoString())
 	v = expressionValue(t, "result.1.top_block.0.third_block.0.name", ctx)
-	assert.Equal(t, `"John"`, v.AsString())
+	assert.Equal(t, `John`, v.AsString())
 }
 
 func TestRootBlock_RemoveDeepNestedBlock(t *testing.T) {

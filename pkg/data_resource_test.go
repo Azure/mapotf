@@ -31,7 +31,7 @@ func TestResourceData_QueryResourceBlocks(t *testing.T) {
 			expected: cty.ObjectVal(map[string]cty.Value{
 				"fake_resource": cty.ObjectVal(map[string]cty.Value{
 					"this": cty.ObjectVal(map[string]cty.Value{
-						"id": cty.StringVal("123"),
+						"id": cty.NumberIntVal(123),
 					}),
 				}),
 			}),
@@ -48,7 +48,7 @@ resource "fake_resource" that {
 			expected: cty.ObjectVal(map[string]cty.Value{
 				"fake_resource": cty.ObjectVal(map[string]cty.Value{
 					"that": cty.ObjectVal(map[string]cty.Value{
-						"count": cty.StringVal("2"),
+						"count": cty.NumberIntVal(2),
 					}),
 				}),
 			}),
@@ -102,7 +102,7 @@ resource "fake_resource" that {
 				"use_for_each":  cty.BoolVal(c.useForEach),
 				"result":        c.expected,
 			}
-			assert.Equal(t, expected, result)
+			assertCtyMapRawEquals(t, expected, result)
 		})
 	}
 }

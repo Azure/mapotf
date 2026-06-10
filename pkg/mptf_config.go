@@ -118,6 +118,18 @@ func (c *MetaProgrammingTFConfig) TerraformBlock() *terraform.RootBlock {
 	return c.terraformBlock
 }
 
+// ModuleDir returns the absolute directory of the Terraform module mapotf is
+// currently transforming. Used by data blocks that need to resolve paths
+// declared in the caller's `.mptf.hcl` (for example `data "module_source"`
+// auto-defaults its `base_dir` to this so relative sources resolve against
+// the caller's module, not against an internal temp folder).
+func (c *MetaProgrammingTFConfig) ModuleDir() string {
+	if c.module == nil {
+		return ""
+	}
+	return c.module.AbsDir
+}
+
 func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock {
 	if strings.HasPrefix(address, "resource.") {
 		return c.resourceBlocks[address]
