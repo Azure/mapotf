@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220
 	github.com/hashicorp/terraform-exec v0.25.2
-	github.com/hashicorp/terraform-json v0.27.2
+	github.com/hashicorp/terraform-json v0.28.0
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
