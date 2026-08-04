@@ -1,0 +1,35 @@
+name: sign-checksums
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag whose checksums.txt should be signed, e.g. v0.1.5
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+
+      - name: Sign checksums.txt and attach the signature to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern checksums.txt --clobber
+          cosign sign-blob checksums.txt \
+            --output-signature checksums.txt.sig \
+            --output-certificate checksums.txt.pem \
+            --yes
+          gh release upload "$TAG" checksums.txt.sig checksums.txt.pem \
+            --repo "$GITHUB_REPOSITORY" --clobber
