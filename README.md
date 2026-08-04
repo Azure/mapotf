@@ -14,7 +14,20 @@ Another scenario is, there are some common design patterns, such as creating pri
 
 ### Pre-built binaries
 
-Download the latest archive for your platform from the [releases page](https://github.com/Azure/mapotf/releases) and extract `mapotf` (or `mapotf.exe` on Windows) onto your `PATH`. Archives are published for Linux, macOS and Windows on both `amd64` and `arm64`. Each release also ships a `checksums.txt` you can verify against.
+Download the latest archive for your platform from the [releases page](https://github.com/Azure/mapotf/releases) and extract `mapotf` (or `mapotf.exe` on Windows) onto your `PATH`. Archives are published for Linux, macOS and Windows on both `amd64` and `arm64`.
+
+Windows binaries are Authenticode signed by Microsoft. Every release also ships `checksums.txt` alongside `checksums.txt.sig`, a detached GPG signature made with Microsoft's release signing key:
+
+```sh
+# Import the Microsoft public signing key
+curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --import
+
+# Verify the checksum file really came from Microsoft
+gpg --verify checksums.txt.sig checksums.txt
+
+# Verify the archive you downloaded matches
+sha256sum --ignore-missing -c checksums.txt
+```
 
 ### From source
 
