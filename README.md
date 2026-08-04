@@ -22,15 +22,22 @@ Windows binaries are Authenticode signed by Microsoft. To check the signature:
 Get-AuthenticodeSignature .\mapotf.exe | Format-List Status, SignerCertificate
 ```
 
-Every release also ships a `checksums.txt` you can verify your download against:
+Every release also ships a `checksums.txt` covering all platforms, signed with a keyless
+[Sigstore](https://www.sigstore.dev/) signature. Verify the signature, then verify your download
+against it:
 
 ```sh
+cosign verify-blob checksums.txt \
+  --signature checksums.txt.sig \
+  --certificate checksums.txt.pem \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/Azure/mapotf/'
+
 sha256sum --ignore-missing -c checksums.txt
 ```
 
-Note that `checksums.txt` is not itself signed, so this confirms your download is intact but does
-not prove where it came from. Linux and macOS binaries are not currently signed: Authenticode is
-Windows-only, and code signing for those platforms is not yet in place.
+This gives Linux and macOS downloads a chain of trust back to this repository. Those binaries are
+not individually signed — Authenticode is Windows-only.
 
 ### From source
 
