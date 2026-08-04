@@ -30,6 +30,8 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        with:
+          cosign-release: 'v3.0.6'
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 #v7.2.2
@@ -39,3 +41,11 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify checksum signature
+        run: |
+          cosign verify-blob \
+            --bundle dist/checksums.txt.sigstore.json \
+            --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/release.yml@${{ github.ref }}" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            dist/checksums.txt
