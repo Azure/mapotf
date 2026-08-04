@@ -28,6 +28,10 @@ Every release also ships a `checksums.txt` you can verify your download against:
 sha256sum --ignore-missing -c checksums.txt
 ```
 
+Note that `checksums.txt` is not itself signed, so this confirms your download is intact but does
+not prove where it came from. Linux and macOS binaries are not currently signed: Authenticode is
+Windows-only, and code signing for those platforms is not yet in place.
+
 ### From source
 
 ```sh
