@@ -14,29 +14,51 @@ Another scenario is, there are some common design patterns, such as creating pri
 
 ### Pre-built binaries
 
-Download the latest archive for your platform from the [releases page](https://github.com/Azure/mapotf/releases) and extract `mapotf` (or `mapotf.exe` on Windows) onto your `PATH`. Archives are published for Linux, macOS and Windows on both `amd64` and `arm64`.
+Download the archive for your platform from the [releases page](https://github.com/Azure/mapotf/releases).
+Archives are published for Linux, macOS and Windows on both `amd64` and `arm64`.
 
-Windows binaries are Authenticode signed by Microsoft. To check the signature:
+Every release also ships a `checksums.txt` covering all six archives, signed with a keyless
+[Sigstore](https://www.sigstore.dev/) signature (`checksums.txt.sigstore.json`). The checksums cover
+the **archives**, so verify before extracting. Download all three files into the same directory, then:
 
-```powershell
-Get-AuthenticodeSignature .\mapotf.exe | Format-List Status, SignerCertificate
-```
-
-Every release also ships a `checksums.txt` covering all platforms, signed with a keyless
-[Sigstore](https://www.sigstore.dev/) signature. Verify the signature, then verify your download
-against it:
+**Linux and macOS**
 
 ```sh
 cosign verify-blob checksums.txt \
   --bundle checksums.txt.sigstore.json \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/Azure/mapotf/'
+  --certificate-identity-regexp '^https://github\.com/Azure/mapotf/\.github/workflows/sign-checksums\.yml@'
 
-sha256sum --ignore-missing -c checksums.txt
+sha256sum --ignore-missing -c checksums.txt        # macOS: shasum -a 256 --ignore-missing -c checksums.txt
 ```
 
-This gives Linux and macOS downloads a chain of trust back to this repository. Those binaries are
-not individually signed — Authenticode is Windows-only.
+**Windows**
+
+```powershell
+cosign verify-blob checksums.txt `
+  --bundle checksums.txt.sigstore.json `
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com `
+  --certificate-identity-regexp '^https://github\.com/Azure/mapotf/\.github/workflows/sign-checksums\.yml@'
+
+$archive  = 'mapotf_0.1.5_windows_amd64.zip'
+$expected = ((Select-String -Path checksums.txt -SimpleMatch $archive).Line -split ' ')[0]
+$actual   = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLower()
+if ($actual -ne $expected) { throw 'Checksum mismatch' }
+```
+
+The signature is a Sigstore bundle, which needs **cosign v3.0.0 or later**. cosign v2.4 to v2.6 can
+verify it by also passing `--new-bundle-format`; earlier versions cannot read it at all.
+
+Once verified, extract `mapotf` (or `mapotf.exe` on Windows) onto your `PATH`.
+
+Windows binaries are additionally Authenticode signed by Microsoft:
+
+```powershell
+Get-AuthenticodeSignature .\mapotf.exe | Format-List Status, SignerCertificate
+```
+
+The Sigstore signature is what gives Linux and macOS downloads a chain of trust back to this
+repository — those binaries are not individually signed, as Authenticode is Windows-only.
 
 ### From source
 

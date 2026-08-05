@@ -9,7 +9,7 @@ import (
 	"os/exec"
 )
 
-// Build metadata set via -ldflags at release time by the ADO release pipeline.
+// Build metadata set via -ldflags at release time.
 var (
 	version = "dev"
 	commit  = "none"
