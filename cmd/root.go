@@ -9,7 +9,7 @@ import (
 	"os/exec"
 )
 
-// Build metadata set via -ldflags at release time by goreleaser.
+// Build metadata set via -ldflags at release time.
 var (
 	version = "dev"
 	commit  = "none"
