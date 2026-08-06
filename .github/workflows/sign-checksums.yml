@@ -2,7 +2,7 @@ name: sign-checksums
 
 on:
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
     inputs:
       tag:
@@ -26,15 +26,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
         run: |
-          # The release pipeline attaches the assets while the release is still a draft, so they are
-          # already present when this runs; the retry only absorbs GitHub API lag. A release published
-          # by any other route has nothing to sign, so the job stops quietly rather than failing.
-          $found = $false
-          foreach ($attempt in 1..6) {
-            $assets = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json assets --jq '.assets[].name' 2>$null
-            if (@($assets) -contains 'checksums.txt') { $found = $true; break }
-            Start-Sleep -Seconds 10
-          }
+          # The release pipeline uploads the assets before it promotes the pre-release, so a
+          # successful pipeline run always leaves checksums.txt attached by the time this fires.
+          # Anything else - a release promoted by hand, or a failed pipeline run - has nothing to
+          # sign, so the job stops quietly rather than failing or waiting for a file that is not
+          # coming.
+          $assets = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json assets --jq '.assets[].name' 2>$null
+          $found = @($assets) -contains 'checksums.txt'
           "found=$($found.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           if (-not $found) {
             Write-Host "::warning::No checksums.txt attached to release $env:TAG, nothing to sign."
