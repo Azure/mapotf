@@ -214,6 +214,100 @@ resource "fake_resource" this {
 	assert.Equal(t, `John`, value.AsString())
 }
 
+func TestNestedBlock_SameAttributeHasVariableLengthTuple(t *testing.T) {
+	code := `
+resource "fake_resource" "this" {
+  rule {
+    destination_fqdns = ["one.example.com"]
+  }
+  rule {
+    destination_fqdns = ["one.example.com", "two.example.com"]
+  }
+  rule {
+    destination_fqdns = ["one.example.com", "two.example.com", "three.example.com"]
+  }
+}
+`
+
+	rules := newBlock(t, code).EvalContext().GetAttr("rule")
+	require.True(t, rules.Type().IsListType())
+	require.True(t, rules.Type().ElementType().IsObjectType())
+	require.True(t, cty.List(cty.String).Equals(rules.Type().ElementType().AttributeTypes()["destination_fqdns"]))
+
+	expected := []cty.Value{
+		cty.ListVal([]cty.Value{cty.StringVal("one.example.com")}),
+		cty.ListVal([]cty.Value{
+			cty.StringVal("one.example.com"),
+			cty.StringVal("two.example.com"),
+		}),
+		cty.ListVal([]cty.Value{
+			cty.StringVal("one.example.com"),
+			cty.StringVal("two.example.com"),
+			cty.StringVal("three.example.com"),
+		}),
+	}
+	for i, value := range expected {
+		actual := rules.Index(cty.NumberIntVal(int64(i))).GetAttr("destination_fqdns")
+		assert.True(t, value.RawEquals(actual), "unexpected rule %d value: %s", i, actual.GoString())
+	}
+}
+
+func TestNestedBlock_SameAttributeHasLiteralAndExpressionValues(t *testing.T) {
+	code := `
+resource "fake_resource" "this" {
+  dynamic "identity" {
+    for_each = local.system_assigned_only
+    content {
+      type         = identity.value.type
+      identity_ids = []
+    }
+  }
+  dynamic "identity" {
+    for_each = local.includes_user_assigned
+    content {
+      type         = identity.value.type
+      identity_ids = identity.value.user_assigned_resource_ids
+    }
+  }
+}
+`
+
+	identities := newBlock(t, code).EvalContext().GetAttr("identity")
+	require.True(t, identities.Type().IsTupleType())
+
+	firstIDs := identities.Index(cty.NumberIntVal(0)).GetAttr("identity_ids")
+	assert.True(t, cty.EmptyTupleVal.RawEquals(firstIDs), "unexpected literal value: %s", firstIDs.GoString())
+
+	secondIDs := identities.Index(cty.NumberIntVal(1)).GetAttr("identity_ids")
+	assert.Equal(t, "identity.value.user_assigned_resource_ids", secondIDs.AsString())
+}
+
+func TestNestedBlock_NestedAttributeHasLiteralAndExpressionValues(t *testing.T) {
+	code := `
+resource "fake_resource" "this" {
+  top_block {
+    child_block {
+      values = []
+    }
+  }
+  top_block {
+    child_block {
+      values = item.value.ids
+    }
+  }
+}
+`
+
+	topBlocks := newBlock(t, code).EvalContext().GetAttr("top_block")
+	require.True(t, topBlocks.Type().IsTupleType())
+
+	firstValue := topBlocks.Index(cty.NumberIntVal(0)).GetAttr("child_block").Index(cty.NumberIntVal(0)).GetAttr("values")
+	assert.True(t, cty.EmptyTupleVal.RawEquals(firstValue), "unexpected literal value: %s", firstValue.GoString())
+
+	secondValue := topBlocks.Index(cty.NumberIntVal(1)).GetAttr("child_block").Index(cty.NumberIntVal(0)).GetAttr("values")
+	assert.Equal(t, "item.value.ids", secondValue.AsString())
+}
+
 func TestNestedBlock_RemoveNestedBlock(t *testing.T) {
 	cfg := `
 root_block {
