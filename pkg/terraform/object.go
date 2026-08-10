@@ -16,9 +16,13 @@ type Object interface {
 func ListOfObject[T Object](objs []T) cty.Value {
 	var values []cty.Value
 	allTypes := make(map[string]cty.Type)
+	canBuildList := true
 	for _, b := range objs {
 		value := b.EvalContext()
 		values = append(values, value)
+		if !canBuildList {
+			continue
+		}
 		attributeTypes := value.Type().AttributeTypes()
 		for n, t := range attributeTypes {
 			if _, ok := allTypes[n]; !ok {
@@ -27,12 +31,25 @@ func ListOfObject[T Object](objs []T) cty.Value {
 			}
 			if !allTypes[n].Equals(t) {
 				if allTypes[n].IsListType() && t.IsListType() {
-					allTypes[n] = cty.List(mergeObjectType(allTypes[n].ElementType(), t.ElementType()))
+					elementType := mergeObjectType(allTypes[n].ElementType(), t.ElementType())
+					if elementType == cty.NilType {
+						canBuildList = false
+						break
+					}
+					allTypes[n] = cty.List(elementType)
 					continue
 				}
-				allTypes[n] = mergeObjectType(allTypes[n], t)
+				mergedType := mergeObjectType(allTypes[n], t)
+				if mergedType == cty.NilType {
+					canBuildList = false
+					break
+				}
+				allTypes[n] = mergedType
 			}
 		}
+	}
+	if !canBuildList {
+		return cty.TupleVal(values)
 	}
 	var allFields []string
 	linq.From(allTypes).Select(func(i interface{}) interface{} {
@@ -54,11 +71,18 @@ func ListOfObject[T Object](objs []T) cty.Value {
 }
 
 func mergeObjectType(t1, t2 cty.Type) cty.Type {
+	if t1.IsTupleType() || t2.IsTupleType() {
+		unifiedType, _ := convert.Unify([]cty.Type{t1, t2})
+		return unifiedType
+	}
 	if t1.IsPrimitiveType() && t2.IsPrimitiveType() {
 		return t1
 	}
 	if t1.IsCollectionType() && t2.IsCollectionType() {
 		return mergeObjectTypeInCollection(t1, t2)
+	}
+	if !t1.IsObjectType() || !t2.IsObjectType() {
+		return cty.NilType
 	}
 	newAttriubtes := make(map[string]cty.Type)
 	for n, t := range t1.AttributeTypes() {
@@ -69,7 +93,11 @@ func mergeObjectType(t1, t2 cty.Type) cty.Type {
 			newAttriubtes[n] = t
 			continue
 		}
-		newAttriubtes[n] = mergeObjectType(newAttriubtes[n], t)
+		mergedType := mergeObjectType(newAttriubtes[n], t)
+		if mergedType == cty.NilType {
+			return cty.NilType
+		}
+		newAttriubtes[n] = mergedType
 	}
 	var allFields []string
 	for n := range newAttriubtes {
@@ -81,6 +109,9 @@ func mergeObjectType(t1, t2 cty.Type) cty.Type {
 func mergeObjectTypeInCollection(t1, t2 cty.Type) cty.Type {
 	if t1.ElementType().IsObjectType() && t2.ElementType().IsObjectType() {
 		mergedElementType := mergeObjectType(t1.ElementType(), t2.ElementType())
+		if mergedElementType == cty.NilType {
+			return cty.NilType
+		}
 		if t1.IsListType() {
 			return cty.List(mergedElementType)
 		}
