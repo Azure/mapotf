@@ -1,6 +1,6 @@
 module github.com/Azure/mapotf
 
-go 1.25.0
+go 1.26.5
 
 require (
 	github.com/Azure/golden v0.0.0-20250715010524-de5f4919b5dd
