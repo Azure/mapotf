@@ -13,14 +13,14 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220
 	github.com/hashicorp/terraform-exec v0.25.2
-	github.com/hashicorp/terraform-json v0.27.2
+	github.com/hashicorp/terraform-json v0.28.0
 	github.com/lonegunmanb/hclfuncs v0.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/prashantv/gostub v1.1.0
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
-	github.com/stretchr/testify v1.11.1
-	github.com/zclconf/go-cty v1.18.1
+	github.com/stretchr/testify v1.12.0
+	github.com/zclconf/go-cty v1.19.0
 )
 
 require (
@@ -31,6 +31,7 @@ require (
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
+	github.com/apparentlymart/go-textseg/v17 v17.0.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
@@ -38,7 +39,6 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
@@ -89,7 +89,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
