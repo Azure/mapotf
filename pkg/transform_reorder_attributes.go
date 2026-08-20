@@ -54,6 +54,7 @@ type ReorderAttributesTransform struct {
 	FootAttributes         []string `hcl:"foot_attributes,optional"`
 	HeadFootLineBreaks     *bool    `hcl:"head_foot_line_breaks,optional"`
 	SortBodyAlphabetically *bool    `hcl:"sort_body_alphabetically,optional"`
+	NestedBlockPath        []string `hcl:"nested_block_path,optional"`
 }
 
 func (r *ReorderAttributesTransform) Type() string {
@@ -69,6 +70,10 @@ func (r *ReorderAttributesTransform) Apply() error {
 
 	if err := validateReorderSectionOverlap(r.HeadAttributes, r.BodyAttributes, r.FootAttributes); err != nil {
 		return err
+	}
+
+	if r.NestedBlockPath != nil {
+		return r.reorderNestedBlockAttributes(block)
 	}
 
 	body := block.WriteBlock.Body()
@@ -93,6 +98,81 @@ func (r *ReorderAttributesTransform) Apply() error {
 	body.AppendNewline()
 	emitReorderElements(body, final, len(headElems), len(headElems)+len(bodyElems), r.useHeadFootLineBreaks())
 	return nil
+}
+
+// reorderNestedBlockAttributes alphabetizes direct attributes of one uniquely
+// addressed nested block. It deliberately does not reorder nested blocks or
+// provider object expressions, so the operation remains a layout-only change.
+func (r *ReorderAttributesTransform) reorderNestedBlockAttributes(block *terraform.RootBlock) error {
+	if err := r.validateNestedBlockPathConfig(); err != nil {
+		return err
+	}
+
+	target, err := findUniqueNestedBlock(block, r.NestedBlockPath)
+	if err != nil {
+		return err
+	}
+
+	body := target.WriteBody()
+	if len(body.Blocks()) > 0 {
+		return fmt.Errorf("reorder_attributes: nested block path %q contains nested blocks and cannot be safely reordered", formatNestedBlockPath(r.NestedBlockPath))
+	}
+
+	attrs := body.Attributes()
+	if len(attrs) < 2 {
+		return nil
+	}
+
+	names := make([]string, 0, len(attrs))
+	for name := range attrs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	body.Clear()
+	body.AppendNewline()
+	for _, name := range names {
+		body.AppendUnstructuredTokens(attrs[name].BuildTokens(nil))
+	}
+	return nil
+}
+
+func (r *ReorderAttributesTransform) validateNestedBlockPathConfig() error {
+	if len(r.NestedBlockPath) == 0 {
+		return fmt.Errorf("reorder_attributes: nested_block_path must contain at least one block name")
+	}
+	for _, name := range r.NestedBlockPath {
+		if name == "" {
+			return fmt.Errorf("reorder_attributes: nested_block_path must not contain empty block names")
+		}
+	}
+	if len(r.HeadAttributes) > 0 || len(r.BodyAttributes) > 0 || len(r.FootAttributes) > 0 || r.HeadFootLineBreaks != nil || r.SortBodyAlphabetically != nil {
+		return fmt.Errorf("reorder_attributes: nested_block_path cannot be combined with head_attributes, body_attributes, foot_attributes, head_foot_line_breaks, or sort_body_alphabetically")
+	}
+	return nil
+}
+
+func findUniqueNestedBlock(block *terraform.RootBlock, path []string) (*terraform.NestedBlock, error) {
+	var current *terraform.NestedBlock
+	nestedBlocks := block.GetNestedBlocks()
+	for index, name := range path {
+		matches := nestedBlocks[name]
+		if len(matches) == 0 {
+			return nil, fmt.Errorf("reorder_attributes: cannot find nested block path %q: segment %q does not exist", formatNestedBlockPath(path), name)
+		}
+		if len(matches) > 1 {
+			return nil, fmt.Errorf("reorder_attributes: nested block path %q is ambiguous at segment %q: found %d matching blocks", formatNestedBlockPath(path), name, len(matches))
+		}
+		current = matches[0]
+		if index < len(path)-1 {
+			nestedBlocks = current.GetNestedBlocks()
+		}
+	}
+	return current, nil
+}
+
+func formatNestedBlockPath(path []string) string {
+	return strings.Join(path, ".")
 }
 
 func (r *ReorderAttributesTransform) useHeadFootLineBreaks() bool {
