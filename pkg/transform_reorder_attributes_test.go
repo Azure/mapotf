@@ -864,6 +864,135 @@ variable "example" {
 			wantErr:        true,
 			errorSubstring: "cannot be in both body_attributes and foot_attributes",
 		},
+		{
+			desc: "nested_required_providers_sorts_entries_and_preserves_comments_and_expressions",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = ["required_providers"]
+}
+`,
+			tfConfig: `
+terraform {
+  required_providers {
+    # The random provider is used for unique names.
+    random = {
+      version = var.random_version
+      source  = "hashicorp/random"
+    }
+
+    azurerm = {
+      version = "~> 4.0"
+      source  = "hashicorp/azurerm"
+    }
+  }
+}
+`,
+			expected: `
+terraform {
+  required_providers {
+    azurerm = {
+      version = "~> 4.0"
+      source  = "hashicorp/azurerm"
+    }
+    # The random provider is used for unique names.
+    random = {
+      version = var.random_version
+      source  = "hashicorp/random"
+    }
+  }
+}
+`,
+		},
+		{
+			desc: "nested_block_path_supports_multiple_levels",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "resource.fake_resource.this"
+  nested_block_path    = ["first", "second"]
+}
+`,
+			tfConfig: `
+resource "fake_resource" this {
+  first {
+    second {
+      zeta  = 3
+      alpha = 1
+      mid   = 2
+    }
+  }
+}
+`,
+			expected: `
+resource "fake_resource" this {
+  first {
+    second {
+      alpha = 1
+      mid   = 2
+      zeta  = 3
+    }
+  }
+}
+`,
+		},
+		{
+			desc: "missing_nested_block_path_returns_error",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = ["required_providers"]
+}
+`,
+			tfConfig: `
+terraform {
+  required_version = ">= 1.9"
+}
+`,
+			wantErr:        true,
+			errorSubstring: `cannot find nested block path "required_providers"`,
+		},
+		{
+			desc: "duplicate_nested_block_path_returns_ambiguity_error",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = ["required_providers"]
+}
+`,
+			tfConfig: `
+terraform {
+  required_providers {
+    random = {
+      source = "hashicorp/random"
+    }
+  }
+
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+    }
+  }
+}
+`,
+			wantErr:        true,
+			errorSubstring: `nested block path "required_providers" is ambiguous`,
+		},
+		{
+			desc: "empty_nested_block_path_returns_error",
+			mptf: `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = []
+}
+`,
+			tfConfig: `
+terraform {
+  required_providers {}
+}
+`,
+			wantErr:        true,
+			errorSubstring: "nested_block_path must contain at least one block name",
+		},
 	}
 
 	for _, c := range cases {
@@ -901,6 +1030,86 @@ variable "example" {
 			assert.Equal(t, expected, actual)
 		})
 	}
+}
+
+func TestReorderAttributes_NestedBlockPathIsIdempotent(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `
+terraform {
+  required_providers {
+    random = {
+      source = "hashicorp/random"
+    }
+    azurerm = {
+      source = "hashicorp/azurerm"
+    }
+  }
+}
+`,
+	}))
+	defer stub.Reset()
+
+	mptf := `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = ["required_providers"]
+}
+`
+	readFile, diag := hclsyntax.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	plan, err := pkg.RunMetaProgrammingTFPlan(cfg)
+	require.NoError(t, err)
+
+	require.NoError(t, plan.Apply())
+	afterFirstApply, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+
+	require.NoError(t, plan.Apply())
+	afterSecondApply, err := afero.ReadFile(filesystem.Fs, "/main.tf")
+	require.NoError(t, err)
+
+	assert.Equal(t, formatHcl(string(afterFirstApply)), formatHcl(string(afterSecondApply)))
+}
+
+func TestReorderAttributes_NestedBlockPathRejectsNonListConfig(t *testing.T) {
+	stub := gostub.Stub(&filesystem.Fs, fakeFs(map[string]string{
+		"/main.tf": `
+terraform {
+  required_providers {}
+}
+`,
+	}))
+	defer stub.Reset()
+
+	mptf := `
+transform "reorder_attributes" this {
+  target_block_address = "terraform"
+  nested_block_path    = "required_providers"
+}
+`
+	readFile, diag := hclsyntax.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	writeFile, diag := hclwrite.ParseConfig([]byte(mptf), "test.hcl", hcl.InitialPos)
+	require.Falsef(t, diag.HasErrors(), diag.Error())
+	hclBlock := golden.NewHclBlock(readFile.Body.(*hclsyntax.Body).Blocks[0], writeFile.Body().Blocks()[0], nil)
+
+	cfg, err := pkg.NewMetaProgrammingTFConfig(&pkg.TerraformModuleRef{
+		Dir:    "/",
+		AbsDir: "/",
+	}, nil, []*golden.HclBlock{hclBlock}, nil, context.TODO())
+	require.NoError(t, err)
+	_, err = pkg.RunMetaProgrammingTFPlan(cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Decode error")
+	assert.Contains(t, err.Error(), "list of string required")
 }
 
 // TestReorderAttributes_CompositionCollision pins the #102 fix:

@@ -22,6 +22,7 @@ This transform composes with `data` blocks like `data "resource"`, `data "variab
 - `foot_attributes` *(optional)*: Names of elements that should appear last, in the listed order.
 - `head_foot_line_breaks` *(optional, default `true`)*: When `true`, a blank line is inserted between the head section and the body, and between the body and the foot section. Set to `false` to suppress those blank lines.
 - `sort_body_alphabetically` *(optional, default `true`)*: Controls the order of body-section elements that are **not** listed in `body_attributes`. When `true`, those elements are sorted alphabetically by name. Set to `false` to preserve the original source order instead.
+- `nested_block_path` *(optional)*: A non-empty list of nested block names below `target_block_address`. When set, the transform resolves exactly one block at every path segment and alphabetizes only the direct attributes in the selected block. This focused mode cannot be combined with the section-ordering arguments above, and the selected block cannot itself contain nested blocks.
 
 ### How `body_attributes` and `sort_body_alphabetically` interact
 
@@ -80,6 +81,38 @@ variable "location" {
 ```
 
 The blank line between the head (`type`, `description`) and the body (`default`) comes from the default `head_foot_line_breaks = true`.
+
+## Example - Sort `required_providers` entries
+
+Use `nested_block_path` to order provider entries without rewriting their values:
+
+```terraform
+transform "reorder_attributes" "required_providers" {
+  target_block_address = "terraform"
+  nested_block_path    = ["required_providers"]
+}
+```
+
+Given:
+
+```terraform
+terraform {
+  required_providers {
+    random = {
+      source = "hashicorp/random"
+    }
+
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+}
+```
+
+After applying the transform, `azurerm` precedes `random`. The `source` and `version` keys inside each provider object are left exactly as written, along with the provider expression and its comments.
+
+If a path segment is missing or has more than one matching nested block, the transform fails rather than choosing one. Multi-level paths are supported, for example `nested_block_path = ["first", "second"]`.
 
 ## Example - Head and foot together
 
@@ -157,4 +190,3 @@ The body section emits provider-required attributes first (alphabetical within t
 - The transform runs against the parsed HCL writer view of the block, so comments and formatting on individual attributes are preserved.
 - Nested blocks have a blank line in front of them when they are preceded by an attribute or a nested block of a different type; adjacent nested blocks of the same type (and, for `dynamic`, the same label) stay adjacent without a separating blank line. A section-boundary blank line counts — no extra blank line is added when one is already being emitted.
 - Nested blocks of the same type that appear multiple times (e.g. two `network_interface` blocks) keep their write-side order when grouped together by name.
-
