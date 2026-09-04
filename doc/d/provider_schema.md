@@ -78,4 +78,6 @@ The same pattern works for data sources by substituting `data.data.all` and `dat
 
 ## Under the Hood
 
-Mapotf retrieves the schema by running `terraform init` followed by `terraform providers schema -json -no-color` in a temporary directory. The temp directory is reused across data blocks within a single `mapotf transform` run, so multiple `data "provider_schema"` blocks for the same provider source pay the init cost only once.
+Mapotf retrieves schemas by running `terraform init -upgrade` followed by `terraform providers schema -json -no-color` in a temporary directory. Statically evaluable `data "provider_schema"` blocks in one transform are written into the same temporary Terraform configuration, so distinct providers require one init/schema cycle. Duplicate source-and-constraint requests are served from an in-memory cache. Requests that cannot be safely evaluated before planning retain the existing per-request fallback.
+
+The cache is intentionally process-local. Persisting results by version constraint would make open constraints such as `~> 4.0` stale and would break `-upgrade` semantics. A safe cross-process cache would initially support exact versions only, key entries by normalized source, exact selected version, Terraform version, platform, and schema format, and protect atomic writes with an inter-process lock.
