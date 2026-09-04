@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/Azure/golden"
 	filesystem "github.com/Azure/mapotf/pkg/fs"
@@ -15,6 +17,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/spf13/afero"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 )
 
@@ -33,6 +36,9 @@ type MetaProgrammingTFConfig struct {
 	terraformBlock  *terraform.RootBlock
 	allRootBlocks   []*terraform.RootBlock
 	module          *terraform.Module
+
+	providerSchemaRetrieverOnce sync.Once
+	providerSchemaRetriever     TerraformProviderSchemaRetriever
 }
 
 func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hclBlocks []*golden.HclBlock, cliFlagAssignedVars []golden.CliFlagAssignedVariables, ctx context.Context) (*MetaProgrammingTFConfig, error) {
@@ -80,6 +86,86 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 
 func (c *MetaProgrammingTFConfig) Init(hclBlocks []*golden.HclBlock) error {
 	return golden.InitConfig(c, hclBlocks)
+}
+
+func (c *MetaProgrammingTFConfig) RunPlan() error {
+	if err := c.prefetchProviderSchemas(); err != nil {
+		return err
+	}
+	return c.BaseConfig.RunPlan()
+}
+
+func (c *MetaProgrammingTFConfig) prefetchProviderSchemas() error {
+	blocks := golden.Blocks[*ProviderSchemaData](c)
+	sort.Slice(blocks, func(i, j int) bool {
+		return blocks[i].Address() < blocks[j].Address()
+	})
+
+	requests := make([]providerSchemaRequest, 0, len(blocks))
+	for _, block := range blocks {
+		request, ok := providerSchemaRequestForPrefetch(block)
+		if ok {
+			requests = append(requests, request)
+		}
+	}
+	if len(requests) == 0 {
+		return nil
+	}
+
+	retriever, ok := c.getProviderSchemaRetriever().(providerSchemaPrefetcher)
+	if !ok {
+		return nil
+	}
+	return retriever.prefetch(requests)
+}
+
+func providerSchemaRequestForPrefetch(block *ProviderSchemaData) (providerSchemaRequest, bool) {
+	if block == nil || block.BaseBlock == nil {
+		return providerSchemaRequest{}, false
+	}
+	body := block.HclBlock().Body
+	if _, ok := body.Attributes["for_each"]; ok {
+		return providerSchemaRequest{}, false
+	}
+	if _, ok := body.Attributes["depends_on"]; ok {
+		return providerSchemaRequest{}, false
+	}
+
+	evalContext := block.EvalContext()
+	failedChecks, err := block.PreConditionCheck(evalContext)
+	if err != nil || len(failedChecks) != 0 {
+		return providerSchemaRequest{}, false
+	}
+	source, ok := knownStringAttribute(body.Attributes["provider_source"], evalContext)
+	if !ok {
+		return providerSchemaRequest{}, false
+	}
+	version, ok := knownStringAttribute(body.Attributes["provider_version"], evalContext)
+	if !ok {
+		return providerSchemaRequest{}, false
+	}
+	return providerSchemaRequest{
+		providerSource:    source,
+		versionConstraint: version,
+	}, true
+}
+
+func knownStringAttribute(attribute *hclsyntax.Attribute, evalContext *hcl.EvalContext) (string, bool) {
+	if attribute == nil {
+		return "", false
+	}
+	value, diagnostics := attribute.Expr.Value(evalContext)
+	if diagnostics.HasErrors() || !value.IsKnown() || value.IsNull() || value.Type() != cty.String {
+		return "", false
+	}
+	return value.AsString(), true
+}
+
+func (c *MetaProgrammingTFConfig) getProviderSchemaRetriever() TerraformProviderSchemaRetriever {
+	c.providerSchemaRetrieverOnce.Do(func() {
+		c.providerSchemaRetriever = SchemaRetrieverFactory(c.Context())
+	})
+	return c.providerSchemaRetriever
 }
 
 func (c *MetaProgrammingTFConfig) ResourceBlocks() []*terraform.RootBlock {

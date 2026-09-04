@@ -37,9 +37,18 @@ func (r *ProviderSchemaData) Type() string {
 }
 
 func (r *ProviderSchemaData) ExecuteDuringPlan() error {
-	schemas, err := SchemaRetrieverFactory(r.Context()).Get(r.Source, r.Version)
+	var retriever TerraformProviderSchemaRetriever
+	if r.BaseBlock != nil {
+		if config, ok := r.Config().(*MetaProgrammingTFConfig); ok {
+			retriever = config.getProviderSchemaRetriever()
+		}
+	}
+	if retriever == nil {
+		retriever = SchemaRetrieverFactory(r.Context())
+	}
+	schemas, err := retriever.Get(r.Source, r.Version)
 	if err != nil {
-		return fmt.Errorf("cannot read `terraform prviders schema` for source %s with version %s: %+v", r.Source, r.Version, err)
+		return fmt.Errorf("cannot read `terraform providers schema` for source %s with version %s: %w", r.Source, r.Version, err)
 	}
 	r.Resources, err = r.Convert(schemas.ResourceSchemas)
 	if err != nil {
