@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -81,7 +83,7 @@ func loadLocalModule(source, baseDir string) (*tfconfig.Module, error) {
 func (t TerraformCliModuleSourceFetcher) fetchRemoteModule(source, version string) (*tfconfig.Module, error) {
 	tmpFolder, err := os.MkdirTemp("", "mapotf-module-*")
 	if err != nil {
-		return nil, fmt.Errorf("error creating temp module folder: %s", err)
+		return nil, fmt.Errorf("error creating temp module folder: %w", err)
 	}
 	defer func() {
 		_ = os.RemoveAll(tmpFolder)
@@ -96,7 +98,7 @@ func (t TerraformCliModuleSourceFetcher) fetchRemoteModule(source, version strin
 %s}
 `, source, versionLine)
 	if err := os.WriteFile(filepath.Join(tmpFolder, "main.tf"), []byte(tfCode), 0600); err != nil {
-		return nil, fmt.Errorf("error writing temp TF code file: %s", err)
+		return nil, fmt.Errorf("error writing temp TF code file: %w", err)
 	}
 
 	execPath, err := t.getTerraformPath()
@@ -108,23 +110,85 @@ func (t TerraformCliModuleSourceFetcher) fetchRemoteModule(source, version strin
 		return nil, fmt.Errorf("error running NewTerraform: %w", err)
 	}
 	getErr := tf.Get(t.ctx)
-
-	moduleDir := filepath.Join(tmpFolder, ".terraform", "modules", "x")
-	if hasTerraformFiles(moduleDir) {
-		mod, diags := tfconfig.LoadModule(moduleDir)
-		if diags.HasErrors() {
-			return nil, fmt.Errorf("error loading module from %s: %s", moduleDir, diags.Error())
-		}
-		// Download succeeded — any `terraform get` validation error is
-		// irrelevant because terraform-config-inspect only reads the
-		// downloaded module's variable and output declarations.
-		return mod, nil
-	}
-
 	if getErr != nil {
-		return nil, fmt.Errorf("error running terraform get for module %q version %q: %w", source, version, getErr)
+		getErr = fmt.Errorf("error running terraform get: %w", getErr)
 	}
-	return nil, fmt.Errorf("terraform get completed for module %q version %q but no .tf files were downloaded to %s", source, version, moduleDir)
+
+	mod, err := loadDownloadedModule(tmpFolder, getErr)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching module %q version %q: %w", source, version, err)
+	}
+	return mod, nil
+}
+
+func loadDownloadedModule(workDir string, getErr error) (*tfconfig.Module, error) {
+	moduleDir, err := downloadedModuleDir(workDir)
+	if err != nil {
+		return nil, errors.Join(getErr, err)
+	}
+	hasFiles, err := hasTerraformFiles(moduleDir)
+	if err != nil {
+		return nil, errors.Join(getErr, err)
+	}
+	if !hasFiles {
+		return nil, errors.Join(getErr, fmt.Errorf("no .tf files in downloaded module directory %q", moduleDir))
+	}
+	mod, diags := tfconfig.LoadModule(moduleDir)
+	if diags.HasErrors() {
+		return nil, errors.Join(getErr, fmt.Errorf("error loading module from %s: %w", moduleDir, diags))
+	}
+	// Wrapper input validation can fail even when the selected module was downloaded.
+	return mod, nil
+}
+
+func downloadedModuleDir(workDir string) (string, error) {
+	dataDir := os.Getenv("TF_DATA_DIR")
+	if dataDir == "" {
+		dataDir = ".terraform"
+	}
+	if !filepath.IsAbs(dataDir) {
+		dataDir = filepath.Join(workDir, dataDir)
+	}
+	manifestPath := filepath.Join(dataDir, "modules", "modules.json")
+	manifestRoot, err := os.OpenRoot(filepath.Dir(manifestPath))
+	if err != nil {
+		return "", fmt.Errorf("cannot read module manifest %q: %w", manifestPath, err)
+	}
+	defer func() {
+		_ = manifestRoot.Close()
+	}()
+	content, err := manifestRoot.ReadFile("modules.json")
+	if err != nil {
+		return "", fmt.Errorf("cannot read module manifest %q: %w", manifestPath, err)
+	}
+	var manifest struct {
+		Modules []TerraformModuleRef `json:"Modules"`
+	}
+	if err := json.Unmarshal(content, &manifest); err != nil {
+		return "", fmt.Errorf("cannot decode module manifest %q: %w", manifestPath, err)
+	}
+
+	var moduleDir string
+	matches := 0
+	for _, module := range manifest.Modules {
+		if module.Key == "x" {
+			matches++
+			moduleDir = module.Dir
+		}
+	}
+	if matches == 0 {
+		return "", fmt.Errorf("module manifest %q has no entry for module %q", manifestPath, "x")
+	}
+	if matches > 1 {
+		return "", fmt.Errorf("module manifest %q has multiple entries for module %q", manifestPath, "x")
+	}
+	if moduleDir == "" {
+		return "", fmt.Errorf("module manifest %q has an empty Dir for module %q", manifestPath, "x")
+	}
+	if !filepath.IsAbs(moduleDir) {
+		moduleDir = filepath.Join(workDir, moduleDir)
+	}
+	return moduleDir, nil
 }
 
 // isLocalSource reports whether source refers to a module on the local
@@ -152,20 +216,20 @@ func isLocalSource(source string) bool {
 // hasTerraformFiles reports whether dir contains at least one .tf file.
 // `.tf` files always live at module root in standard layouts so a one-level
 // scan is sufficient.
-func hasTerraformFiles(dir string) bool {
+func hasTerraformFiles(dir string) (bool, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return false
+		return false, fmt.Errorf("cannot read downloaded module directory %q: %w", dir, err)
 	}
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
 		if strings.HasSuffix(e.Name(), ".tf") {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func (t TerraformCliModuleSourceFetcher) getTerraformPath() (string, error) {
@@ -185,4 +249,3 @@ func (t TerraformCliModuleSourceFetcher) getTerraformPath() (string, error) {
 func (t TerraformCliModuleSourceFetcher) isWindows() bool {
 	return runtime.GOOS == "windows"
 }
-
