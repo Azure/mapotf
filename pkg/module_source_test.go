@@ -2,13 +2,18 @@ package pkg_test
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/Azure/mapotf/pkg"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,7 +58,7 @@ func TestIsLocalSource(t *testing.T) {
 // with no terraform CLI invocation. Therefore this test can run even when
 // terraform is absent from PATH.
 func TestTerraformCliModuleSourceFetcher_LocalSource(t *testing.T) {
-	t.Parallel()
+	t.Setenv("PATH", "")
 	baseDir := t.TempDir()
 	submod := filepath.Join(baseDir, "submod")
 	require.NoError(t, os.Mkdir(submod, 0o755))
@@ -102,24 +107,116 @@ func TestTerraformCliModuleSourceFetcher_LocalSourceMissingDirectory(t *testing.
 	require.Error(t, err)
 }
 
-// TestTerraformCliModuleSourceFetcher_RemoteSourceToleratesValidationError
-// pins the U3 fix: when `terraform get` succeeds in downloading the module
-// but fails wrapper-validation (because the synthetic wrapper passes zero
-// inputs and the target module declares required inputs), the fetcher should
-// still parse the downloaded module via terraform-config-inspect. This test
-// requires terraform on PATH because it exercises the real CLI path.
-func TestTerraformCliModuleSourceFetcher_RemoteSourceToleratesValidationError(t *testing.T) {
-	if _, err := exec.LookPath("terraform"); err != nil {
-		t.Skip("Skipping test because Terraform is not available on PATH")
+func TestTerraformCliModuleSourceFetcher_RemoteSourceLocalGit(t *testing.T) {
+	for _, tool := range []string{"terraform", "git"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("Skipping test because %s is not available on PATH", tool)
+		}
 	}
-	// Azure/naming/azurerm v0.4.0 declares no required inputs (every variable
-	// has a default), so it's the safest registry module to exercise the
-	// remote-fetch happy path without paying the cost of a flaky network
-	// dependency on a module with required args.
-	sut := pkg.NewTerraformCliModuleSourceFetcher(context.Background())
-	mod, err := sut.Get("Azure/naming/azurerm", "0.4.0", "")
-	require.NoError(t, err)
-	require.NotNil(t, mod)
-	// Sanity: the naming module has known variables.
-	assert.NotEmpty(t, mod.Variables)
+
+	cases := []struct {
+		name        string
+		subdir      string
+		rootDecoy   bool
+		dataDir     string
+		emptyModule bool
+		missing     bool
+		wantError   string
+	}{
+		{name: "subdirectory_without_root_tf", subdir: "nested/subdir"},
+		{name: "subdirectory_with_root_decoy", subdir: "nested/subdir", rootDecoy: true},
+		{name: "root_module"},
+		{name: "relative_data_dir", subdir: "nested/subdir", dataDir: "relative"},
+		{name: "absolute_data_dir", subdir: "nested/subdir", dataDir: "absolute"},
+		{name: "empty_subdirectory_with_decoys", subdir: "nested/subdir", rootDecoy: true, emptyModule: true, wantError: "no .tf files"},
+		{name: "missing_subdirectory_with_root_decoy", subdir: "missing/subdir", rootDecoy: true, missing: true, wantError: "terraform get"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dataDir := ""
+			switch tc.dataDir {
+			case "relative":
+				dataDir = "terraform-data"
+			case "absolute":
+				dataDir = t.TempDir()
+			}
+			t.Setenv("TF_DATA_DIR", dataDir)
+
+			repoDir := filepath.Join(t.TempDir(), "module repository")
+			require.NoError(t, os.Mkdir(repoDir, 0o700))
+			repo, err := git.PlainInit(repoDir, false)
+			require.NoError(t, err)
+			worktree, err := repo.Worktree()
+			require.NoError(t, err)
+			commit := func() string {
+				t.Helper()
+				require.NoError(t, worktree.AddWithOptions(&git.AddOptions{All: true}))
+				hash, err := worktree.Commit("module fixture", &git.CommitOptions{
+					Author: &object.Signature{
+						Name:  "Mapotf tests",
+						Email: "mapotf@example.invalid",
+						When:  time.Unix(0, 0),
+					},
+				})
+				require.NoError(t, err)
+				return hash.String()
+			}
+
+			moduleDir := filepath.Join(repoDir, filepath.FromSlash(tc.subdir))
+			if !tc.missing {
+				require.NoError(t, os.MkdirAll(moduleDir, 0o700))
+				if tc.emptyModule {
+					deeperDir := filepath.Join(moduleDir, "unrelated")
+					require.NoError(t, os.Mkdir(deeperDir, 0o700))
+					require.NoError(t, os.WriteFile(filepath.Join(deeperDir, "main.tf"), []byte(`variable "deeper_decoy" {}`), 0o600))
+				} else {
+					require.NoError(t, os.WriteFile(filepath.Join(moduleDir, "main.tf"), []byte(`
+variable "required_input" {
+  type = string
+}
+variable "optional_input" {
+  default = "default"
+}
+output "selected_module" {
+  value = var.required_input
+}
+`), 0o600))
+				}
+			}
+			if tc.rootDecoy {
+				require.NoError(t, os.WriteFile(filepath.Join(repoDir, "decoy.tf"), []byte(`variable "root_decoy" {}`), 0o600))
+			}
+			ref := commit()
+			if tc.wantError == "" {
+				require.NoError(t, os.WriteFile(filepath.Join(moduleDir, "main.tf"), []byte(`variable "wrong_revision" {}`), 0o600))
+				commit()
+			}
+
+			repoURL := url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(filepath.ToSlash(repoDir), "/")}
+			source := "git::" + repoURL.String()
+			if tc.subdir != "" {
+				source += "//" + tc.subdir
+			}
+			source += "?ref=" + ref
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			sut := pkg.NewTerraformCliModuleSourceFetcher(ctx)
+			mod, err := sut.Get(source, "", "")
+			if tc.wantError != "" {
+				require.ErrorContains(t, err, tc.wantError)
+				assert.Nil(t, mod)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, mod)
+			assert.Len(t, mod.Variables, 2)
+			require.Contains(t, mod.Variables, "required_input")
+			assert.True(t, mod.Variables["required_input"].Required)
+			require.Contains(t, mod.Variables, "optional_input")
+			assert.False(t, mod.Variables["optional_input"].Required)
+			assert.Contains(t, mod.Outputs, "selected_module")
+			assert.NotContains(t, mod.Variables, "root_decoy")
+			assert.NotContains(t, mod.Variables, "wrong_revision")
+		})
+	}
 }
