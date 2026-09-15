@@ -46,6 +46,7 @@ func TestTerraformData_RequiredProviders(t *testing.T) {
 		config                  string
 		wantedTerraformVersion  *string
 		wantedRequiredProviders map[string]pkg.RequiredProvider
+		expectedError           string
 	}{
 		{
 			desc: "required_providers only",
@@ -70,6 +71,61 @@ func TestTerraformData_RequiredProviders(t *testing.T) {
   required_version = ">= 1.2"
 }`,
 			wantedTerraformVersion: p(">= 1.2"),
+		},
+		{
+			desc: "required_providers with configuration aliases",
+			config: `terraform {
+  required_providers {
+    mycloud = {
+      source                = "mycorp/mycloud"
+      version               = "~> 1.0"
+      configuration_aliases = [mycloud.primary, mycloud.secondary]
+    }
+  }
+}`,
+			wantedRequiredProviders: map[string]pkg.RequiredProvider{
+				"mycloud": {
+					Source:  p("mycorp/mycloud"),
+					Version: p("~> 1.0"),
+				},
+			},
+		},
+		{
+			desc: "required_providers with aliases only",
+			config: `terraform {
+  required_providers {
+    mycloud = {
+      configuration_aliases = [mycloud.primary]
+    }
+  }
+}`,
+			wantedRequiredProviders: map[string]pkg.RequiredProvider{
+				"mycloud": {},
+			},
+		},
+		{
+			desc: "required_providers with aliases and invalid source expression",
+			config: `terraform {
+  required_providers {
+    mycloud = {
+      source                = var.provider_source
+      configuration_aliases = [mycloud.primary]
+    }
+  }
+}`,
+			expectedError: "required_providers.mycloud.source",
+		},
+		{
+			desc: "required_providers with aliases and invalid version expression",
+			config: `terraform {
+  required_providers {
+    mycloud = {
+      version               = var.provider_version
+      configuration_aliases = [mycloud.primary]
+    }
+  }
+}`,
+			expectedError: "required_providers.mycloud.version",
 		},
 		{
 			desc: "required_providers with version only",
@@ -163,6 +219,10 @@ func TestTerraformData_RequiredProviders(t *testing.T) {
 			}
 
 			err = data.ExecuteDuringPlan()
+			if c.expectedError != "" {
+				require.ErrorContains(t, err, c.expectedError)
+				return
+			}
 			require.NoError(t, err)
 			require.Equal(t, c.wantedTerraformVersion, data.RequiredVersion)
 			require.Equal(t, c.wantedRequiredProviders, data.RequiredProviders)
