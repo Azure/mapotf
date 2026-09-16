@@ -8,9 +8,37 @@ The `update_in_place` transform block is a powerful tool in Mapotf that allows y
 
 - `dynamic_block_body`: This optional argument allows you to specify a dynamic block of HCL code that will be parsed and applied to the target block. This can be used to add or modify attributes and nested blocks within the target block.
 
+- `merge_object_attributes`: Optional boolean, default `false`. When `true`, patches to literal object attributes merge by literal field name instead of replacing the entire attribute. Unmentioned fields, their expressions, and comments are preserved. This applies to attributes in nested blocks as well.
+
 - `asstring`: This nested block is used to specify the transformation that will be applied to the resources. The transformation is defined as a string of Terraform code.
 
-- `asraw`: This nested block is used to specify the transformation that will be applied to the resources. The transformation is defined as raw HCL code. The code is not parsed or evaluated, but is directly inserted into the Terraform configuration. This allows you to write complex transformations that cannot be expressed as a single Terraform expression.
+- `asraw`: This nested block is used to specify the transformation as raw HCL code. Its expressions are not evaluated. Object merging parses their HCL syntax without evaluating provider aliases or other references.
+
+## Example - Preserve Provider Aliases
+
+```hcl
+transform "update_in_place" azapi {
+  target_block_address    = "terraform"
+  merge_object_attributes = true
+
+  asraw {
+    required_providers {
+      azapi = {
+        source  = "Azure/azapi"
+        version = "~> 2.12"
+      }
+    }
+  }
+}
+```
+
+This updates only `source` and `version`, preserving fields such as `configuration_aliases = [azapi.primary, azapi.secondary]`. Missing fields and attributes are added. Separate patches use the current written object, retaining changes from earlier transforms.
+
+Merging is shallow: a field explicitly supplied by the patch is replaced in full, even when that field contains a nested object. Unmentioned fields are left intact. Keys must be literal identifiers or string literals (quoted keys are preserved); computed, interpolated, numeric, and duplicate keys are rejected. An object patch requires an existing literal object or an absent attribute. Object-producing function calls, traversals, conditionals, and `for` expressions cannot serve as merge targets. Replacing an existing literal object with a non-object patch is also rejected while this option is enabled. Errors leave that transform's target unchanged.
+
+Scalar attributes retain their replacement behavior. Existing nested-block matching is unchanged. With the option omitted or `false`, object attributes continue to be replaced completely.
+
+Single-argument blocks remain inline when updating their existing attribute. Expand them to multiline block syntax before adding further block-level attributes; otherwise the transform reports a syntax error without changing the target.
 
 ## Example - Auto-generated Tags for Azure Kubernetes Cluster
 

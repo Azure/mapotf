@@ -14,10 +14,12 @@ data "terraform" "example" {
 The following attributes are exported:
 
 - **required_providers** (Optional): A map of provider configurations required by the module. Each provider configuration can include the following attributes:
-    - **source** (Optional, string): The source of the provider, typically in the format `namespace/provider`.
-    - **version** (Optional, string): The version constraint for the provider.
+    - **source** (Optional, string): The source of the provider, typically in the format `namespace/provider`, or `null` when omitted.
+    - **version** (Optional, string): The version constraint for the provider, or `null` when omitted.
 
 - **required_version** (Optional, string): The required version of Terraform for the module.
+
+Both metadata attributes remain present for every provider, including entries containing only `configuration_aliases`. Aliases are not exported in this map. When no providers are declared, the map is empty. Use a null check or `coalesce` to supply a default; `try` alone does not replace a null value.
 
 ## Example
 
