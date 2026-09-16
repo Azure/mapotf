@@ -2,6 +2,7 @@ package pkg_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/afero"
 	"strings"
 	"testing"
@@ -412,22 +413,28 @@ block "example" {
 	}
 
 	for _, c := range cases {
-		t.Run(c.desc, func(t *testing.T) {
-			readDst, diag := hclsyntax.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
-			require.Falsef(t, diag.HasErrors(), diag.Error())
-			writeDst, diag := hclwrite.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
-			require.Falsef(t, diag.HasErrors(), diag.Error())
-			dstBlock := terraform.NewBlock(&terraform.Module{
-				Dir:    ".",
-				AbsDir: "/",
-			}, readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
-			patchFile, diag := hclwrite.ParseConfig([]byte(c.patch), "patch.hcl", hcl.InitialPos)
-			require.Falsef(t, diag.HasErrors(), diag.Error())
-			sut := new(pkg.UpdateInPlaceTransform)
-			sut.PatchWriteBlock(dstBlock, patchFile.Body().Blocks()[0])
-			patched := string(dstBlock.WriteBlock.BuildTokens(hclwrite.Tokens{}).Bytes())
-			assert.Equal(t, formatHcl(c.expectedDest), formatHcl(patched))
-		})
+		for _, mergeObjects := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/merge=%t", c.desc, mergeObjects), func(t *testing.T) {
+				readDst, diag := hclsyntax.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
+				require.Falsef(t, diag.HasErrors(), diag.Error())
+				writeDst, diag := hclwrite.ParseConfig([]byte(c.dest), "test.tf", hcl.InitialPos)
+				require.Falsef(t, diag.HasErrors(), diag.Error())
+				dstBlock := terraform.NewBlock(&terraform.Module{
+					Dir:    ".",
+					AbsDir: "/",
+				}, readDst.Body.(*hclsyntax.Body).Blocks[0], writeDst.Body().Blocks()[0])
+				patchFile, diag := hclwrite.ParseConfig([]byte(c.patch), "patch.hcl", hcl.InitialPos)
+				require.Falsef(t, diag.HasErrors(), diag.Error())
+				sut := &pkg.UpdateInPlaceTransform{MergeObjectAttributes: mergeObjects}
+				require.NoError(t, sut.PatchWriteBlock(dstBlock, patchFile.Body().Blocks()[0]))
+				patched := string(dstBlock.WriteBlock.BuildTokens(hclwrite.Tokens{}).Bytes())
+				assert.Equal(t, formatHcl(c.expectedDest), formatHcl(patched))
+				if mergeObjects {
+					require.NoError(t, sut.PatchWriteBlock(dstBlock, patchFile.Body().Blocks()[0]))
+					require.Equal(t, patched, string(dstBlock.WriteBlock.BuildTokens(nil).Bytes()))
+				}
+			})
+		}
 	}
 }
 
