@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+
 	"github.com/Azure/golden"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
@@ -18,17 +19,46 @@ type TerraformData struct {
 	*BaseData
 	*golden.BaseBlock
 
-	RequiredVersion   *string                     `attribute:"required_version"`
-	RequiredProviders map[string]RequiredProvider `attribute:"required_providers"`
-	Block             cty.Value                   `attribute:"block"`
+	RequiredVersion   *string `attribute:"required_version"`
+	RequiredProviders map[string]RequiredProvider
+	Block             cty.Value `attribute:"block"`
 }
 
 func (d *TerraformData) Type() string {
 	return "terraform"
 }
 
+// BaseValues exports provider metadata with string-typed nulls instead of golden's nil pointer values.
+func (d *TerraformData) BaseValues() map[string]cty.Value {
+	values := d.BaseBlock.BaseValues()
+	providers := make(map[string]cty.Value, len(d.RequiredProviders))
+	for name, provider := range d.RequiredProviders {
+		attributes := map[string]cty.Value{
+			"source":  cty.NullVal(cty.String),
+			"version": cty.NullVal(cty.String),
+		}
+		if provider.Source != nil {
+			attributes["source"] = cty.StringVal(*provider.Source)
+		}
+		if provider.Version != nil {
+			attributes["version"] = cty.StringVal(*provider.Version)
+		}
+		providers[name] = cty.ObjectVal(attributes)
+	}
+	if len(providers) == 0 {
+		values["required_providers"] = cty.MapValEmpty(cty.Object(map[string]cty.Type{
+			"source":  cty.String,
+			"version": cty.String,
+		}))
+	} else {
+		values["required_providers"] = cty.MapVal(providers)
+	}
+	return values
+}
+
 func (d *TerraformData) ExecuteDuringPlan() error {
 	d.Block = cty.NilVal
+	d.RequiredProviders = nil
 	tb := d.BaseBlock.Config().(*MetaProgrammingTFConfig).TerraformBlock()
 	if tb == nil {
 		return nil
