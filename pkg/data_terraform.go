@@ -48,25 +48,34 @@ func (d *TerraformData) ExecuteDuringPlan() error {
 		return nil
 	}
 	d.RequiredProviders = make(map[string]RequiredProvider)
-	for s, p := range rp[0].Body.Attributes {
-		providerConfig, diag := p.Expr.Value(&hcl.EvalContext{})
+	for providerName, providerAttribute := range rp[0].Body.Attributes {
+		providerEntries, diag := hcl.ExprMap(providerAttribute.Expr)
 		if diag.HasErrors() {
-			return fmt.Errorf("error while evaluating terraform block's `required_providers.%s`: %+v", s, diag)
+			return fmt.Errorf("error while evaluating terraform block's `required_providers.%s`: %+v", providerName, diag)
 		}
-		p := RequiredProvider{}
-		it := providerConfig.ElementIterator()
-		for it.Next() {
-			k, _ := it.Element()
-			if k.AsString() == "source" {
-				source := providerConfig.GetAttr("source").AsString()
-				p.Source = &source
+		provider := RequiredProvider{}
+		for _, entry := range providerEntries {
+			key, diag := entry.Key.Value(&hcl.EvalContext{})
+			if diag.HasErrors() {
+				return fmt.Errorf("error while evaluating terraform block's `required_providers.%s` key: %+v", providerName, diag)
 			}
-			if k.AsString() == "version" {
-				version := providerConfig.GetAttr("version").AsString()
-				p.Version = &version
+			attributeName := key.AsString()
+			if attributeName != "source" && attributeName != "version" {
+				continue
+			}
+			value, diag := entry.Value.Value(&hcl.EvalContext{})
+			if diag.HasErrors() {
+				return fmt.Errorf("error while evaluating terraform block's `required_providers.%s.%s`: %+v", providerName, attributeName, diag)
+			}
+			attributeValue := value.AsString()
+			switch attributeName {
+			case "source":
+				provider.Source = &attributeValue
+			case "version":
+				provider.Version = &attributeValue
 			}
 		}
-		d.RequiredProviders[s] = p
+		d.RequiredProviders[providerName] = provider
 	}
 	return nil
 }
