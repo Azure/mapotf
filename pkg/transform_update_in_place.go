@@ -126,14 +126,16 @@ func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hc
 			source = []byte("patch {" + string(body) + "}")
 		}
 		read, diag := hclsyntax.ParseConfig(source, dest.Range().Filename, hcl.InitialPos)
-		if diag.HasErrors() {
-			return fmt.Errorf("cannot parse object merge target: %s", diag.Error())
+		readBlock, err := singleMergeSyntaxBlock(read, diag)
+		if err != nil {
+			return fmt.Errorf("cannot parse object merge target: %w", err)
 		}
 		write, diag := hclwrite.ParseConfig(source, dest.Range().Filename, hcl.InitialPos)
-		if diag.HasErrors() {
-			return fmt.Errorf("cannot parse object merge target: %s", diag.Error())
+		writeBlock, err := singleMergeWriteBlock(write, diag)
+		if err != nil {
+			return fmt.Errorf("cannot parse object merge target: %w", err)
 		}
-		copy := terraform.NewBlock(nil, read.Body.(*hclsyntax.Body).Blocks[0], write.Body().Blocks()[0])
+		copy := terraform.NewBlock(nil, readBlock, writeBlock)
 		if err := u.patchWriteBlock(copy, patch); err != nil {
 			return err
 		}
@@ -183,10 +185,11 @@ func (u *UpdateInPlaceTransform) patchWriteBlock(dest terraform.Block, patch *hc
 			newBlock := patchNestedBlock
 			if u.MergeObjectAttributes {
 				file, diag := hclwrite.ParseConfig(newBlock.BuildTokens(nil).Bytes(), dest.Range().Filename, hcl.InitialPos)
-				if diag.HasErrors() {
-					return fmt.Errorf("cannot parse new nested block: %s", diag.Error())
+				parsedBlock, err := singleMergeWriteBlock(file, diag)
+				if err != nil {
+					return fmt.Errorf("cannot parse new nested block: %w", err)
 				}
-				newBlock = file.Body().Blocks()[0]
+				newBlock = parsedBlock
 			}
 			dest.AppendBlock(newBlock)
 		} else {
@@ -211,12 +214,56 @@ func currentWriteNestedBlocks(dest terraform.Block, blockType string) ([]*terraf
 			continue
 		}
 		read, diag := hclsyntax.ParseConfig(block.BuildTokens(nil).Bytes(), dest.Range().Filename, hcl.InitialPos)
-		if diag.HasErrors() {
-			return nil, fmt.Errorf("cannot parse current nested block %q: %s", blockType, diag.Error())
+		readBlock, err := singleMergeSyntaxBlock(read, diag)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse current nested block %q: %w", blockType, err)
 		}
-		blocks = append(blocks, terraform.NewNestedBlock(read.Body.(*hclsyntax.Body).Blocks[0], block))
+		blocks = append(blocks, terraform.NewNestedBlock(readBlock, block))
 	}
 	return blocks, nil
+}
+
+func singleMergeSyntaxBlock(file *hcl.File, diag hcl.Diagnostics) (*hclsyntax.Block, error) {
+	if diag.HasErrors() {
+		return nil, diag
+	}
+	if file == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL syntax file")
+	}
+	body, ok := file.Body.(*hclsyntax.Body)
+	if !ok || body == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL syntax body")
+	}
+	if len(body.Blocks) != 1 {
+		return nil, fmt.Errorf("expected exactly one HCL syntax block, got %d", len(body.Blocks))
+	}
+	block := body.Blocks[0]
+	if block == nil || block.Body == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL syntax block and body")
+	}
+	return block, nil
+}
+
+func singleMergeWriteBlock(file *hclwrite.File, diag hcl.Diagnostics) (*hclwrite.Block, error) {
+	if diag.HasErrors() {
+		return nil, diag
+	}
+	if file == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL write file")
+	}
+	body := file.Body()
+	if body == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL write body")
+	}
+	blocks := body.Blocks()
+	if len(blocks) != 1 {
+		return nil, fmt.Errorf("expected exactly one HCL write block, got %d", len(blocks))
+	}
+	block := blocks[0]
+	if block == nil || block.Body() == nil {
+		return nil, fmt.Errorf("expected a non-nil HCL write block and body")
+	}
+	return block, nil
 }
 
 func (u *UpdateInPlaceTransform) String() string {
