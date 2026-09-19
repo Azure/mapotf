@@ -35,9 +35,13 @@ func NewTerraformCliProviderSchemaRetriever(ctx context.Context) TerraformProvid
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	state := newProviderSchemaRetrieverState()
+	// Attached here rather than in newProviderSchemaRetrieverState so tests
+	// that build state directly stay hermetic and never touch the user cache.
+	state.diskCache = newProviderSchemaDiskCacheFromEnv()
 	return TerraformCliProviderSchemaRetriever{
 		ctx:   ctx,
-		state: newProviderSchemaRetrieverState(),
+		state: state,
 	}
 }
 
@@ -85,6 +89,7 @@ type providerSchemaResult struct {
 type providerSchemaRetrieverState struct {
 	mu            sync.Mutex
 	cache         map[providerSchemaCacheKey]providerSchemaResult
+	diskCache     *providerSchemaDiskCache
 	runnerFactory func(TerraformCliProviderSchemaRetriever) (providerSchemaRunner, error)
 }
 
@@ -120,6 +125,10 @@ func (t TerraformCliProviderSchemaRetriever) prefetchWithState(state *providerSc
 	if len(missing) == 0 {
 		return nil
 	}
+	missing = resolveProviderSchemasFromDisk(state, missing)
+	if len(missing) == 0 {
+		return nil
+	}
 	if ctxErr := t.context().Err(); ctxErr != nil {
 		return ctxErr
 	}
@@ -134,11 +143,31 @@ func (t TerraformCliProviderSchemaRetriever) prefetchWithState(state *providerSc
 	}
 
 	for _, batch := range partitionProviderSchemaRequests(missing) {
-		if err := t.loadProviderSchemaBatch(state.cache, runner, batch); err != nil {
+		if err := t.loadProviderSchemaBatch(state, runner, batch); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// resolveProviderSchemasFromDisk promotes any request already persisted by a
+// previous mapotf process into the in-memory cache, returning only those that
+// still need Terraform.
+func resolveProviderSchemasFromDisk(state *providerSchemaRetrieverState, requests []providerSchemaRequest) []providerSchemaRequest {
+	if state.diskCache == nil {
+		return requests
+	}
+	remaining := make([]providerSchemaRequest, 0, len(requests))
+	for _, request := range requests {
+		key := request.key()
+		schema, ok := state.diskCache.get(key)
+		if !ok {
+			remaining = append(remaining, request)
+			continue
+		}
+		state.cache[key] = providerSchemaResult{schema: schema}
+	}
+	return remaining
 }
 
 func deduplicateProviderSchemaRequests(requests []providerSchemaRequest, cache map[providerSchemaCacheKey]providerSchemaResult) []providerSchemaRequest {
@@ -195,10 +224,11 @@ func partitionProviderSchemaRequests(requests []providerSchemaRequest) [][]provi
 	return batches
 }
 
-func (t TerraformCliProviderSchemaRetriever) loadProviderSchemaBatch(cache map[providerSchemaCacheKey]providerSchemaResult, runner providerSchemaRunner, requests []providerSchemaRequest) error {
+func (t TerraformCliProviderSchemaRetriever) loadProviderSchemaBatch(state *providerSchemaRetrieverState, runner providerSchemaRunner, requests []providerSchemaRequest) error {
+	cache := state.cache
 	schemas, err := t.retrieveProviderSchemas(runner, requests)
 	if err == nil {
-		cacheProviderSchemas(cache, requests, schemas.Schemas)
+		cacheProviderSchemas(cache, state.diskCache, requests, schemas.Schemas)
 		return nil
 	}
 	if ctxErr := contextError(t.context(), err); ctxErr != nil {
@@ -220,7 +250,7 @@ func (t TerraformCliProviderSchemaRetriever) loadProviderSchemaBatch(cache map[p
 			cache[request.key()] = providerSchemaResult{err: err}
 			continue
 		}
-		cacheProviderSchemas(cache, []providerSchemaRequest{request}, schemas.Schemas)
+		cacheProviderSchemas(cache, state.diskCache, []providerSchemaRequest{request}, schemas.Schemas)
 	}
 	return nil
 }
@@ -263,12 +293,18 @@ func terraformProviderConfig(requests []providerSchemaRequest) []byte {
 	return file.Bytes()
 }
 
-func cacheProviderSchemas(cache map[providerSchemaCacheKey]providerSchemaResult, requests []providerSchemaRequest, schemas map[string]*tfjson.ProviderSchema) {
+func cacheProviderSchemas(cache map[providerSchemaCacheKey]providerSchemaResult, disk *providerSchemaDiskCache, requests []providerSchemaRequest, schemas map[string]*tfjson.ProviderSchema) {
 	for _, request := range requests {
 		schema, err := lookupProviderSchema(schemas, request.providerSource, request.versionConstraint)
 		cache[request.key()] = providerSchemaResult{
 			schema: schema,
 			err:    err,
+		}
+		// Only successful lookups are persisted; a failure is usually
+		// environmental (network, missing provider) and must not be replayed
+		// from disk on the next run.
+		if err == nil {
+			disk.put(request.key(), schema)
 		}
 	}
 }

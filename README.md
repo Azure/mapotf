@@ -116,4 +116,16 @@ You can also use `transform` command to carry the transforms without invoke Terr
 
 Since blocks defined in `override.tf` and `*_override.tf` files are meant to be patch block and might contain only partial content, they might cause analyze error in Mapotf so we WON'T process these override files.
 
+## Provider schema cache
+
+`data "provider_schema"` is populated by running `terraform init` and `terraform providers schema` in a temporary directory. For large providers that dominates runtime, and a pipeline that runs mapotf once per module (root, submodules, examples) repeats the whole cost for every invocation even though the schemas are identical.
+
+Results are therefore cached on disk and reused by later runs. The cache is keyed by provider source and version constraint, stores only successful lookups, and is written atomically so concurrent mapotf processes can share it safely. A missing, corrupt or expired entry simply falls back to Terraform, so the cache can never fail a transform.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MAPOTF_PROVIDER_SCHEMA_CACHE` | enabled | Set to `off`, `0`, `false`, `no` or `disabled` to bypass the cache entirely. |
+| `MAPOTF_PROVIDER_SCHEMA_CACHE_DIR` | `<user cache dir>/mapotf/provider-schema` | Override the cache location. |
+| `MAPOTF_PROVIDER_SCHEMA_CACHE_TTL` | `168h` (7 days) | Go duration controlling entry lifetime. A floating constraint such as `~> 4.0` resolves to whichever release was current when the entry was written, so entries expire by default. Set `0` to never expire, which suits pipelines that pin exact provider versions. |
+
 This tool is still in development, but you're welcome to give it a try.
