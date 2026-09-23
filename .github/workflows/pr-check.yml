@@ -33,6 +33,16 @@ jobs:
       - name: Run tests
 
         run: go test -v github.com/Azure/mapotf/...
+      - name: Test checksum signing helper
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -EQ '5.7.1')) {
+            Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
+          }
+          Import-Module Pester -RequiredVersion 5.7.1
+          $tests = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath '.github' -AdditionalChildPath 'tests', 'Get-ReleaseChecksum.Tests.ps1'
+          $result = Invoke-Pester -Path $tests -PassThru
+          if ($result.FailedCount -ne 0) { exit 1 }
       - name: golangci-lint
         if: runner.os == 'Linux'
         run: |
