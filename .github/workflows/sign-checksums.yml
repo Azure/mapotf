@@ -20,23 +20,21 @@ jobs:
       run:
         shell: pwsh
     steps:
+      - name: Check out signing helper
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+
       - name: Check that checksums.txt is attached to the release
         id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          EVENT_RELEASE_ID: ${{ github.event.release.id }}
         run: |
-          # The release pipeline uploads the assets before it promotes the pre-release, so a
-          # successful pipeline run always leaves checksums.txt attached by the time this fires.
-          # Anything else - a release promoted by hand, or a failed pipeline run - has nothing to
-          # sign, so the job stops quietly rather than failing or waiting for a file that is not
-          # coming.
-          $assets = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json assets --jq '.assets[].name' 2>$null
-          $found = @($assets) -contains 'checksums.txt'
-          "found=$($found.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          if (-not $found) {
-            Write-Host "::warning::No checksums.txt attached to release $env:TAG, nothing to sign."
-          }
+          $script = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath '.github' -AdditionalChildPath 'scripts', 'Get-ReleaseChecksum.ps1'
+          & $script -Mode Check -Repository $env:GITHUB_REPOSITORY -Tag $env:TAG -EventReleaseId $env:EVENT_RELEASE_ID
 
       - name: Install cosign
         if: steps.check.outputs.found == 'true'
@@ -49,9 +47,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          ASSET_ID: ${{ steps.check.outputs.asset_id }}
+          ASSET_SIZE: ${{ steps.check.outputs.asset_size }}
         run: |
-          gh release download $env:TAG --repo $env:GITHUB_REPOSITORY --pattern checksums.txt --clobber
-          if ($LASTEXITCODE -ne 0) { throw "Failed to download checksums.txt from $env:TAG" }
+          $script = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath '.github' -AdditionalChildPath 'scripts', 'Get-ReleaseChecksum.ps1'
+          & $script -Mode Download -Repository $env:GITHUB_REPOSITORY -AssetId $env:ASSET_ID -AssetSize $env:ASSET_SIZE
 
           cosign sign-blob checksums.txt --bundle checksums.txt.sigstore.json --yes
           if ($LASTEXITCODE -ne 0) { throw 'cosign sign-blob failed' }
