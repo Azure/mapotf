@@ -59,16 +59,21 @@ func TestVarFlagsPreserveLiteralCollections(t *testing.T) {
 		"--mptf-var", list,
 		"--mptf-var", `value="contains, commas and = equals"`,
 		"--mptf-var-file", `C:\fixture\with,comma.mptfvars`,
+		"--mptf-var-file", `C:\fixture\overrides.mptfvars`,
 	}
 	require.NoError(t, flags.Parse(args))
 	raw, err := flags.GetStringArray("mptf-var")
 	require.NoError(t, err)
 	assert.Equal(t, []string{list, `value="contains, commas and = equals"`}, raw)
+	files, err := flags.GetStringArray("mptf-var-file")
+	require.NoError(t, err)
+	assert.Equal(t, []string{`C:\fixture\with,comma.mptfvars`, `C:\fixture\overrides.mptfvars`}, files)
 	assignments, err := varFlags(args)
 	require.NoError(t, err)
 	assert.Equal(t, []golden.CliFlagAssignedVariables{
 		golden.NewCliFlagAssignedVariable("new_location_modules", `["C:\\fixture\\module","C:\\fixture\\module\\modules\\child"]`),
 		golden.NewCliFlagAssignedVariable("value", `"contains, commas and = equals"`),
 		golden.NewCliFlagAssignedVariableFile(`C:\fixture\with,comma.mptfvars`),
+		golden.NewCliFlagAssignedVariableFile(`C:\fixture\overrides.mptfvars`),
 	}, assignments)
 }

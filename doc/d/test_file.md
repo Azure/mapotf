@@ -65,7 +65,11 @@ mapotf debug --tf-dir C:\src\module --test-file tests\unit\basic.tftest.hcl --mp
 
 `--eval` writes exactly one JSON value and a newline to stdout. Parse/evaluation/encoding failures return a nonzero exit code. It runs the configuration's plan, but never applies transforms or creates backups. Local `module_source` inspection does not invoke Terraform or use the network. Without `--eval`, debug retains its interactive mode.
 
-Rules can accept collections through repeated `--mptf-var` arguments, for example `--mptf-var 'targets=["C:\\src\\module","C:\\src\\module\\modules\\child"]'`, or through `--mptf-var-file C:\rules\inputs.mptfvars`. Each flag value is passed intact rather than interpreted as CSV.
+`--mptf-var` accepts one `name=value` assignment per occurrence. Repeat the flag for additional assignments, for example `--mptf-var 'targets=["C:\\src\\module","C:\\src\\module\\modules\\child"]' --mptf-var 'enabled=true'`.
+
+`--mptf-var-file` accepts one filename per occurrence. Repeat it for additional files: `--mptf-var-file C:\rules\base.mptfvars --mptf-var-file C:\rules\overrides.mptfvars`.
+
+Each value is passed intact; commas inside HCL collections, strings, or filenames are not separators. CSV-grouping multiple assignments or filenames into one flag occurrence is not supported.
 
 ## Conditional edits
 
