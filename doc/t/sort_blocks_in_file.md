@@ -6,7 +6,7 @@ This transform is normally driven by `data "variable"`, `data "output"`, `data "
 
 ## Arguments
 
-- `file_name`: The target `.tf` file (must end in `.tf`). Blocks listed in `desired_order` will be moved into this file, in the listed order. The file is created if it doesn't already exist.
+- `file_name`: The target `.tf` file (must end in `.tf`). Blocks listed in `desired_order` will be moved into this file, in the listed order. The file is created if it doesn't already exist. In [test-file mode](../d/test_file.md), it must name the selected `.tftest.hcl` file.
 - `desired_order`: A non-empty list of block addresses, in the order they should appear in `file_name`. Each address must resolve to a known block in the target module (for example `variable.location`, `output.id`, `module.naming`, `moved.0`). An address that does not resolve is a hard error — silent skipping would mask drift, since `desired_order` is almost always computed from a data source.
 
 ## Attributes

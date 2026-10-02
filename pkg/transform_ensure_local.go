@@ -29,7 +29,7 @@ func (u *EnsureLocalTransform) Apply() error {
 	u.writeBlock.Body().SetAttributeRaw(u.LocalName, u.tokens)
 	if u.newWriteBlock {
 		cfg := u.Config().(*MetaProgrammingTFConfig)
-		cfg.AddBlock(u.FallbackFileName, u.writeBlock)
+		return cfg.AddBlock(u.FallbackFileName, u.writeBlock)
 	}
 	return nil
 }
@@ -45,6 +45,9 @@ func (u *EnsureLocalTransform) Decode(block *golden.HclBlock, context *hcl.EvalC
 		return err
 	}
 	cfg := u.Config().(*MetaProgrammingTFConfig)
+	if cfg.module.TestFile != "" {
+		return fmt.Errorf("ensure_local is not supported in test-file mode")
+	}
 	if b, ok := cfg.localBlocks[fmt.Sprintf("local.%s", u.LocalName)]; ok {
 		u.writeBlock = b.WriteBlock
 	} else {

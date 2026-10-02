@@ -153,13 +153,20 @@ func NewBlock(m *Module, rb *hclsyntax.Block, wb *hclwrite.Block) *RootBlock {
 		b.ForEach = NewAttribute("for_each", forEachAttr, wb.Body().GetAttribute("for_each"))
 	}
 	b.Attributes = attributes(rb.Body, wb.Body())
-	b.NestedBlocks = nestedBlocks(rb.Body, wb.Body())
+	if m != nil && m.TestFile != "" {
+		b.NestedBlocks = testNestedBlocks(rb.Body, wb.Body())
+	} else {
+		b.NestedBlocks = nestedBlocks(rb.Body, wb.Body())
+	}
 	return b
 }
 
 func (b *RootBlock) EvalContext() cty.Value {
 	v := map[string]cty.Value{}
 	RootBlockReflectionInformation(v, b)
+	if b.module != nil && b.module.TestFile != "" {
+		return testBlockValue(b, b.Labels, b.Type, v["mptf"])
+	}
 	for n, a := range b.Attributes {
 		v[n] = evalAttributeValue(a)
 	}

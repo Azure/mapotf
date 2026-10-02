@@ -15,6 +15,21 @@ func TestFilterArgs(t *testing.T) {
 		expectedNonMptf []string
 	}{
 		{
+			name:         "Native test selection and debug expression",
+			inputArgs:    []string{"mapotf", "debug", "--test-file", "tests/unit.tftest.hcl", "--eval", "data.test_file.this.result"},
+			expectedMptf: []string{"mapotf", "debug", "--test-file", "tests/unit.tftest.hcl", "--eval", "data.test_file.this.result"},
+		},
+		{
+			name:         "Native test flags with equals",
+			inputArgs:    []string{"mapotf", "debug", "--test-file=tests/unit.tftest.hcl", "--eval=data.test_file.this.result"},
+			expectedMptf: []string{"mapotf", "debug", "--test-file=tests/unit.tftest.hcl", "--eval=data.test_file.this.result"},
+		},
+		{
+			name:         "Recursive option is not forwarded",
+			inputArgs:    []string{"mapotf", "transform", "--test-file", "tests/unit.tftest.hcl", "--recursive"},
+			expectedMptf: []string{"mapotf", "transform", "--test-file", "tests/unit.tftest.hcl", "--recursive"},
+		},
+		{
 			name:            "Test with mapotf specific arguments",
 			inputArgs:       []string{"mapotf", "transform", "--tf-dir", "/testTerraform", "--mptf-dir", "/testMptf"},
 			expectedMptf:    []string{"mapotf", "transform", "--tf-dir", "/testTerraform", "--mptf-dir", "/testMptf"},

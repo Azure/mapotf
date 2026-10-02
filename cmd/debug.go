@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
+	ctyjson "github.com/zclconf/go-cty/cty/json"
 	"os"
 )
 
@@ -53,6 +54,9 @@ func replFunc(tfDir, mptfDir *string) func(c *cobra.Command, args []string) erro
 			return err
 		}
 		mod, err := pkg.NewTerraformModuleRef(*tfDir, "", "", "")
+		if cf.testFile != "" {
+			mod, err = pkg.NewTerraformTestFileRef(*tfDir, cf.testFile)
+		}
 		if err != nil {
 			return err
 		}
@@ -62,6 +66,22 @@ func replFunc(tfDir, mptfDir *string) func(c *cobra.Command, args []string) erro
 		}
 		_, err = pkg.RunMetaProgrammingTFPlan(cfg)
 		if err != nil {
+			return err
+		}
+		if cf.debugEval != "" {
+			expression, diag := hclsyntax.ParseExpression([]byte(cf.debugEval), "debug-eval.hcl", hcl.InitialPos)
+			if diag.HasErrors() {
+				return diag
+			}
+			value, diag := expression.Value(cfg.EvalContext())
+			if diag.HasErrors() {
+				return diag
+			}
+			result, err := ctyjson.Marshal(value, value.Type())
+			if err != nil {
+				return fmt.Errorf("cannot encode debug result as JSON: %w", err)
+			}
+			_, err = fmt.Fprintln(c.OutOrStdout(), string(result))
 			return err
 		}
 		line := liner.NewLiner()

@@ -11,7 +11,7 @@ type MoveBlockTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	TargetBlockAddress string `hcl:"target_block_address"`
-	FileName           string `hcl:"file_name" validate:"endswith=.tf"`
+	FileName           string `hcl:"file_name"`
 }
 
 func (m *MoveBlockTransform) Type() string {
@@ -20,6 +20,9 @@ func (m *MoveBlockTransform) Type() string {
 
 func (m *MoveBlockTransform) Apply() error {
 	cfg := m.Config().(*MetaProgrammingTFConfig)
+	if err := cfg.validateTargetFile(m.FileName); err != nil {
+		return err
+	}
 	block := cfg.RootBlock(m.TargetBlockAddress)
 	if block == nil {
 		return fmt.Errorf("cannot find block: %s", m.TargetBlockAddress)
@@ -35,6 +38,5 @@ func (m *MoveBlockTransform) Apply() error {
 	// by AddBlock requires the block not already be owned by another body.
 	// (Same pattern as sort_blocks_in_file.)
 	cfg.module.RemoveBlock(writeBlock)
-	cfg.AddBlock(m.FileName, writeBlock)
-	return nil
+	return cfg.AddBlock(m.FileName, writeBlock)
 }

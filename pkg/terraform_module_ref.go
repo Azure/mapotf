@@ -11,12 +11,26 @@ import (
 var AbsDir func(string) (string, error) = filepath.Abs
 
 type TerraformModuleRef struct {
-	Key     string `json:"Key"`
-	Source  string `json:"Source"`
-	Dir     string `json:"Dir"`
-	AbsDir  string
-	Version string `json:"Version"`
-	GitHash string
+	Key      string `json:"Key"`
+	Source   string `json:"Source"`
+	Dir      string `json:"Dir"`
+	AbsDir   string
+	Version  string `json:"Version"`
+	GitHash  string
+	TestFile string
+}
+
+// NewTerraformTestFileRef selects one test file owned by dir.
+func NewTerraformTestFileRef(dir, testFile string) (*TerraformModuleRef, error) {
+	m, err := NewTerraformRootModuleRef(dir)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := terraform.TestFilePath(m.AbsDir, testFile); err != nil {
+		return nil, err
+	}
+	m.TestFile = filepath.Clean(testFile)
+	return m, nil
 }
 
 func NewTerraformRootModuleRef(dir string) (*TerraformModuleRef, error) {
@@ -65,12 +79,13 @@ func (m *TerraformModuleRef) LoadAbsDir() error {
 
 func (r *TerraformModuleRef) toTerraformPkgType() terraform.ModuleRef {
 	return terraform.ModuleRef{
-		Key:     r.Key,
-		Source:  r.Source,
-		Dir:     r.Dir,
-		AbsDir:  r.AbsDir,
-		Version: r.Version,
-		GitHash: r.GitHash,
+		Key:      r.Key,
+		Source:   r.Source,
+		Dir:      r.Dir,
+		AbsDir:   r.AbsDir,
+		Version:  r.Version,
+		GitHash:  r.GitHash,
+		TestFile: r.TestFile,
 	}
 }
 

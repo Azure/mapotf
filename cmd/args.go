@@ -25,16 +25,23 @@ func FilterArgs(inputArgs []string) ([]string, []string) {
 		"--mptf-dir":      {},
 		"--mptf-var":      {},
 		"--mptf-var-file": {},
+		"--test-file":     {},
+		"--eval":          {},
 		"--help":          {},
 		"--version":       {},
 	}
 	mptfShortHands := map[string]struct{}{
-		"-r": {},
-		"-h": {},
-		"-v": {},
+		"-r":          {},
+		"-h":          {},
+		"-v":          {},
+		"--recursive": {},
 	}
 	for i := 0; i < len(inputArgs); i++ {
 		arg := inputArgs[i]
+		if name, _, ok := strings.Cut(arg, "="); ok && (name == "--test-file" || name == "--eval" || name == "--recursive") {
+			mptfArgs = append(mptfArgs, arg)
+			continue
+		}
 		if _, isSubCommand := subCommands[arg]; isSubCommand {
 			mptfArgs = append(mptfArgs, arg)
 		} else if _, isMptfVarFlag := mptfVarFlags[arg]; isMptfVarFlag {
