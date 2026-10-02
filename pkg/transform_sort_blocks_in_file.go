@@ -29,7 +29,7 @@ var _ Transform = &SortBlocksInFileTransform{}
 type SortBlocksInFileTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	FileName     string   `hcl:"file_name" validate:"endswith=.tf"`
+	FileName     string   `hcl:"file_name"`
 	DesiredOrder []string `hcl:"desired_order" validate:"unique,dive,min=1"`
 }
 
@@ -38,6 +38,10 @@ func (s *SortBlocksInFileTransform) Type() string {
 }
 
 func (s *SortBlocksInFileTransform) Apply() error {
+	cfg := s.Config().(*MetaProgrammingTFConfig)
+	if err := cfg.validateTargetFile(s.FileName); err != nil {
+		return err
+	}
 	if len(s.DesiredOrder) == 0 {
 		return nil
 	}
@@ -48,8 +52,6 @@ func (s *SortBlocksInFileTransform) Apply() error {
 		}
 		seen[addr] = struct{}{}
 	}
-
-	cfg := s.Config().(*MetaProgrammingTFConfig)
 
 	writeBlocks := make([]*hclwrite.Block, 0, len(s.DesiredOrder))
 	for _, addr := range s.DesiredOrder {
@@ -66,7 +68,9 @@ func (s *SortBlocksInFileTransform) Apply() error {
 		cfg.module.RemoveBlock(wb)
 	}
 	for _, wb := range writeBlocks {
-		cfg.AddBlock(s.FileName, wb)
+		if err := cfg.AddBlock(s.FileName, wb); err != nil {
+			return err
+		}
 	}
 	return nil
 }

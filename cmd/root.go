@@ -28,8 +28,34 @@ pipelines.`,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},
-	SilenceErrors: false,
-	SilenceUsage:  true,
+	SilenceErrors:     false,
+	SilenceUsage:      true,
+	PersistentPreRunE: validateSelectionFlags,
+}
+
+func validateSelectionFlags(cmd *cobra.Command, _ []string) error {
+	if cmd.Flags().Changed("test-file") || cf.testFile != "" {
+		if cf.testFile == "" {
+			return fmt.Errorf("--test-file must not be empty")
+		}
+		switch cmd.Name() {
+		case "transform", "debug", "reset", "clean-backup":
+		default:
+			return fmt.Errorf("--test-file is supported only by transform, debug, reset, and clean-backup")
+		}
+		if flag := cmd.Flags().Lookup("recursive"); flag != nil && flag.Value.String() == "true" {
+			return fmt.Errorf("--test-file cannot be combined with --recursive")
+		}
+	}
+	if cmd.Flags().Changed("eval") || cf.debugEval != "" {
+		if cmd.Name() != "debug" {
+			return fmt.Errorf("--eval is supported only by debug")
+		}
+		if cf.debugEval == "" {
+			return fmt.Errorf("--eval must not be empty")
+		}
+	}
+	return nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -51,8 +77,10 @@ func init() {
 		panic(fmt.Sprintf("error on getting working dir:%s", err.Error()))
 	}
 	rootCmd.PersistentFlags().StringVar(&cf.tfDir, "tf-dir", pwd, "Terraform directory")
+	rootCmd.PersistentFlags().StringVar(&cf.testFile, "test-file", "", "Select one .tftest.hcl file relative to --tf-dir (transform, debug, reset, clean-backup only)")
+	rootCmd.PersistentFlags().StringVar(&cf.debugEval, "eval", "", "Evaluate an HCL expression as JSON without applying transforms (debug only)")
 	rootCmd.PersistentFlags().StringSliceVar(&cf.mptfDirs, "mptf-dir", nil, "MPTF directory")
 
-	rootCmd.PersistentFlags().StringSlice("mptf-var", cf.mptfVars, "Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable.")
-	rootCmd.PersistentFlags().StringSlice("mptf-var-file", cf.mptfVarFiles, "Load variable values from the given file, in addition to the default files mptf.mptfvars and *.auto.mptfvars. Use this option more than once to include more than one variables file.")
+	rootCmd.PersistentFlags().StringArray("mptf-var", cf.mptfVars, "Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable.")
+	rootCmd.PersistentFlags().StringArray("mptf-var-file", cf.mptfVarFiles, "Load variable values from the given file, in addition to the default files mptf.mptfvars and *.auto.mptfvars. Use this option more than once to include more than one variables file.")
 }

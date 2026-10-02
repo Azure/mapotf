@@ -12,6 +12,8 @@ var cf = &commonFlags{}
 
 type commonFlags struct {
 	tfDir        string
+	testFile     string
+	debugEval    string
 	mptfDirs     []string
 	mptfVars     []string
 	mptfVarFiles []string
@@ -58,7 +60,7 @@ func varFlags(args []string) ([]golden.CliFlagAssignedVariables, error) {
 			i++
 			continue
 		}
-		varAssignment := strings.Split(arg, "=")
+		varAssignment := strings.SplitN(arg, "=", 2)
 		if len(varAssignment) != 2 {
 			return nil, fmt.Errorf("the given --mptf option \"%s\" is not correctly specified. Must be a variable name and value separated by an equals sign, like --mptf-var key=value", arg)
 		}

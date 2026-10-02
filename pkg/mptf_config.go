@@ -33,6 +33,7 @@ type MetaProgrammingTFConfig struct {
 	outputBlocks    map[string]*terraform.RootBlock
 	moduleBlocks    map[string]*terraform.RootBlock
 	movedBlocks     map[string]*terraform.RootBlock
+	testBlocks      map[string]*terraform.RootBlock
 	terraformBlock  *terraform.RootBlock
 	allRootBlocks   []*terraform.RootBlock
 	module          *terraform.Module
@@ -76,6 +77,7 @@ func (c *MetaProgrammingTFConfig) reloadTerraformModule(m *TerraformModuleRef) e
 	c.outputBlocks = groupByAddress(module.Outputs)
 	c.localBlocks = groupByAddress(module.Locals)
 	c.movedBlocks = groupByAddress(module.MovedBlocks)
+	c.testBlocks = groupByAddress(module.TestBlocks)
 	if len(module.TerraformBlocks) > 0 {
 		c.terraformBlock = module.TerraformBlocks[0]
 	}
@@ -217,6 +219,9 @@ func (c *MetaProgrammingTFConfig) ModuleDir() string {
 }
 
 func (c *MetaProgrammingTFConfig) RootBlock(address string) *terraform.RootBlock {
+	if c.module.TestFile != "" {
+		return c.testBlocks[address]
+	}
 	if strings.HasPrefix(address, "resource.") {
 		return c.resourceBlocks[address]
 	}
@@ -337,8 +342,15 @@ func (c *MetaProgrammingTFConfig) slice(blocks map[string]*terraform.RootBlock) 
 	return r
 }
 
-func (c *MetaProgrammingTFConfig) AddBlock(filename string, block *hclwrite.Block) {
-	c.module.AddBlock(filename, block)
+func (c *MetaProgrammingTFConfig) AddBlock(filename string, block *hclwrite.Block) error {
+	return c.module.AddBlock(filename, block)
+}
+
+func (c *MetaProgrammingTFConfig) validateTargetFile(filename string) error {
+	if c.module.TestFile == "" && !strings.HasSuffix(filename, ".tf") {
+		return fmt.Errorf("target filename %q must end with .tf", filename)
+	}
+	return c.module.ValidateTargetFile(filename)
 }
 
 func groupByAddress(blocks []*terraform.RootBlock) map[string]*terraform.RootBlock {

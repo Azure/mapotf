@@ -24,4 +24,5 @@
 * [`provider_schema`](d/provider_schema.md)
 * [`resource`](d/resource.md)
 * [`terraform`](d/terraform.md)
+* [`test_file`](d/test_file.md)
 * [`variable`](d/variable.md)

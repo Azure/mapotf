@@ -116,6 +116,10 @@ You can also use `transform` command to carry the transforms without invoke Terr
 
 Since blocks defined in `override.tf` and `*_override.tf` files are meant to be patch block and might contain only partial content, they might cause analyze error in Mapotf so we WON'T process these override files.
 
+## Terraform test files
+
+Use `transform --tf-dir <owning-module> --test-file <relative.tftest.hcl>` to edit one test file without changing ordinary `.tf` files. The same selection works with `debug`, `reset`, and `clean-backup`. `debug --eval '<HCL expression>'` returns one JSON value without applying transforms. See [`data "test_file"`](doc/d/test_file.md) for reflection, local run targets, and conditional edits.
+
 ## Provider schema cache
 
 `data "provider_schema"` is populated by running `terraform init` and `terraform providers schema` in a temporary directory. For large providers that dominates runtime, and a pipeline that runs mapotf once per module (root, submodules, examples) repeats the whole cost for every invocation even though the schemas are identical.

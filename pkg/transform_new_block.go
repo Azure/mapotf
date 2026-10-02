@@ -31,7 +31,7 @@ type NewBlockTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
 	NewBlockType  string   `hcl:"new_block_type"`
-	FileName      string   `hcl:"filename" validate:"endswith=.tf"`
+	FileName      string   `hcl:"filename"`
 	Labels        []string `hcl:"labels,optional"`
 	NewBody       string   `hcl:"body,optional"`
 	newWriteBlock *hclwrite.Block
@@ -108,8 +108,11 @@ func (n *NewBlockTransform) Type() string {
 }
 
 func (n *NewBlockTransform) Apply() error {
-	n.Config().(*MetaProgrammingTFConfig).AddBlock(n.FileName, n.newWriteBlock)
-	return nil
+	cfg := n.Config().(*MetaProgrammingTFConfig)
+	if err := cfg.validateTargetFile(n.FileName); err != nil {
+		return err
+	}
+	return cfg.AddBlock(n.FileName, n.newWriteBlock)
 }
 
 func (n *NewBlockTransform) NewWriteBlock() *hclwrite.Block {

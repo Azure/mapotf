@@ -5,7 +5,7 @@ The `new_block` transform block is a powerful tool in Mapotf that allows you to 
 ## Arguments
 
 - `new_block_type`: This argument specifies the type of the new block (e.g., `resource`, `variable`, etc.). It is a required string attribute.
-- `filename`: This argument indicates the file where the new block will be added. It must end with `.tf` and is a required string attribute.
+- `filename`: This required string names the destination `.tf` file. In [test-file mode](../d/test_file.md), it must name the selected `.tftest.hcl` file instead.
 - `labels`: This optional argument allows you to specify labels for the new block. It is a list of strings.
 - `body`: This optional argument allows you to specify the body content for the new block as a string of HCL code.
 - `asstring`: This nested block is used to specify the transformation that will be applied to the new block. The transformation is defined as a string of Terraform code.

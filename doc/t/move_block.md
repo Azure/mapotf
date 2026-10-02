@@ -5,7 +5,7 @@ The `move_block` transform moves one root block to a specified `.tf` file. It is
 ## Arguments
 
 - `target_block_address`: The address of the root block to move (for example `variable.location`, `output.id`, `resource.azurerm_resource_group.this`, `module.naming`). If the address does not resolve to a known block the transform returns an error.
-- `file_name`: The destination `.tf` file. Must end in `.tf`. The file is created if it doesn't already exist.
+- `file_name`: The destination `.tf` file. Must end in `.tf`. The file is created if it doesn't already exist. In [test-file mode](../d/test_file.md), only the already-selected `.tftest.hcl` file is allowed; cross-file moves are rejected.
 
 ## Attributes
 

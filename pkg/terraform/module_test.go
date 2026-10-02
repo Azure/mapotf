@@ -192,7 +192,7 @@ func TestModule_AddBlock(t *testing.T) {
 	newBlock.Body().SetAttributeValue("name", cty.StringVal("test-rg"))
 
 	// Add the block to a new file
-	m.AddBlock("new_file.tf", newBlock)
+	require.NoError(t, m.AddBlock("new_file.tf", newBlock))
 
 	// Verify that the block was added to the writeFiles map
 	require.Contains(t, m.writeFiles, "new_file.tf")
@@ -332,7 +332,7 @@ func TestModule_AddBlockThenRemoveBlock_Roundtrip(t *testing.T) {
 	}
 
 	block := createResourceBlock("azurerm_resource_group", "added", "added-rg")
-	m.AddBlock("new_file.tf", block)
+	require.NoError(t, m.AddBlock("new_file.tf", block))
 
 	// RemoveBlock must find the block we just added; pointer-equality pass
 	// or type+labels fallback must see it.
@@ -364,7 +364,7 @@ func TestModule_AddBlockThenRemoveBlock_ByTypeAndLabels(t *testing.T) {
 	}
 
 	added := createResourceBlock("azurerm_resource_group", "added", "added-rg")
-	m.AddBlock("new_file.tf", added)
+	require.NoError(t, m.AddBlock("new_file.tf", added))
 
 	// Remove by a fresh block with the same type+labels (pointer differs).
 	matcher := hclwrite.NewBlock("resource", []string{"azurerm_resource_group", "added"})

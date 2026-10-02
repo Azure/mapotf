@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -55,6 +56,8 @@ type Module struct {
 	Source          string
 	Version         string
 	GitHash         string
+	TestFile        string
+	TestBlocks      []*RootBlock
 }
 
 func (m *Module) loadConfig(cfg, filename string) error {
@@ -86,15 +89,19 @@ func (m *Module) loadConfig(cfg, filename string) error {
 }
 
 type ModuleRef struct {
-	Key     string `json:"Key"`
-	Source  string `json:"Source"`
-	Dir     string `json:"Dir"`
-	AbsDir  string
-	Version string `json:"Version"`
-	GitHash string
+	Key      string `json:"Key"`
+	Source   string `json:"Source"`
+	Dir      string `json:"Dir"`
+	AbsDir   string
+	Version  string `json:"Version"`
+	GitHash  string
+	TestFile string
 }
 
 func LoadModule(mr ModuleRef) (*Module, error) {
+	if mr.TestFile != "" {
+		return loadTestFile(mr)
+	}
 	files, err := afero.ReadDir(fs.Fs, mr.AbsDir)
 	if err != nil {
 		return nil, err
@@ -142,8 +149,19 @@ func LoadModule(mr ModuleRef) (*Module, error) {
 func (m *Module) SaveToDisk() error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+	if m.TestFile != "" {
+		if len(m.writeFiles) != 1 || m.writeFiles[m.TestFile] == nil {
+			return fmt.Errorf("test-file mode can only write %q", m.TestFile)
+		}
+		if _, err := testFileSyntax(m.writeFiles[m.TestFile].Bytes(), m.TestFile); err != nil {
+			return fmt.Errorf("invalid transformed test file: %w", err)
+		}
+	}
 	for fn, wf := range m.writeFiles {
 		absPath := filepath.Join(m.Dir, fn)
+		if m.TestFile != "" {
+			absPath = filepath.Join(m.AbsDir, fn)
+		}
 		exist, err := afero.Exists(fs.Fs, absPath)
 		if err != nil {
 			return err
@@ -164,7 +182,13 @@ func (m *Module) SaveToDisk() error {
 	return nil
 }
 
-func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
+func (m *Module) AddBlock(fileName string, block *hclwrite.Block) error {
+	if err := m.ValidateTargetFile(fileName); err != nil {
+		return err
+	}
+	if m.TestFile != "" {
+		fileName = m.TestFile
+	}
 	func() {
 		m.lock.Lock()
 		defer m.lock.Unlock()
@@ -185,6 +209,14 @@ func (m *Module) AddBlock(fileName string, block *hclwrite.Block) {
 	// trailing whitespace is canonicalized by normalizeFileWhitespace in
 	// SaveToDisk.
 	writeFile.Body().AppendBlock(block)
+	return nil
+}
+
+func (m *Module) ValidateTargetFile(fileName string) error {
+	if m.TestFile != "" && (!filepath.IsLocal(fileName) || filepath.Clean(fileName) != m.TestFile) {
+		return fmt.Errorf("test-file mode can only write %q, not %q", m.TestFile, fileName)
+	}
+	return nil
 }
 
 func (m *Module) RemoveBlock(block *hclwrite.Block) {
@@ -199,6 +231,11 @@ func (m *Module) RemoveBlock(block *hclwrite.Block) {
 				return
 			}
 		}
+	}
+
+	// Test provider identities include aliases, so labels alone are not a safe fallback.
+	if m.TestFile != "" {
+		return
 	}
 
 	targetType := block.Type()
@@ -254,6 +291,9 @@ func (m *Module) loadLocals(rb *hclsyntax.Block, wb *hclwrite.Block) {
 }
 
 func (m *Module) Blocks() []*RootBlock {
+	if m.TestFile != "" {
+		return m.TestBlocks
+	}
 	var blocks []*RootBlock
 	linq.From(m.TerraformBlocks).Concat(linq.From(m.Locals)).
 		Concat(linq.From(m.Outputs)).Concat(linq.From(m.Variables)).

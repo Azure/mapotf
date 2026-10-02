@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
 )
 
 func NewTransformCmd() *cobra.Command {
@@ -36,12 +37,18 @@ func NewTransformCmd() *cobra.Command {
 }
 
 func transform(recursive bool, ctx context.Context) ([]func(), error) {
+	if cf.testFile != "" && recursive {
+		return nil, fmt.Errorf("--test-file cannot be combined with --recursive")
+	}
 	var restore []func()
 	varFlags, err := varFlags(os.Args)
 	if err != nil {
 		return nil, err
 	}
 	rootMod, err := pkg.NewTerraformRootModuleRef(cf.tfDir)
+	if cf.testFile != "" {
+		rootMod, err = pkg.NewTerraformTestFileRef(cf.tfDir, cf.testFile)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +64,16 @@ func transform(recursive bool, ctx context.Context) ([]func(), error) {
 	}
 	for _, moduleRef := range moduleRefs {
 		d := moduleRef
+		if d.TestFile != "" {
+			path := filepath.Join(d.AbsDir, d.TestFile)
+			if err := backup.BackupFile(path); err != nil {
+				return restore, err
+			}
+			restore = append(restore, func() {
+				_ = backup.ResetFile(path)
+			})
+			continue
+		}
 		err = backup.BackupFolder(d.AbsDir)
 		restore = append(restore, func() {
 			_ = backup.Reset(d.AbsDir)

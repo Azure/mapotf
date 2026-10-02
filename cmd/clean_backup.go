@@ -5,6 +5,7 @@ import (
 
 	"github.com/Azure/mapotf/pkg"
 	"github.com/Azure/mapotf/pkg/backup"
+	"github.com/Azure/mapotf/pkg/terraform"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +23,17 @@ func NewClearBackupCmd() *cobra.Command {
 }
 
 func cleanBackup() error {
+	if cf.testFile != "" {
+		path, err := terraform.TestFilePath(cf.tfDir, cf.testFile)
+		if err != nil {
+			return err
+		}
+		if err := backup.ClearBackupFile(path); err != nil {
+			return err
+		}
+		fmt.Println("Selected test file backup has been cleaned.")
+		return nil
+	}
 	moduleRefs, err := pkg.ModuleRefs(cf.tfDir)
 	if err != nil {
 		return err
