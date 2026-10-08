@@ -35,6 +35,10 @@ func TestUpdateInPlaceTransform_String(t *testing.T) {
 	assert.Equal(t, `patch{
 }
 `, parsed["patch"])
+	assert.NotContains(t, parsed, "match_nested_block_labels")
+	u.MatchNestedBlockLabels = true
+	require.NoError(t, json.Unmarshal([]byte(u.String()), &parsed))
+	assert.Equal(t, true, parsed["match_nested_block_labels"])
 }
 
 func TestUpdateInPlaceTransform_ObjectMergeValidatesBeforeMutation(t *testing.T) {
@@ -86,6 +90,42 @@ func TestUpdateInPlaceTransform_ObjectMergeRejectsUnknownFlag(t *testing.T) {
 		},
 	})
 	require.ErrorContains(t, err, "must be a known, non-null bool")
+}
+
+func TestUpdateInPlaceTransform_MatchNestedBlockLabelsRejectsInvalidFlag(t *testing.T) {
+	for name, value := range map[string]cty.Value{
+		"string true":  cty.StringVal("true"),
+		"string false": cty.StringVal("false"),
+		"number":       cty.NumberIntVal(1),
+		"null":         cty.NullVal(cty.DynamicPseudoType),
+		"null bool":    cty.NullVal(cty.Bool),
+		"unknown bool": cty.UnknownVal(cty.Bool),
+		"unknown type": cty.DynamicVal,
+		"list":         cty.ListVal([]cty.Value{cty.True}),
+		"object":       cty.ObjectVal(map[string]cty.Value{"enabled": cty.True}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			source := []byte(`transform "update_in_place" this {
+  target_block_address = "terraform"
+  match_nested_block_labels = var.enabled
+}`)
+			read, diag := hclsyntax.ParseConfig(source, "rule", hcl.InitialPos)
+			require.False(t, diag.HasErrors(), diag.Error())
+			write, diag := hclwrite.ParseConfig(source, "rule", hcl.InitialPos)
+			require.False(t, diag.HasErrors(), diag.Error())
+			block := golden.NewHclBlock(read.Body.(*hclsyntax.Body).Blocks[0], write.Body().Blocks()[0], nil)
+			u := &UpdateInPlaceTransform{MatchNestedBlockLabels: true}
+			err := u.Decode(block, &hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{"enabled": value}),
+				},
+			})
+			require.ErrorContains(t, err, "`match_nested_block_labels` must be a known, non-null bool")
+			require.False(t, u.MatchNestedBlockLabels)
+			err = u.Decode(block, nil)
+			require.ErrorContains(t, err, "`match_nested_block_labels`:")
+		})
+	}
 }
 
 func TestUpdateInPlaceTransform_SingleMergeBlockParse(t *testing.T) {

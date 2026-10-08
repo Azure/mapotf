@@ -10,6 +10,8 @@ The `update_in_place` transform block is a powerful tool in Mapotf that allows y
 
 - `merge_object_attributes`: Optional boolean, default `false`. When `true`, patches to literal object attributes merge by literal field name instead of replacing the entire attribute. Unmentioned fields, their expressions, and comments are preserved. This applies to attributes in nested blocks as well.
 
+- `match_nested_block_labels`: Optional boolean, default `false`. When `true`, nested blocks match only when their type and complete ordered label list are identical, case-sensitively. Matching applies recursively at every nesting level. Every exact match is updated; if none exists, a block with the patch's type and labels is appended. Both boolean options require known, non-null boolean values, not strings.
+
 - `asstring`: This nested block is used to specify the transformation that will be applied to the resources. The transformation is defined as a string of Terraform code.
 
 - `asraw`: This nested block is used to specify the transformation as raw HCL code. Its expressions are not evaluated. Object merging parses their HCL syntax without evaluating provider aliases or other references.
@@ -36,9 +38,35 @@ This updates only `source` and `version`, preserving fields such as `configurati
 
 Merging is shallow: a field explicitly supplied by the patch is replaced in full, even when that field contains a nested object. Unmentioned fields are left intact. Keys must be literal identifiers or string literals (quoted keys are preserved); computed, interpolated, numeric, and duplicate keys are rejected. An object patch requires an existing literal object or an absent attribute. Object-producing function calls, traversals, conditionals, and `for` expressions cannot serve as merge targets. Replacing an existing literal object with a non-object patch is also rejected while this option is enabled. Errors leave that transform's target unchanged.
 
-Scalar attributes retain their replacement behavior. Existing nested-block matching is unchanged. With the option omitted or `false`, object attributes continue to be replaced completely.
+Scalar attributes retain their replacement behavior. Object merging does not change nested-block matching; use `match_nested_block_labels` separately when labels must match. With object merging omitted or `false`, object attributes continue to be replaced completely.
 
 Single-argument blocks remain inline when updating their existing attribute. Expand them to multiline block syntax before adding further block-level attributes; otherwise the transform reports a syntax error without changing the target.
+
+## Example - Update a Named Mock
+
+When selecting a Terraform test file with `--test-file`, this patches only `mock_data "azapi_client_config"` inside `mock_provider "azapi"`:
+
+```hcl
+transform "update_in_place" client_config {
+  target_block_address      = "mock_provider.azapi"
+  match_nested_block_labels = true
+  merge_object_attributes   = true
+
+  asraw {
+    mock_data "azapi_client_config" {
+      defaults = {
+        subscription_id = "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}
+```
+
+Other mock labels and block types are untouched, including their expressions and comments. Object merging preserves unmentioned `defaults` fields such as `tenant_id`. If the matching mock is absent, it is appended without changing existing mocks. Separate patches use the current written blocks, including blocks added by earlier transforms.
+
+With label matching enabled, unlabeled blocks match only other unlabeled blocks, so patches to `run.variables` can still merge their object attributes. Matching is syntactic: `nested {}` does not match `dynamic "nested" {}`. A patch written as `dynamic "nested" { ... }` matches that dynamic block literally, including its `for_each` attribute and nested `content` block.
+
+Omitting `match_nested_block_labels` or setting it to `false` preserves the existing behavior: all nested blocks of the same effective type are patched regardless of labels, including the content of corresponding dynamic blocks.
 
 ## Example - Auto-generated Tags for Azure Kubernetes Cluster
 
