@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg/terraform"
@@ -19,11 +20,12 @@ var _ golden.CustomDecode = &UpdateInPlaceTransform{}
 type UpdateInPlaceTransform struct {
 	*golden.BaseBlock
 	*BaseTransform
-	TargetBlockAddress    string `hcl:"target_block_address" validate:"required"`
-	DynamicBlockBody      string `hcl:"dynamic_block_body,optional"`
-	MergeObjectAttributes bool   `hcl:"merge_object_attributes,optional"`
-	updateBlock           *hclwrite.Block
-	targetBlock           *terraform.RootBlock
+	TargetBlockAddress     string `hcl:"target_block_address" validate:"required"`
+	DynamicBlockBody       string `hcl:"dynamic_block_body,optional"`
+	MergeObjectAttributes  bool   `hcl:"merge_object_attributes,optional"`
+	MatchNestedBlockLabels bool   `hcl:"match_nested_block_labels,optional"`
+	updateBlock            *hclwrite.Block
+	targetBlock            *terraform.RootBlock
 }
 
 func (u *UpdateInPlaceTransform) Type() string {
@@ -43,16 +45,26 @@ func (u *UpdateInPlaceTransform) Decode(block *golden.HclBlock, context *hcl.Eva
 	if err != nil {
 		return err
 	}
-	u.MergeObjectAttributes = false
-	if attr, ok := block.Attributes()["merge_object_attributes"]; ok {
+	for _, flag := range []struct {
+		name  string
+		value *bool
+	}{
+		{"merge_object_attributes", &u.MergeObjectAttributes},
+		{"match_nested_block_labels", &u.MatchNestedBlockLabels},
+	} {
+		*flag.value = false
+		attr, ok := block.Attributes()[flag.name]
+		if !ok {
+			continue
+		}
 		value, err := attr.Value(context)
 		if err != nil {
-			return fmt.Errorf("`merge_object_attributes`: %w", err)
+			return fmt.Errorf("`%s`: %w", flag.name, err)
 		}
 		if value.Type() != cty.Bool || value.IsNull() || !value.IsKnown() {
-			return fmt.Errorf("`merge_object_attributes` must be a known, non-null bool")
+			return fmt.Errorf("`%s` must be a known, non-null bool", flag.name)
 		}
-		u.MergeObjectAttributes = value.True()
+		*flag.value = value.True()
 	}
 	cfg := u.Config().(*MetaProgrammingTFConfig)
 	b := cfg.RootBlock(u.TargetBlockAddress)
@@ -149,7 +161,7 @@ func (u *UpdateInPlaceTransform) PatchWriteBlock(dest terraform.Block, patch *hc
 func (u *UpdateInPlaceTransform) patchWriteBlock(dest terraform.Block, patch *hclwrite.Block) error {
 	// we cannot patch one-line block
 	singleLine := dest.Range().Start.Line == dest.Range().End.Line
-	if u.MergeObjectAttributes {
+	if u.MergeObjectAttributes || u.MatchNestedBlockLabels {
 		singleLine = len(dest.WriteBody().Attributes()) == 0 && !bytes.Contains(dest.WriteBody().BuildTokens(nil).Bytes(), []byte("\n"))
 	}
 	if singleLine {
@@ -172,18 +184,14 @@ func (u *UpdateInPlaceTransform) patchWriteBlock(dest terraform.Block, patch *hc
 	}
 	// Handle nested blocks
 	for _, patchNestedBlock := range patch.Body().Blocks() {
-		destNestedBlocks := dest.GetNestedBlocks()[patchNestedBlock.Type()]
-		if u.MergeObjectAttributes {
-			var err error
-			destNestedBlocks, err = currentWriteNestedBlocks(dest, patchNestedBlock.Type())
-			if err != nil {
-				return err
-			}
+		destNestedBlocks, err := u.matchingNestedBlocks(dest, patchNestedBlock)
+		if err != nil {
+			return err
 		}
 		if len(destNestedBlocks) == 0 {
 			// If the nested block does not exist in dest, add it
 			newBlock := patchNestedBlock
-			if u.MergeObjectAttributes {
+			if u.MergeObjectAttributes || u.MatchNestedBlockLabels {
 				file, diag := hclwrite.ParseConfig(newBlock.BuildTokens(nil).Bytes(), dest.Range().Filename, hcl.InitialPos)
 				parsedBlock, err := singleMergeWriteBlock(file, diag)
 				if err != nil {
@@ -203,22 +211,37 @@ func (u *UpdateInPlaceTransform) patchWriteBlock(dest terraform.Block, patch *hc
 	return nil
 }
 
-func currentWriteNestedBlocks(dest terraform.Block, blockType string) ([]*terraform.NestedBlock, error) {
-	var blocks []*terraform.NestedBlock
+func (u *UpdateInPlaceTransform) matchingNestedBlocks(dest terraform.Block, patch *hclwrite.Block) ([]terraform.Block, error) {
+	var blocks []terraform.Block
+	if !u.MergeObjectAttributes && !u.MatchNestedBlockLabels {
+		for _, block := range dest.GetNestedBlocks()[patch.Type()] {
+			blocks = append(blocks, block)
+		}
+		return blocks, nil
+	}
 	for _, block := range dest.WriteBody().Blocks() {
 		effectiveType := block.Type()
-		if effectiveType == "dynamic" && len(block.Labels()) == 1 {
+		if u.MatchNestedBlockLabels {
+			if !slices.Equal(block.Labels(), patch.Labels()) {
+				continue
+			}
+		} else if effectiveType == "dynamic" && len(block.Labels()) == 1 {
 			effectiveType = block.Labels()[0]
 		}
-		if effectiveType != blockType {
+		if effectiveType != patch.Type() {
 			continue
 		}
 		read, diag := hclsyntax.ParseConfig(block.BuildTokens(nil).Bytes(), dest.Range().Filename, hcl.InitialPos)
 		readBlock, err := singleMergeSyntaxBlock(read, diag)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse current nested block %q: %w", blockType, err)
+			return nil, fmt.Errorf("cannot parse current nested block %q: %w", patch.Type(), err)
 		}
-		blocks = append(blocks, terraform.NewNestedBlock(readBlock, block))
+		if u.MatchNestedBlockLabels {
+			// Match dynamic blocks literally, without redirecting to their content.
+			blocks = append(blocks, terraform.NewBlock(nil, readBlock, block))
+		} else {
+			blocks = append(blocks, terraform.NewNestedBlock(readBlock, block))
+		}
 	}
 	return blocks, nil
 }
@@ -272,6 +295,9 @@ func (u *UpdateInPlaceTransform) String() string {
 	content["target_block_address"] = u.TargetBlockAddress
 	if u.MergeObjectAttributes {
 		content["merge_object_attributes"] = true
+	}
+	if u.MatchNestedBlockLabels {
+		content["match_nested_block_labels"] = true
 	}
 	content["patch"] = string(u.updateBlock.BuildTokens(nil).Bytes())
 	str, err := json.Marshal(content)
