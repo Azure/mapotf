@@ -14,9 +14,9 @@ import (
 var _ Data = &ModuleSourceData{}
 
 // ModuleSourceFetcherFactory is overridable in tests; the default returns a
-// CLI-backed fetcher that runs `terraform get` in a temp directory.
+// CLI-backed metadata fetcher with exact public-registry version caching.
 var ModuleSourceFetcherFactory = func(ctx context.Context) TerraformModuleSourceFetcher {
-	return NewTerraformCliModuleSourceFetcher(ctx)
+	return moduleSourceMetadataFetcher{TerraformCliModuleSourceFetcher{ctx: ctx}}
 }
 
 // ModuleSourceData fetches the variables and outputs of a Terraform module

@@ -87,4 +87,21 @@ Mapotf parses the requested module in one of two ways depending on the source:
 
 Remote sources containing `//subdirectory` are loaded from the exact module directory recorded in Terraform's `modules/modules.json` manifest, not the repository root. The manifest is read from `TF_DATA_DIR` when set, or `.terraform` otherwise; relative paths are resolved against the temporary Terraform working directory.
 
-Each unique `(source, version, base_dir)` triple is fetched at most once per `mapotf transform` run.
+## Remote inspection cache
+
+Data blocks reuse variable/output metadata across processes for public `registry.terraform.io` root modules pinned to a bare, stable three-part version, such as `Azure/naming/azurerm` with `version = "0.4.2"`. The first fetch still runs Terraform; only successful downloads whose manifest matches the requested source and version populate the cache. Tolerated Terraform errors never populate it.
+
+Local modules are always reloaded, including between sequential transform profiles. Version constraints (including `= 0.4.2`), prereleases, subdirectories, Git/URL sources and private registries remain uncached. The exported Go `NewTerraformCliModuleSourceFetcher` also retains its uncached, full-module behavior.
+
+| Environment variable | Default | Behavior |
+| --- | --- | --- |
+| `MAPOTF_MODULE_SOURCE_CACHE` | enabled | `off`, `false`, `0`, `no` or `disabled` bypass reads and writes; `refresh` fetches again and replaces successful entries. |
+| `MAPOTF_MODULE_SOURCE_CACHE_DIR` | OS user cache directory, under `mapotf/module-source` | Override the dedicated cache directory, for example under `AVM_HOME`. Keep it private to the current user. |
+| `MAPOTF_MODULE_SOURCE_CACHE_TTL` | `168h` | Go duration until an entry expires; zero or a negative duration disables expiry. |
+| `MAPOTF_MODULE_SOURCE_CACHE_LOCK_TIMEOUT` | `2m` | Positive Go duration limiting how long to wait for another process populating the same entry. |
+
+Per-entry OS locks prevent duplicate population and are released automatically if a process exits. Waiting honors cancellation; timeout returns an actionable error rather than starting a duplicate download. Invalid duration settings warn and use their defaults. Cache I/O or corrupt-entry failures warn and retry through the normal fetch path; errors from that fetch are not hidden.
+
+Entries are format- and inspector-version-specific, checksum-validated, and replaced through a temporary file while holding the lock. Variable/output metadata must round-trip without changing default types; unsupported legacy default representations stay uncached. Cache hits preserve the data source's existing attributes, including its string rendering of non-null defaults. To invalidate entries, use `refresh` or remove the cache's `.json` files while no transforms are running. Do not remove `.lock` files while processes may be using them.
+
+The cache conservatively bypasses custom Terraform CLI contexts: `TF_CLI_CONFIG_FILE`, `TERRAFORM_CONFIG`, `TF_CLI_ARGS`, `TF_CLI_ARGS_get`, `TF_DATA_DIR`, any nonempty `TF_TOKEN_*`, the default CLI configuration file, or any `.tfrc`/`.tfrc.json` configuration fragment. This includes otherwise benign CLI configuration files. On Windows the default paths come from the OS roaming-app-data folder, as Terraform uses, not an overridden `APPDATA`. Configuration contents and credentials are never read into cache keys or entries. Builds without a versioned inspector dependency also bypass caching.
