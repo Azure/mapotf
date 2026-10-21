@@ -7,6 +7,7 @@
 * [`regex_replace_expression`](t/regex_replace_expression.md)
 * [`remove_block`](t/remove_block.md)
 * [`remove_block_element`](t/remove_block_element.md)
+* [`remove_object_attributes`](t/remove_object_attributes.md)
 * [`rename_block_element`](t/rename_block_element.md)
 * [`reorder_attributes`](t/reorder_attributes.md)
 * [`sort_blocks_in_file`](t/sort_blocks_in_file.md)
@@ -26,3 +27,7 @@
 * [`terraform`](d/terraform.md)
 * [`test_file`](d/test_file.md)
 * [`variable`](d/variable.md)
+
+## Functions
+
+* [`object_entries`](functions/object_entries.md)

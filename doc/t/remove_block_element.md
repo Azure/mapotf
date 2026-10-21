@@ -2,6 +2,8 @@
 
 The `remove_block_element` transform block is a tool in Mapotf that allows you to remove specific content from existing blocks. This is useful when you need to clean up or modify configurations by removing unwanted nested blocks or attributes.
 
+Paths use dots to traverse nested blocks, not slashes. They do **not** traverse object entries: `providers.modtm` removes the entire `providers` attribute. Use [`remove_object_attributes`](remove_object_attributes.md) to remove selected object keys while preserving sibling expressions and comments.
+
 ## Arguments
 
 - `target_block_address`: This argument specifies the address of the block from which the content will be removed. The block address is a string that uniquely identifies a block in a Terraform configuration.
@@ -15,11 +17,11 @@ Here is an example of how to use the `remove_block_element` transform block to r
 ```terraform
 transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
-  paths                = ["nested_block", "nested_block2/attr"]
+  paths                = ["nested_block", "nested_block2.attr"]
 }
 ```
 
-In this example, the `target_block_address` is set to the block address of the `fake_resource` resource. The `paths` argument specifies two paths: `nested_block` and `nested_block2/attr`. The first path removes the `nested_block` block, and the second path removes the `attr` attribute from the `nested_block2` block.
+In this example, the `target_block_address` is set to the block address of the `fake_resource` resource. The `paths` argument specifies two paths: `nested_block` and `nested_block2.attr`. The first path removes the `nested_block` block, and the second path removes the `attr` attribute from the `nested_block2` block.
 
 ## Detailed Behavior
 
@@ -76,7 +78,7 @@ resource "fake_resource" this {
 ```terraform
 transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/second_nested_block"]
+  paths = ["nested_block.second_nested_block"]
 }
 ```
 
@@ -133,7 +135,7 @@ resource "fake_resource" this {
 ```terraform
 transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/attr"]
+  paths = ["nested_block.attr"]
 }
 ```
 
@@ -158,7 +160,7 @@ resource "fake_resource" this {
 ```terraform
 transform "remove_block_element" this {
   target_block_address = "resource.fake_resource.this"
-  paths = ["nested_block/attr"]
+  paths = ["nested_block.attr"]
 }
 ```
 

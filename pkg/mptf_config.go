@@ -53,7 +53,8 @@ func NewMetaProgrammingTFConfig(m *TerraformModuleRef, varConfigDir *string, hcl
 		IgnoreUnknownVariables:   true,
 	})
 	baseConfig.OverrideFunctions = map[string]function.Function{
-		"tohcl": ToHclFunc,
+		"tohcl":          ToHclFunc,
+		"object_entries": ObjectEntriesFunc,
 	}
 	cfg := &MetaProgrammingTFConfig{
 		BaseConfig: baseConfig,
