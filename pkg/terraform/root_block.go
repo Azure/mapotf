@@ -58,6 +58,7 @@ func blockAddressToRef(address string) string {
 type RootBlock struct {
 	*hclsyntax.Block
 	module       *Module
+	source       string
 	WriteBlock   *hclwrite.Block
 	Count        *Attribute
 	ForEach      *Attribute
