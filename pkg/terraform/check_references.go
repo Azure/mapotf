@@ -40,7 +40,7 @@ func (b *RootBlock) CheckReferences() (cty.Value, error) {
 			visit(block.Body)
 		}
 	}
-	visit(b.Block.Body)
+	visit(b.Body)
 	sort.SliceStable(traversals, func(i, j int) bool {
 		return traversals[i].SourceRange().Start.Byte < traversals[j].SourceRange().Start.Byte
 	})
