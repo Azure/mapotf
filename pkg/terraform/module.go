@@ -36,6 +36,7 @@ var wantedTypes = map[string]func(module *Module) *[]*RootBlock{
 	"variable": func(m *Module) *[]*RootBlock { return &m.Variables },
 	"output":   func(m *Module) *[]*RootBlock { return &m.Outputs },
 	"moved":    func(m *Module) *[]*RootBlock { return &m.MovedBlocks },
+	"check":    func(m *Module) *[]*RootBlock { return &m.CheckBlocks },
 }
 
 type Module struct {
@@ -52,6 +53,7 @@ type Module struct {
 	Outputs         []*RootBlock
 	Locals          []*RootBlock
 	MovedBlocks     []*RootBlock
+	CheckBlocks     []*RootBlock
 	Key             string
 	Source          string
 	Version         string
@@ -82,6 +84,9 @@ func (m *Module) loadConfig(cfg, filename string) error {
 			continue
 		}
 		hclBlock := NewBlock(m, rb, writeBlocks[i])
+		if rb.Type == "check" {
+			hclBlock.source = cfg
+		}
 		blocks := getter(m)
 		*blocks = append(*blocks, hclBlock)
 	}
@@ -300,6 +305,7 @@ func (m *Module) Blocks() []*RootBlock {
 		Concat(linq.From(m.DataBlocks)).Concat(linq.From(m.EphemeralBlocks)).
 		Concat(linq.From(m.ResourceBlocks)).
 		Concat(linq.From(m.ModuleBlocks)).Concat(linq.From(m.MovedBlocks)).
+		Concat(linq.From(m.CheckBlocks)).
 		ToSlice(&blocks)
 	return blocks
 }

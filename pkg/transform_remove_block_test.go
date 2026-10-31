@@ -3,7 +3,7 @@ package pkg_test
 import (
 	"context"
 	"testing"
-	
+
 	"github.com/Azure/golden"
 	"github.com/Azure/mapotf/pkg"
 	filesystem "github.com/Azure/mapotf/pkg/fs"
@@ -24,6 +24,37 @@ func TestRemoveBlock(t *testing.T) {
 		expected string
 		wantErr  bool
 	}{
+		{
+			desc: "remove_check_block",
+			mptf: `
+transform "remove_block" this {
+  target_block_address = "check.remove"
+}
+`,
+			tfConfig: `
+check "remove" {
+  assert {
+    condition     = var.location != null
+    error_message = "missing location"
+  }
+}
+
+check "keep" {
+  assert {
+    condition     = true
+    error_message = "kept"
+  }
+}
+`,
+			expected: `
+check "keep" {
+  assert {
+    condition     = true
+    error_message = "kept"
+  }
+}
+`,
+		},
 		{
 			desc: "remove_resource",
 			mptf: `

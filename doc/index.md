@@ -15,6 +15,7 @@
 
 ## `data` blocks
 
+* [`check`](d/check.md)
 * [`data`](d/data.md)
 * [`ephemeral`](d/ephemeral.md)
 * [`local`](d/local.md)
